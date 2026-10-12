@@ -7,6 +7,7 @@ const MENU_HEIGHT = 32;
 
 const desktop = document.querySelector<HTMLElement>('[data-desktop]');
 const fallback = document.querySelector<HTMLElement>('[data-fallback]');
+const skipLink = document.querySelector<HTMLAnchorElement>('[data-skip]');
 
 if (desktop && fallback) {
   const wide = window.matchMedia(WIDE_QUERY);
@@ -38,6 +39,14 @@ if (desktop && fallback) {
     [...windows.values()]
       .filter((w) => !w.hidden)
       .sort((a, b) => Number(b.style.zIndex) - Number(a.style.zIndex))[0];
+
+  const clampWindow = (win: HTMLElement) => {
+    if (win.hidden || !win.style.left) return;
+    const maxLeft = window.innerWidth - 80;
+    const maxTop = window.innerHeight - 60;
+    win.style.left = `${Math.min(Math.max(win.offsetLeft, 80 - win.offsetWidth), maxLeft)}px`;
+    win.style.top = `${Math.min(Math.max(win.offsetTop, MENU_HEIGHT), maxTop)}px`;
+  };
 
   const placeWindow = (win: HTMLElement) => {
     // Cascade new windows from the top-left, to the right of the launcher column.
@@ -71,7 +80,9 @@ if (desktop && fallback) {
     const win = windows.get(id);
     if (!win) return;
     win.hidden = true;
-    openers.get(id)?.focus({ preventScroll: true });
+    // Windows opened from the URL hash have no opener; fall back to their launcher icon.
+    const opener = openers.get(id) ?? desktop.querySelector<HTMLElement>(`.desktop-launch[data-open="${id}"]`);
+    opener?.focus({ preventScroll: true });
     const next = topWindow();
     history.replaceState(null, '', next?.dataset.window ? `#${next.dataset.window}` : location.pathname);
     setActiveDock();
@@ -132,6 +143,8 @@ if (desktop && fallback) {
       window.setInterval(tick, 30_000);
     }
 
+    window.addEventListener('resize', () => windows.forEach(clampWindow));
+
     const fromHash = location.hash.slice(1);
     open(windows.has(fromHash) ? fromHash : DEFAULT_WINDOW);
   };
@@ -139,6 +152,7 @@ if (desktop && fallback) {
   const apply = () => {
     desktop.classList.toggle('hidden', !wide.matches);
     fallback.classList.toggle('hidden', wide.matches);
+    skipLink?.setAttribute('href', wide.matches ? '#desktop' : '#main');
     if (wide.matches && !booted) boot();
   };
 

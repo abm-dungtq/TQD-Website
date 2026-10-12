@@ -8,7 +8,8 @@ import SectionBody from './SectionBody.astro';
 import { person, sections } from '../data/profile';
 ---
 
-<div id="desktop" class="desktop hidden" data-desktop>
+<div id="desktop" class="desktop hidden" data-desktop tabindex="-1">
+  <h1 class="sr-only">{person.name} ({person.handle})</h1>
   <div class="desktop-menubar">
     <a href="/" class="flex items-center gap-2 font-semibold text-ink no-underline">
       <Image src={person.portrait} alt="" width={40} height={40} class="size-5 rounded-full object-cover" />
