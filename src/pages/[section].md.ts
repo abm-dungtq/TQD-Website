@@ -1,3 +1,4 @@
+export const prerender = true;
 import type { APIRoute } from 'astro';
 import { sections, type SectionId } from '../data/profile';
 import { markdownResponse, sectionMarkdown } from '../lib/profile-markdown';

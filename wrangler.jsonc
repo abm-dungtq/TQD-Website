@@ -1,12 +1,16 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "tqd-website",
+  "name": "tqd-next",
   "account_id": "b243f38bff984ce1741c379547e97a75",
+  "main": "./src/worker.ts",
   "compatibility_date": "2026-09-01",
-  "assets": {
-    "directory": "./dist",
-    "not_found_handling": "404-page",
-    "html_handling": "drop-trailing-slash"
-  },
-  "routes": [{ "pattern": "tqd.io.vn", "custom_domain": true }]
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "observability": { "enabled": true },
+  "vars": { "ADMIN_EMAIL": "dungtq.ceo@gmail.com" },
+  "d1_databases": [
+    { "binding": "DB", "database_name": "tqd_db", "database_id": "b11ff76d-6626-4d05-ab23-34cc124d9163", "migrations_dir": "migrations" }
+  ],
+  "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "tqd-media" }],
+  "triggers": { "crons": ["0 19 * * *"] }
 }
