@@ -12,6 +12,12 @@ const DRAG_THRESHOLD = 4;
 
 type WindowMotion = typeof import('./window-motion');
 
+const whenIdle = (run: () => void) => {
+  const idle = () => ('requestIdleCallback' in window ? requestIdleCallback(run, { timeout: 2000 }) : setTimeout(run, 200));
+  if (document.readyState === 'complete') idle();
+  else window.addEventListener('load', idle, { once: true });
+};
+
 const desktop = document.querySelector<HTMLElement>('[data-desktop]');
 const fallback = document.querySelector<HTMLElement>('[data-fallback]');
 const skipLink = document.querySelector<HTMLAnchorElement>('[data-skip]');
@@ -168,11 +174,16 @@ if (desktop && fallback) {
       let startX = event.clientX - win.offsetLeft;
       let startY = event.clientY - win.offsetTop;
       let side: 'left' | 'right' | null = null;
+      let dragging = false;
       handle.setPointerCapture(event.pointerId);
 
       const move = (e: PointerEvent) => {
-        if (!detached) {
+        if (!dragging) {
           if (Math.hypot(e.clientX - event.clientX, e.clientY - event.clientY) < DRAG_THRESHOLD) return;
+          dragging = true;
+          window.dispatchEvent(new CustomEvent('tqd:drag', { detail: 'start' }));
+        }
+        if (!detached) {
           // Leaving a maximized or snapped state: go back to the normal size under the pointer.
           const rect = win.getBoundingClientRect();
           const ratio = (event.clientX - rect.left) / rect.width;
@@ -197,6 +208,7 @@ if (desktop && fallback) {
         handle.removeEventListener('pointerup', stop);
         handle.removeEventListener('pointercancel', stop);
         if (snapPreview) snapPreview.hidden = true;
+        if (dragging) window.dispatchEvent(new CustomEvent('tqd:drag', { detail: 'end' }));
         const target = side;
         if (target) void relayout(win, () => win.setAttribute('data-snap', target));
       };
@@ -212,6 +224,11 @@ if (desktop && fallback) {
     booted = true;
     // Animations are only needed on the desktop, so they load with it.
     import('./window-motion').then((m) => (motion = m)).catch(() => {});
+    // Extras wait until the page has loaded and the browser is idle, so they never delay first paint.
+    whenIdle(() => {
+      import('./weather').then((m) => m.startWeather(desktop)).catch(() => {});
+      import('./mascot').then((m) => m.startMascot(desktop)).catch(() => {});
+    });
 
     windows.forEach((win, id) => {
       enableDrag(win);

@@ -4,6 +4,12 @@ Website giới thiệu hồ sơ, sản phẩm AI tự xây, đào tạo, video A
 
 Giao diện lấy cảm hứng từ zuey.me; mã nguồn viết mới, không sao chép từ repo đó.
 
+## Hiệu ứng
+
+Trên màn hình rộng: tìm nhanh bằng `Ctrl K` / `⌘K`; cửa sổ mở, thu nhỏ, phóng to, ghép nửa màn hình; nút **Tất cả cửa sổ** (hoặc `F3`) bày mọi cửa sổ kiểu Exposé; dock phóng to icon khi rê chuột; nền aurora; linh vật DũngTQ đổi tư thế theo thao tác và thỉnh thoảng đi dạo; thời tiết Hà Nội ở thanh menu kèm mưa/tuyết trên nền khi trời mưa/tuyết. Trên điện thoại mỗi mục mở thành một tấm trượt lên, kéo xuống để đóng.
+
+Menu **Giao diện** chọn sáng/tối/tự động, màu nhấn, và tắt/bật **Linh vật**, **Hiệu ứng thời tiết**. Khi hệ điều hành bật giảm chuyển động (`prefers-reduced-motion`), mọi hiệu ứng đứng yên. Ảnh linh vật tạo lại bằng `node scripts/make-mascot.mjs` (hoặc `--fallback` để dùng ảnh chân dung tròn).
+
 ## Nội dung
 
 - Nội dung nằm trong D1 (`tqd_db`) và được sửa tại **`/admin`** (đăng nhập bằng email + mật khẩu admin). Không còn sửa nội dung trong mã nguồn.
@@ -27,6 +33,6 @@ Agent (Claude Code, Codex) đăng bài, ảnh và video qua API `/api/v1` bằng
 | `npm run deploy:preview` | Deploy bản preview `tqd-next` |
 | `npm run deploy` | Deploy production lên `tqd.io.vn` |
 
-Các kiểm tra khác nằm trong `scripts/verify/` (`site`, `admin`, `articles`, `api`, `cache`, `seed`, `live`).
+Các kiểm tra khác nằm trong `scripts/verify/` (`site`, `admin`, `articles`, `api`, `cache`, `seed`, `live`, `lighthouse`, `mascot-files`).
 
 Cách deploy, secret admin, cache và rollback: [docs/deployment.md](docs/deployment.md).

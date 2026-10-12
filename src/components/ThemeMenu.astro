@@ -5,9 +5,11 @@ interface Props {
   id: string;
   /** Opens the panel upward-right of the trigger instead of below-left. */
   align?: 'start' | 'end';
+  /** Adds switches for the desktop-only effects (mascot, weather). */
+  effects?: boolean;
 }
 
-const { id, align = 'end' } = Astro.props;
+const { id, align = 'end', effects = false } = Astro.props;
 const modes = [
   { value: 'light', label: 'Sáng' },
   { value: 'dark', label: 'Tối' },
@@ -56,6 +58,21 @@ const accents = [
         }
       </div>
     </fieldset>
+    {
+      effects && (
+        <fieldset>
+          <legend>Hiệu ứng</legend>
+          <label class="theme-switch">
+            <span>Linh vật</span>
+            <input type="checkbox" role="switch" data-pref="tqd-mascot" />
+          </label>
+          <label class="theme-switch">
+            <span>Hiệu ứng thời tiết</span>
+            <input type="checkbox" role="switch" data-pref="tqd-weather-fx" />
+          </label>
+        </fieldset>
+      )
+    }
   </div>
 </div>
 
@@ -166,6 +183,47 @@ const accents = [
     box-shadow:
       0 0 0 2px var(--color-panel),
       0 0 0 4px var(--swatch);
+  }
+  .theme-switch {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 36px;
+    font-size: 0.8125rem;
+    cursor: pointer;
+  }
+  .theme-switch input {
+    appearance: none;
+    position: relative;
+    width: 36px;
+    height: 20px;
+    margin: 0;
+    border-radius: 999px;
+    background: var(--color-line);
+    cursor: pointer;
+    transition: background-color 200ms var(--os-ease);
+  }
+  .theme-switch input::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgb(15 23 42 / 0.25);
+    transition: transform 200ms var(--os-spring);
+  }
+  .theme-switch input:checked {
+    background: var(--color-accent);
+  }
+  .theme-switch input:checked::after {
+    transform: translateX(16px);
+  }
+  .theme-switch input:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
   }
   @keyframes theme-pop {
     from {

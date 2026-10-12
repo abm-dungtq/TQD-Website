@@ -1,0 +1,101 @@
+---
+// Desktop mascot: two stacked images cross-fade between poses. Hidden until src/scripts/mascot.ts
+// starts it, so phones, print and no-JavaScript visitors never see or download it.
+---
+
+<div class="mascot-wrap" data-mascot-wrap hidden>
+  <p class="mascot-tip" role="status" data-mascot-tip></p>
+  <button type="button" class="mascot" data-mascot data-pose="idle" aria-label="Linh vật DũngTQ – bấm để xem mẹo">
+    <img alt="" width="128" height="128" class="is-front" data-mascot-img />
+    <img alt="" width="128" height="128" data-mascot-img />
+  </button>
+</div>
+
+<style is:global>
+  .mascot-wrap {
+    position: absolute;
+    right: 24px;
+    bottom: 84px;
+    z-index: 950;
+    width: 128px;
+    height: 128px;
+    pointer-events: none;
+  }
+  .mascot-wrap[hidden] {
+    display: none;
+  }
+  .mascot {
+    position: relative;
+    display: block;
+    width: 128px;
+    height: 128px;
+    border-radius: 24px;
+    pointer-events: auto;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mascot:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+  .mascot img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    opacity: 0;
+    filter: drop-shadow(0 10px 12px rgb(2 6 23 / 0.22));
+    transition: opacity 200ms var(--os-ease);
+  }
+  .mascot img.is-front {
+    opacity: 1;
+  }
+  .mascot-wrap[data-dir='left'] .mascot img {
+    transform: scaleX(-1);
+  }
+  /* A slow breath while idle, on the images only so the button itself stays put under the pointer. */
+  .mascot[data-pose='idle'] img {
+    animation: mascot-breathe 3.2s ease-in-out infinite;
+    transform-origin: 50% 100%;
+  }
+  .mascot[data-pose='sleep'] img {
+    filter: drop-shadow(0 10px 12px rgb(2 6 23 / 0.22)) brightness(0.85);
+  }
+  .mascot-tip {
+    position: absolute;
+    right: 8px;
+    bottom: calc(100% + 6px);
+    width: max-content;
+    max-width: 15rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--color-line);
+    border-radius: 14px 14px 4px 14px;
+    background: var(--color-panel);
+    color: var(--color-ink);
+    font-size: 0.8125rem;
+    box-shadow: 0 12px 28px -12px rgb(2 6 23 / 0.35);
+    transform-origin: 100% 100%;
+    animation: mascot-tip 240ms var(--os-spring);
+  }
+  .mascot-tip:empty {
+    display: none;
+  }
+  @keyframes mascot-breathe {
+    50% {
+      translate: 0 -2px;
+      scale: 1.015 0.99;
+    }
+  }
+  @keyframes mascot-tip {
+    from {
+      opacity: 0;
+      transform: scale(0.85);
+    }
+  }
+  @media print {
+    .mascot-wrap {
+      display: none;
+    }
+  }
+</style>

@@ -1,7 +1,7 @@
 ---
 phase: 7
 title: "Linh vật và thời tiết"
-status: pending
+status: completed
 priority: P3
 effort: 8h
 dependencies: [6]
@@ -10,6 +10,12 @@ dependencies: [6]
 # Phase 7 — Linh vật và thời tiết
 
 > Đọc mục Constraints trong `plan.md` trước khi bắt đầu. Phase này không được chặn các phase trước: nếu kẹt, các phase 1–6 vẫn là bản phát hành hợp lệ.
+
+## Kết quả (2026-10-12)
+
+- Ảnh linh vật do Codex CLI (gọi qua Paseo) sinh, vì máy không có key Gemini/OpenRouter/MiniMax. Người dùng đã duyệt bộ 6 tư thế. Ảnh gốc nằm trong `.secrets/mascot-raw/` (không commit).
+- Production 619eed73: `mascot-weather-check.mjs` và `motion-check.mjs` (trong `C:/Users/ABM/.cache/tqd-verify/`) đều ALL PASS. Lighthouse mobile 2 lần: `/` 0.98/1.00, bài viết 0.99/1.00.
+- Khác plan: nhịp "thở" khi đứng yên chạy trên ảnh, không chạy trên nút, để vùng bấm không rung. Mẹo ⌘K ghi `Ctrl K (⌘K trên Mac)`. Kéo cửa sổ chưa bị gắn chỉ bắt đầu sau 4 px.
 
 ## Goal
 

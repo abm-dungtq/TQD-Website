@@ -1,5 +1,6 @@
 // Light/dark/auto theme and accent colour. The inline script in BaseLayout applies the saved
 // choice before first paint; this module wires the menus and cross-fades later changes.
+import { prefOn, setPref, type PrefKey } from './prefs';
 
 const MODES = ['light', 'dark', 'auto'] as const;
 const ACCENTS = ['blue', 'violet', 'emerald', 'amber', 'rose'] as const;
@@ -32,6 +33,7 @@ const syncMenus = () => {
   for (const menu of menus) {
     menu.querySelectorAll<HTMLInputElement>('input[data-mode]').forEach((i) => (i.checked = i.value === mode));
     menu.querySelectorAll<HTMLInputElement>('input[data-accent]').forEach((i) => (i.checked = i.value === accent));
+    menu.querySelectorAll<HTMLInputElement>('input[data-pref]').forEach((i) => (i.checked = prefOn(i.dataset.pref as PrefKey)));
   }
 };
 
@@ -83,6 +85,7 @@ for (const menu of menus) {
     const input = e.target as HTMLInputElement;
     if (input.dataset.mode !== undefined) change({ mode: input.value as Mode });
     if (input.dataset.accent !== undefined) change({ accent: input.value as Accent });
+    if (input.dataset.pref) setPref(input.dataset.pref as PrefKey, input.checked);
   });
 }
 

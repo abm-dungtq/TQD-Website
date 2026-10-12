@@ -5,6 +5,7 @@
 import Icon from './Icon.astro';
 import ThemeMenu from './ThemeMenu.astro';
 import SectionBody from './SectionBody.astro';
+import Mascot from './Mascot.astro';
 import type { SiteData } from '../lib/content';
 
 interface Props {
@@ -32,7 +33,8 @@ const { person, sections } = data.site;
         </svg>
         Tất cả cửa sổ
       </button>
-      <ThemeMenu id="theme-desktop" />
+      <span class="desktop-weather" data-weather hidden></span>
+      <ThemeMenu id="theme-desktop" effects />
       <time class="ml-2 font-mono" data-clock></time>
     </div>
   </div>
@@ -86,6 +88,8 @@ const { person, sections } = data.site;
   }
 
   <div class="desktop-snap" data-snap-preview hidden></div>
+
+  <Mascot />
 
   <nav class="desktop-dock" aria-label="Dock">
     {
@@ -173,6 +177,21 @@ const { person, sections } = data.site;
   .desktop-menu-btn:hover,
   .desktop-menu-btn[aria-pressed='true'] {
     background: color-mix(in srgb, var(--color-ink) 8%, transparent);
+  }
+  .desktop-weather {
+    padding: 0 0.5rem;
+    color: var(--color-muted);
+    white-space: nowrap;
+  }
+  .desktop-weather[hidden] {
+    display: none;
+  }
+  .desktop-weather-fx {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
   }
   .desktop-launcher {
     position: absolute;

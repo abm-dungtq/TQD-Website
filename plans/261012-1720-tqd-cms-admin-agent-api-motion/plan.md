@@ -79,7 +79,7 @@ Trình duyệt ──► Worker tqd-website (src/worker.ts)
 | 4 | Bài viết, media R2, player TikTok | [phase-04](phase-04-articles-media-tiktok.md) | 3 | in-progress (chờ link TikTok, task 4.9) |
 | 5 | API cho agent và skill `tqd-publish` | [phase-05](phase-05-agent-api-and-skill.md) | 4 | completed |
 | 6 | Hiệu ứng: ⌘K, mobile, cửa sổ/dock/Exposé, hình nền | [phase-06](phase-06-motion-os-shell.md) | 4 | completed |
-| 7 | Linh vật và thời tiết | [phase-07](phase-07-mascot-and-weather.md) | 6 | pending |
+| 7 | Linh vật và thời tiết | [phase-07](phase-07-mascot-and-weather.md) | 6 | completed |
 
 Phase 5 và 6 độc lập nhau (khác file), có thể làm theo thứ tự bất kỳ sau phase 4.
 

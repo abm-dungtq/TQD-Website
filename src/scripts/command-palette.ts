@@ -109,12 +109,14 @@ if (dialog && input && list && empty && status) {
     list.replaceChildren();
     empty.hidden = true;
     dialog.showModal();
+    window.dispatchEvent(new CustomEvent('tqd:palette', { detail: 'open' }));
     input.focus();
     await load();
     render();
   };
 
   dialog.addEventListener('close', () => {
+    window.dispatchEvent(new CustomEvent('tqd:palette', { detail: 'close' }));
     returnFocus?.focus({ preventScroll: true });
     returnFocus = null;
   });
