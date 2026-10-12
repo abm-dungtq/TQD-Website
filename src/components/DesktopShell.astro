@@ -3,6 +3,7 @@
 // It stays hidden until src/scripts/desktop.ts enables it on wide screens; without
 // JavaScript or on phones the plain page in [data-fallback] is shown instead.
 import Icon from './Icon.astro';
+import ThemeMenu from './ThemeMenu.astro';
 import SectionBody from './SectionBody.astro';
 import type { SiteData } from '../lib/content';
 
@@ -22,7 +23,18 @@ const { person, sections } = data.site;
       {person.handle}
     </a>
     <span class="text-muted">{person.role}</span>
-    <time class="ml-auto font-mono" data-clock></time>
+    <div class="ml-auto flex items-center gap-1">
+      <button type="button" class="cmdk-trigger" data-cmdk-open hidden>Tìm <kbd>Ctrl K</kbd></button>
+      <button type="button" class="desktop-menu-btn" data-expose-toggle aria-pressed="false">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+          <rect x="3.5" y="4.5" width="7.5" height="6.5" rx="1.5"></rect><rect x="13" y="4.5" width="7.5" height="6.5" rx="1.5"></rect>
+          <rect x="3.5" y="13" width="7.5" height="6.5" rx="1.5"></rect><rect x="13" y="13" width="7.5" height="6.5" rx="1.5"></rect>
+        </svg>
+        Tất cả cửa sổ
+      </button>
+      <ThemeMenu id="theme-desktop" />
+      <time class="ml-2 font-mono" data-clock></time>
+    </div>
   </div>
 
   <nav class="desktop-launcher" aria-label="Ứng dụng">
@@ -48,10 +60,16 @@ const { person, sections } = data.site;
         hidden
       >
         <header class="desktop-titlebar" data-drag>
-          <span class="flex gap-1.5" aria-hidden="true">
-            <span class="size-3 rounded-full bg-[#ff5f57]" />
-            <span class="size-3 rounded-full bg-[#febc2e]" />
-            <span class="size-3 rounded-full bg-[#28c840]" />
+          <span class="desktop-lights">
+            <button type="button" class="desktop-light is-close" data-close aria-label="Đóng">
+              <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3.5 3.5l5 5m0-5-5 5" /></svg>
+            </button>
+            <button type="button" class="desktop-light is-min" data-minimize aria-label="Thu nhỏ">
+              <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 6h6" /></svg>
+            </button>
+            <button type="button" class="desktop-light is-max" data-maximize aria-label="Phóng to">
+              <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 8V4h4M8 4 4 8" /></svg>
+            </button>
           </span>
           <h2 id={`win-title-${s.id}`} class="text-sm font-semibold">
             {s.title}
@@ -59,9 +77,6 @@ const { person, sections } = data.site;
           <a href={`/${s.id}`} class="ml-auto text-xs font-semibold">
             Mở trang riêng
           </a>
-          <button type="button" class="desktop-close" data-close aria-label={`Đóng ${s.title}`}>
-            ×
-          </button>
         </header>
         <div class="desktop-body">
           <SectionBody id={s.id} data={data} />
@@ -69,6 +84,8 @@ const { person, sections } = data.site;
       </section>
     ))
   }
+
+  <div class="desktop-snap" data-snap-preview hidden></div>
 
   <nav class="desktop-dock" aria-label="Dock">
     {
@@ -85,14 +102,49 @@ const { person, sections } = data.site;
   import '../scripts/desktop.ts';
 </script>
 
-<style>
+<style is:global>
   .desktop {
     position: fixed;
     inset: 0;
     overflow: hidden;
     background-color: var(--color-paper);
-    background-image: radial-gradient(var(--color-line) 1px, transparent 1px);
-    background-size: 22px 22px;
+  }
+  /* Aurora wallpaper: soft accent glows drifting slowly; the first layer is the static dot grid. */
+  .desktop::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      radial-gradient(color-mix(in srgb, var(--color-ink) 9%, transparent) 1px, transparent 1px),
+      radial-gradient(38% 46% at 18% 28%, color-mix(in srgb, var(--color-accent) 24%, transparent), transparent 70%),
+      radial-gradient(34% 40% at 82% 18%, color-mix(in srgb, color-mix(in oklch, var(--color-accent), #22d3ee 45%) 20%, transparent), transparent 70%),
+      radial-gradient(40% 44% at 70% 82%, color-mix(in srgb, color-mix(in oklch, var(--color-accent), #e879f9 40%) 18%, transparent), transparent 70%),
+      radial-gradient(30% 36% at 30% 86%, color-mix(in srgb, var(--color-accent) 14%, transparent), transparent 70%);
+    background-size:
+      22px 22px,
+      200% 200%,
+      200% 200%,
+      200% 200%,
+      200% 200%;
+    background-position:
+      0 0,
+      0% 0%,
+      100% 0%,
+      100% 100%,
+      0% 100%;
+    will-change: background-position;
+    animation: aurora 28s ease-in-out infinite alternate;
+  }
+  @keyframes aurora {
+    to {
+      background-position:
+        0 0,
+        60% 40%,
+        30% 70%,
+        20% 30%,
+        80% 20%;
+    }
   }
   .desktop-menubar {
     position: absolute;
@@ -101,12 +153,26 @@ const { person, sections } = data.site;
     display: flex;
     align-items: center;
     gap: 1rem;
-    padding: 0 1rem;
+    padding: 0 0.5rem 0 1rem;
     font-size: 0.8125rem;
-    background: color-mix(in srgb, var(--color-panel) 80%, transparent);
-    backdrop-filter: blur(12px);
+    background: color-mix(in srgb, var(--color-panel) 72%, transparent);
+    backdrop-filter: blur(16px) saturate(1.4);
     border-bottom: 1px solid var(--color-line);
     z-index: 1000;
+  }
+  .desktop-menu-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 28px;
+    padding: 0 0.5rem;
+    border-radius: 6px;
+    color: var(--color-ink);
+    cursor: pointer;
+  }
+  .desktop-menu-btn:hover,
+  .desktop-menu-btn[aria-pressed='true'] {
+    background: color-mix(in srgb, var(--color-ink) 8%, transparent);
   }
   .desktop-launcher {
     position: absolute;
@@ -115,6 +181,7 @@ const { person, sections } = data.site;
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+    transition: opacity 300ms var(--os-ease);
   }
   .desktop-launch {
     width: 92px;
@@ -126,9 +193,13 @@ const { person, sections } = data.site;
     border-radius: 12px;
     color: var(--color-ink);
     cursor: pointer;
+    transition: background-color 150ms var(--os-ease);
   }
   .desktop-launch:hover {
-    background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+    background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+  }
+  .desktop-launch:active .desktop-glyph {
+    transform: scale(0.94);
   }
   .desktop-glyph {
     display: grid;
@@ -136,10 +207,11 @@ const { person, sections } = data.site;
     width: 52px;
     height: 52px;
     border-radius: 14px;
-    background: var(--color-panel);
+    background: color-mix(in srgb, var(--color-panel) 85%, transparent);
     border: 1px solid var(--color-line);
     color: var(--color-accent);
-    box-shadow: 0 1px 2px rgb(15 23 42 / 0.06);
+    box-shadow: 0 4px 12px -6px rgb(15 23 42 / 0.25);
+    transition: transform 150ms var(--os-ease);
   }
   .desktop-window {
     position: absolute;
@@ -150,59 +222,169 @@ const { person, sections } = data.site;
     background: var(--color-panel);
     border: 1px solid var(--color-line);
     border-radius: 12px;
-    box-shadow: 0 24px 48px -12px rgb(15 23 42 / 0.25);
+    box-shadow: 0 30px 60px -18px rgb(2 6 23 / 0.35);
     overflow: hidden;
   }
   .desktop-window[hidden] {
     display: none;
   }
-  .desktop-window[data-opening] {
-    animation: window-in 160ms ease-out;
+  /* Maximized and snapped windows: below the menu bar, above the dock, 8 px margins. */
+  .desktop-window[data-maximized],
+  .desktop-window[data-snap] {
+    top: 40px !important;
+    height: calc(100vh - 40px - 92px) !important;
+    border-radius: 10px;
+  }
+  .desktop-window[data-maximized] {
+    left: 8px !important;
+    width: calc(100vw - 16px) !important;
+  }
+  .desktop-window[data-snap='left'] {
+    left: 8px !important;
+    width: calc(50vw - 12px) !important;
+  }
+  .desktop-window[data-snap='right'] {
+    left: calc(50vw + 4px) !important;
+    width: calc(50vw - 12px) !important;
+  }
+  .desktop-snap {
+    position: absolute;
+    top: 40px;
+    height: calc(100vh - 40px - 92px);
+    width: calc(50vw - 12px);
+    border: 2px solid color-mix(in srgb, var(--color-accent) 60%, transparent);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+    backdrop-filter: blur(4px);
+    pointer-events: none;
+    z-index: 900;
+  }
+  .desktop-snap[hidden] {
+    display: none;
   }
   .desktop-titlebar {
     display: flex;
     align-items: center;
     gap: 0.75rem;
     height: 40px;
-    padding: 0 0.75rem;
+    padding: 0 0.75rem 0 0.5rem;
     border-bottom: 1px solid var(--color-line);
     background: var(--color-paper);
     cursor: grab;
     user-select: none;
     touch-action: none;
   }
-  .desktop-close {
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
-    font-size: 1.25rem;
-    line-height: 1;
-    color: var(--color-muted);
+  .desktop-lights {
+    display: flex;
+  }
+  .desktop-light {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
     cursor: pointer;
   }
-  .desktop-close:hover {
-    background: var(--color-line);
-    color: var(--color-ink);
+  .desktop-light::before {
+    content: '';
+    grid-area: 1 / 1;
+    width: 12px;
+    height: 12px;
+    border-radius: 999px;
+    background: var(--light);
+    box-shadow: inset 0 0 0 0.5px rgb(0 0 0 / 0.18);
+  }
+  .desktop-light svg {
+    grid-area: 1 / 1;
+    width: 8px;
+    height: 8px;
+    fill: none;
+    stroke: rgb(0 0 0 / 0.6);
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    opacity: 0;
+  }
+  .desktop-lights:hover .desktop-light svg,
+  .desktop-light:focus-visible svg {
+    opacity: 1;
+  }
+  .desktop-light.is-close {
+    --light: #ff5f57;
+  }
+  .desktop-light.is-min {
+    --light: #febc2e;
+  }
+  .desktop-light.is-max {
+    --light: #28c840;
   }
   .desktop-body {
     flex: 1;
     overflow: auto;
     padding: 1.5rem;
   }
+  /* Exposé */
+  .is-expose .desktop-window {
+    transition: transform 400ms var(--os-ease);
+    cursor: pointer;
+  }
+  .is-expose .desktop-window > * {
+    pointer-events: none;
+  }
+  .is-expose .desktop-window:hover {
+    outline: 3px solid var(--color-accent);
+  }
+  .is-expose .desktop-launcher {
+    opacity: 0;
+  }
+  .expose-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    background: rgb(2 6 23 / 0.28);
+    backdrop-filter: blur(6px);
+  }
+  .expose-layer[hidden] {
+    display: none;
+  }
+  .expose-label {
+    position: absolute;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    background: var(--color-panel);
+    color: var(--color-ink);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    white-space: nowrap;
+    transform: translateX(-50%);
+    box-shadow: 0 4px 12px -4px rgb(2 6 23 / 0.3);
+  }
+  /* Dock */
   .desktop-dock {
+    --dock-grow: 0px;
     position: absolute;
     left: 50%;
     bottom: 14px;
     transform: translateX(-50%);
     display: flex;
+    align-items: flex-end;
     gap: 0.5rem;
     padding: 0.5rem;
+    z-index: 1000;
+  }
+  .desktop-dock::before {
+    content: '';
+    position: absolute;
+    inset: 0 calc(-1 * var(--dock-grow));
+    z-index: -1;
     border-radius: 18px;
-    background: color-mix(in srgb, var(--color-panel) 75%, transparent);
-    backdrop-filter: blur(14px);
+    background: color-mix(in srgb, var(--color-panel) 68%, transparent);
+    backdrop-filter: blur(16px) saturate(1.4);
     border: 1px solid var(--color-line);
     box-shadow: 0 12px 32px -12px rgb(15 23 42 / 0.3);
-    z-index: 1000;
+    transition: inset 200ms var(--os-ease);
+  }
+  .desktop-dock.is-magnify::before {
+    transition: none;
   }
   .desktop-dock-item {
     position: relative;
@@ -215,18 +397,21 @@ const { person, sections } = data.site;
     background: var(--color-panel);
     border: 1px solid var(--color-line);
     cursor: pointer;
-    transition: transform 120ms ease-out;
+    transform-origin: 50% 100%;
+    transition: transform 200ms var(--os-ease);
   }
-  .desktop-dock-item:hover,
+  .desktop-dock.is-magnify .desktop-dock-item {
+    transition: none;
+  }
+  .desktop-dock:not(.is-magnify) .desktop-dock-item:hover,
   .desktop-dock-item:focus-visible {
     transform: translateY(-4px);
   }
   .desktop-dock-item::after {
     content: attr(data-tip);
     position: absolute;
-    bottom: calc(100% + 8px);
+    bottom: calc(100% + 10px);
     left: 50%;
-    transform: translateX(-50%);
     padding: 0.2rem 0.5rem;
     border-radius: 6px;
     background: var(--color-ink);
@@ -235,12 +420,16 @@ const { person, sections } = data.site;
     white-space: nowrap;
     opacity: 0;
     pointer-events: none;
+    /* Keeps the label at its normal size while the icon is magnified. */
+    transform: translateX(-50%) scale(calc(1 / var(--s, 1)));
+    transform-origin: 50% 100%;
+    transition: opacity 150ms var(--os-ease);
   }
   .desktop-dock-item:hover::after,
   .desktop-dock-item:focus-visible::after {
     opacity: 1;
   }
-  .desktop-dock-item[data-active]::before {
+  .desktop-dock-item.is-open::before {
     content: '';
     position: absolute;
     bottom: -6px;
@@ -249,18 +438,10 @@ const { person, sections } = data.site;
     border-radius: 999px;
     background: var(--color-ink);
   }
-  @keyframes window-in {
-    from {
-      opacity: 0;
-      transform: scale(0.97);
-    }
-  }
   @media (prefers-reduced-motion: reduce) {
-    .desktop-window[data-opening] {
+    .desktop::before {
       animation: none;
-    }
-    .desktop-dock-item {
-      transition: none;
+      will-change: auto;
     }
   }
 </style>

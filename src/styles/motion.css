@@ -1,0 +1,32 @@
+/* Motion tokens shared by every animated surface. Timings live in the Phase 6 motion table. */
+:root {
+  --os-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --os-spring: cubic-bezier(0.2, 1.15, 0.3, 1);
+}
+
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 250ms;
+}
+
+/* Theme switches cross-fade a little slower than page navigations. */
+html[data-theme-switching]::view-transition-old(root),
+html[data-theme-switching]::view-transition-new(root) {
+  animation-duration: 350ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after,
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+    transition: none !important;
+  }
+}

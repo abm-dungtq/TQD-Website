@@ -1,0 +1,172 @@
+---
+// ⌘K quick search over sections, published articles and visible items (/search.json).
+// Opened by src/scripts/command-palette.ts; the trigger buttons stay hidden without JavaScript.
+---
+
+<dialog id="cmdk" class="cmdk" aria-label="Tìm nhanh">
+  <div class="cmdk-field">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+      <circle cx="11" cy="11" r="6.5"></circle>
+      <path d="m16 16 4.5 4.5" stroke-linecap="round"></path>
+    </svg>
+    <input
+      id="cmdk-input"
+      type="text"
+      role="combobox"
+      aria-controls="cmdk-list"
+      aria-expanded="true"
+      aria-autocomplete="list"
+      aria-label="Tìm mục, bài viết, sản phẩm"
+      placeholder="Tìm mục, bài viết, sản phẩm…"
+      autocomplete="off"
+      spellcheck="false"
+    />
+    <kbd class="cmdk-esc">Esc</kbd>
+  </div>
+  <ul id="cmdk-list" role="listbox" aria-label="Kết quả"></ul>
+  <p class="cmdk-empty" data-cmdk-empty hidden>Không tìm thấy</p>
+  <p class="cmdk-status" data-cmdk-status hidden>Đang tải…</p>
+  <footer class="cmdk-foot" aria-hidden="true">
+    <span><kbd>↑</kbd><kbd>↓</kbd> chọn</span>
+    <span><kbd>↵</kbd> mở</span>
+  </footer>
+</dialog>
+
+<script>
+  import '../scripts/command-palette.ts';
+</script>
+
+<style is:global>
+  .cmdk {
+    width: min(560px, calc(100vw - 2rem));
+    max-height: min(520px, 80vh);
+    margin: 14vh auto auto;
+    padding: 0;
+    border: 1px solid var(--color-line);
+    border-radius: 16px;
+    background: var(--color-panel);
+    color: var(--color-ink);
+    box-shadow: 0 32px 64px -20px rgb(2 6 23 / 0.45);
+    overflow: hidden;
+  }
+  .cmdk[open] {
+    display: flex;
+    flex-direction: column;
+    animation: cmdk-in 280ms var(--os-ease);
+  }
+  .cmdk::backdrop {
+    background: rgb(2 6 23 / 0.4);
+    backdrop-filter: blur(8px);
+  }
+  .cmdk-field {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0 1rem;
+    border-bottom: 1px solid var(--color-line);
+    color: var(--color-muted);
+  }
+  .cmdk-field input {
+    flex: 1;
+    min-height: 56px;
+    border: 0;
+    background: transparent;
+    color: var(--color-ink);
+    font-size: 1rem;
+    outline: none;
+  }
+  .cmdk kbd {
+    display: inline-grid;
+    place-items: center;
+    min-width: 1.4rem;
+    padding: 0.05rem 0.35rem;
+    border: 1px solid var(--color-line);
+    border-radius: 5px;
+    background: var(--color-paper);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--color-muted);
+  }
+  #cmdk-list {
+    overflow-y: auto;
+    padding: 0.5rem;
+  }
+  .cmdk-group {
+    padding: 0.6rem 0.6rem 0.3rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+  .cmdk-option {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    min-height: 44px;
+    padding: 0.6rem 0.75rem;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  .cmdk-option[aria-selected='true'] {
+    background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+    color: var(--color-accent-ink);
+  }
+  .cmdk-option span:last-child {
+    margin-left: auto;
+    overflow: hidden;
+    max-width: 50%;
+    font-size: 0.8rem;
+    color: var(--color-muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .cmdk-empty,
+  .cmdk-status {
+    padding: 1.5rem 1rem 2rem;
+    text-align: center;
+    color: var(--color-muted);
+  }
+  .cmdk-foot {
+    display: flex;
+    gap: 1rem;
+    padding: 0.5rem 1rem;
+    border-top: 1px solid var(--color-line);
+    font-size: 0.75rem;
+    color: var(--color-muted);
+  }
+  .cmdk-foot kbd + kbd {
+    margin-left: 0.2rem;
+  }
+  .cmdk-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 28px;
+    padding: 0 0.5rem;
+    border-radius: 6px;
+    font-size: 0.8125rem;
+    color: var(--color-ink);
+    cursor: pointer;
+  }
+  .cmdk-trigger:hover {
+    background: color-mix(in srgb, var(--color-ink) 8%, transparent);
+  }
+  .cmdk-trigger kbd {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--color-muted);
+  }
+  @media (pointer: coarse) {
+    .cmdk-trigger kbd,
+    .cmdk-foot {
+      display: none;
+    }
+  }
+  @keyframes cmdk-in {
+    from {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+  }
+</style>

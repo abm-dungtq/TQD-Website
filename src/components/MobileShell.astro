@@ -1,0 +1,226 @@
+---
+// Phone home screen: clock, profile and an icon grid. Each icon is a plain link, so it works
+// without JavaScript; src/scripts/mobile-shell.ts turns taps into a draggable sheet.
+import Icon from './Icon.astro';
+import type { Site } from '../lib/content';
+
+interface Props {
+  site: Site;
+}
+
+const { person, sections } = Astro.props.site;
+---
+
+<div class="m-home" data-m-home>
+  <div class="m-status">
+    <time class="m-clock" data-m-clock>--:--</time>
+    <span class="m-date" data-m-date></span>
+  </div>
+  <div class="m-profile">
+    <img src={person.portraitSmall} alt="" width="56" height="56" class="m-avatar" />
+    <div>
+      <p class="font-semibold">{person.name}</p>
+      <p class="text-sm text-muted">{person.role}</p>
+    </div>
+  </div>
+  <nav aria-label="Các mục">
+    <ul class="m-grid">
+      {
+        sections.map((s) => (
+          <li>
+            <a href={`/${s.id}`} class="m-app" data-m-open={s.id}>
+              <span class="m-icon">
+                <Icon name={s.icon} size={26} />
+              </span>
+              <span class="m-label">{s.title}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
+</div>
+
+<div class="m-scrim" data-m-scrim hidden></div>
+<section class="m-sheet" role="dialog" aria-modal="true" aria-labelledby="m-sheet-title" data-m-sheet hidden>
+  <header class="m-sheet-head" data-m-drag>
+    <span class="m-handle" aria-hidden="true"></span>
+    <h2 id="m-sheet-title" class="m-sheet-title" data-m-title></h2>
+    <a class="m-sheet-link" data-m-link href="/">Trang riêng</a>
+    <button type="button" class="m-sheet-close" data-m-close aria-label="Đóng">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M6 6l12 12M18 6 6 18" stroke-linecap="round"></path>
+      </svg>
+    </button>
+  </header>
+  <div class="m-sheet-body" data-m-body></div>
+</section>
+
+<script>
+  import '../scripts/mobile-shell.ts';
+</script>
+
+<style is:global>
+  .m-home {
+    transform-origin: 50% 0;
+    transition:
+      transform 380ms var(--os-spring),
+      opacity 380ms var(--os-ease),
+      filter 380ms var(--os-ease);
+  }
+  .m-home.is-behind {
+    transform: scale(0.94);
+    opacity: 0.45;
+    filter: blur(2px);
+  }
+  .m-status {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.5rem 0 1.75rem;
+  }
+  .m-clock {
+    font-size: 3.5rem;
+    font-weight: 300;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .m-date {
+    margin-top: 0.4rem;
+    font-size: 0.875rem;
+    color: var(--color-muted);
+  }
+  .m-profile {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    margin-bottom: 2rem;
+    padding: 0.875rem 1rem;
+    border: 1px solid var(--color-line);
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--color-panel) 80%, transparent);
+    backdrop-filter: blur(12px);
+  }
+  .m-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 999px;
+    object-fit: cover;
+  }
+  .m-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.5rem 0.5rem;
+  }
+  .m-app {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--color-ink);
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .m-icon {
+    display: grid;
+    place-items: center;
+    width: 60px;
+    height: 60px;
+    border-radius: 16px;
+    color: #fff;
+    background: linear-gradient(150deg, color-mix(in srgb, var(--color-accent) 70%, #fff), var(--color-accent));
+    box-shadow: 0 8px 18px -8px color-mix(in srgb, var(--color-accent) 70%, transparent);
+    transition: transform 150ms var(--os-ease);
+  }
+  .m-app:active .m-icon {
+    transform: scale(0.92);
+  }
+  .m-label {
+    display: -webkit-box;
+    max-width: 100%;
+    overflow: hidden;
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.3;
+    text-align: center;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+  .m-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 1090;
+    background: rgb(2 6 23 / 0.3);
+  }
+  .m-scrim[hidden],
+  .m-sheet[hidden] {
+    display: none;
+  }
+  .m-sheet {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 1100;
+    display: flex;
+    flex-direction: column;
+    height: 92dvh;
+    border-radius: 18px 18px 0 0;
+    background: var(--color-panel);
+    box-shadow: 0 -12px 40px -12px rgb(2 6 23 / 0.35);
+  }
+  .m-sheet-head {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.25rem 0.75rem 0.75rem 1.25rem;
+    border-bottom: 1px solid var(--color-line);
+    touch-action: none;
+    user-select: none;
+  }
+  .m-handle {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    width: 40px;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--color-line);
+    transform: translateX(-50%);
+  }
+  .m-sheet-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+  }
+  .m-sheet-link {
+    margin-left: auto;
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+  .m-sheet-close {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    color: var(--color-muted);
+  }
+  .m-sheet-body {
+    flex: 1;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 1.25rem 1.25rem 2.5rem;
+  }
+  .m-loading {
+    padding: 3rem 0;
+    text-align: center;
+    color: var(--color-muted);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .m-home.is-behind {
+      transform: none;
+      filter: none;
+      opacity: 1;
+    }
+  }
+</style>

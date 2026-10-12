@@ -1,7 +1,7 @@
 ---
 phase: 6
 title: "Hiệu ứng: ⌘K, mobile, cửa sổ/dock/Exposé, hình nền và giao diện"
-status: pending
+status: completed
 priority: P2
 effort: 12h
 dependencies: [4]
@@ -10,6 +10,14 @@ dependencies: [4]
 # Phase 6 — Hiệu ứng: ⌘K, mobile, cửa sổ/dock/Exposé, hình nền và giao diện
 
 > Đọc mục Constraints trong `plan.md` trước khi bắt đầu. KHÔNG mở hay chép file từ repo zuey-me; mọi thông số cần dùng đã ghi trong phase này.
+
+## Kết quả (2026-10-12)
+
+- Production 40e133d6: Lighthouse mobile 2 lần — `/` 0.98/1.00, `/bai-viet/{slug}` (ảnh bìa WebP ~22 KB) 0.99–1.00/1.00.
+- Lần đo đầu chỉ đạt 0.87/0.86 vì Google Fonts chặn render. Đã chuyển sang font tự host bằng Astro Fonts API, inline CSS và thêm `fetchpriority` cho ảnh bìa.
+- Kiểm tra hiệu ứng: `C:/Users/ABM/.cache/tqd-verify/motion-check.mjs <base-url>` (nằm ngoài repo) in ALL PASS trên local, preview và production.
+- Khác plan: màu nhấn sáng emerald `#047857`, amber `#b45309` để chữ link đạt tương phản 4.5:1.
+- Việc sau: chuyển hiệu ứng aurora từ `background-position` sang `transform`.
 
 ## Goal
 

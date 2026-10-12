@@ -90,6 +90,7 @@ try {
   if (!(await (await fetch(`${base}/bai-viet`)).text()).includes(title)) throw [3, '/bai-viet missing title'];
   const page = await fetch(`${base}/bai-viet/${pubSlug}`);
   if (page.status !== 200 || (await page.text()).includes('<script>alert')) throw [3, `article page ${page.status} or script kept`];
+  if (!(await (await fetch(`${base}/search.json`)).text()).includes(`/bai-viet/${pubSlug}`)) throw [3, 'search.json missing article'];
 
   // 4. Updates need the right If-Match.
   res = await api(`/api/v1/articles/${pubSlug}`, { key: full, method: 'PUT', json: article });
@@ -105,6 +106,7 @@ try {
   const drafted = await res.json();
   if (res.status !== 201 || drafted.status !== 'draft' || !drafted.warning) throw [5, `${res.status} ${JSON.stringify(drafted)}`];
   if ((await fetch(`${base}/bai-viet/${draftSlug}`)).status !== 404) throw [5, 'draft is public'];
+  if ((await (await fetch(`${base}/search.json`)).text()).includes(draftSlug)) throw [5, 'draft listed in search.json'];
 
   // 6. ...and cannot touch a published article.
   res = await api(`/api/v1/articles/${pubSlug}`, { key: draft, method: 'PUT', json: article, headers: { 'If-Match': '"v2"' } });

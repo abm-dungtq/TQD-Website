@@ -26,7 +26,7 @@ const published = article.publishedAt
     <p class="mb-4"><a href="/bai-viet">← Tất cả bài viết</a></p>
     <h1 class="mb-2 text-3xl font-bold tracking-tight">{article.title}</h1>
     {published && <p class="mb-6 text-sm text-muted"><time datetime={article.publishedAt}>{published}</time></p>}
-    {article.coverKey && <img src={mediaUrl(article.coverKey)} alt="" class="article-cover" width="1200" height="675" />}
+    {article.coverKey && <img src={mediaUrl(article.coverKey)} alt="" class="article-cover" width="1200" height="675" fetchpriority="high" />}
     {
       article.tags.length > 0 && (
         <ul class="mb-6 flex flex-wrap gap-2 text-xs">

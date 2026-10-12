@@ -1,9 +1,15 @@
 // Window manager for the home-page desktop (src/components/DesktopShell.astro).
 // The desktop only runs on wide screens; elsewhere the plain page stays visible.
+import { enableDockMagnify } from './dock';
+import { createExpose } from './expose';
 
 const WIDE_QUERY = '(min-width: 1024px)';
 const DEFAULT_WINDOW = 'ho-so';
 const MENU_HEIGHT = 32;
+const SNAP_EDGE = 24;
+const DRAG_THRESHOLD = 4;
+
+type WindowMotion = typeof import('./window-motion');
 
 const desktop = document.querySelector<HTMLElement>('[data-desktop]');
 const fallback = document.querySelector<HTMLElement>('[data-fallback]');
@@ -11,9 +17,11 @@ const skipLink = document.querySelector<HTMLAnchorElement>('[data-skip]');
 
 if (desktop && fallback) {
   const wide = window.matchMedia(WIDE_QUERY);
-  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const windows = new Map<string, HTMLElement>();
   const openers = new Map<string, HTMLElement>();
+  const snapPreview = desktop.querySelector<HTMLElement>('[data-snap-preview]');
+  const exposeButton = desktop.querySelector<HTMLElement>('[data-expose-toggle]');
+  let motion: WindowMotion | null = null;
   let zTop = 10;
   let opened = 0;
   let booted = false;
@@ -23,11 +31,11 @@ if (desktop && fallback) {
     if (id) windows.set(id, win);
   });
 
+  const dockItem = (id: string) => desktop.querySelector<HTMLElement>(`.desktop-dock-item[data-open="${id}"]`);
+  const isMinimized = (win: HTMLElement) => win.hasAttribute('data-minimized');
+
   const setActiveDock = () => {
-    desktop.querySelectorAll<HTMLElement>('.desktop-dock-item').forEach((item) => {
-      const win = item.dataset.open ? windows.get(item.dataset.open) : undefined;
-      item.toggleAttribute('data-active', Boolean(win && !win.hidden));
-    });
+    windows.forEach((win, id) => dockItem(id)?.classList.toggle('is-open', !win.hidden || isMinimized(win)));
   };
 
   const focusWindow = (win: HTMLElement) => {
@@ -35,10 +43,26 @@ if (desktop && fallback) {
     win.style.zIndex = String(zTop);
   };
 
+  const visibleWindows = () => [...windows.values()].filter((w) => !w.hidden);
+
   const topWindow = (): HTMLElement | undefined =>
-    [...windows.values()]
-      .filter((w) => !w.hidden)
-      .sort((a, b) => Number(b.style.zIndex) - Number(a.style.zIndex))[0];
+    visibleWindows().sort((a, b) => Number(b.style.zIndex) - Number(a.style.zIndex))[0];
+
+  const syncHash = () => {
+    const top = topWindow();
+    history.replaceState(null, '', top?.dataset.window ? `#${top.dataset.window}` : location.pathname);
+  };
+
+  const expose = createExpose(
+    desktop,
+    visibleWindows,
+    (win) => {
+      focusWindow(win);
+      win.querySelector<HTMLElement>('[data-close]')?.focus({ preventScroll: true });
+      syncHash();
+    },
+    (active) => exposeButton?.setAttribute('aria-pressed', String(active)),
+  );
 
   const clampWindow = (win: HTMLElement) => {
     if (win.hidden || !win.style.left) return;
@@ -58,56 +82,122 @@ if (desktop && fallback) {
     opened += 1;
   };
 
+  const restore = async (id: string) => {
+    const win = windows.get(id);
+    const item = dockItem(id);
+    if (!win || !isMinimized(win)) return;
+    win.removeAttribute('data-minimized');
+    win.hidden = false;
+    focusWindow(win);
+    setActiveDock();
+    syncHash();
+    if (motion && item) await motion.animateRestore(win, item.getBoundingClientRect());
+    win.querySelector<HTMLElement>('[data-close]')?.focus({ preventScroll: true });
+  };
+
   const open = (id: string, opener?: HTMLElement) => {
     const win = windows.get(id);
     if (!win) return;
+    if (expose.active) expose.exit();
     if (opener) openers.set(id, opener);
-    if (win.hidden) {
+    if (isMinimized(win)) {
+      void restore(id);
+      return;
+    }
+    const wasHidden = win.hidden;
+    if (wasHidden) {
       win.hidden = false;
       if (!win.style.left) placeWindow(win);
-      if (!reducedMotion.matches) {
-        win.setAttribute('data-opening', '');
-        win.addEventListener('animationend', () => win.removeAttribute('data-opening'), { once: true });
-      }
     }
     focusWindow(win);
     win.querySelector<HTMLElement>('[data-close]')?.focus({ preventScroll: true });
     history.replaceState(null, '', `#${id}`);
     setActiveDock();
+    if (wasHidden && opener && motion) void motion.animateOpen(win, opener.getBoundingClientRect());
   };
 
-  const close = (id: string) => {
+  const close = async (id: string) => {
     const win = windows.get(id);
-    if (!win) return;
+    if (!win || win.hidden || win.hasAttribute('data-closing')) return;
+    win.setAttribute('data-closing', '');
+    if (motion) await motion.animateClose(win);
+    win.removeAttribute('data-closing');
     win.hidden = true;
+    win.removeAttribute('data-maximized');
+    win.removeAttribute('data-snap');
     // Windows opened from the URL hash have no opener; fall back to their launcher icon.
     const opener = openers.get(id) ?? desktop.querySelector<HTMLElement>(`.desktop-launch[data-open="${id}"]`);
     opener?.focus({ preventScroll: true });
-    const next = topWindow();
-    history.replaceState(null, '', next?.dataset.window ? `#${next.dataset.window}` : location.pathname);
+    syncHash();
     setActiveDock();
   };
+
+  const minimize = async (id: string) => {
+    const win = windows.get(id);
+    const item = dockItem(id);
+    if (!win || win.hidden || !item) return;
+    if (motion) await motion.animateMinimize(win, item.getBoundingClientRect());
+    win.setAttribute('data-minimized', '');
+    win.hidden = true;
+    item.focus({ preventScroll: true });
+    syncHash();
+    setActiveDock();
+  };
+
+  /** Applies a layout change to a window, animated with FLIP when motion is loaded. */
+  const relayout = (win: HTMLElement, change: () => void) => (motion ? motion.flip(win, change) : (change(), Promise.resolve()));
+
+  const toggleMaximize = (win: HTMLElement) =>
+    relayout(win, () => {
+      win.removeAttribute('data-snap');
+      win.toggleAttribute('data-maximized');
+    });
 
   const enableDrag = (win: HTMLElement) => {
     const handle = win.querySelector<HTMLElement>('[data-drag]');
     if (!handle) return;
+    handle.addEventListener('dblclick', (event) => {
+      if (!(event.target as Element).closest('a, button')) void toggleMaximize(win);
+    });
     handle.addEventListener('pointerdown', (event) => {
-      const target = event.target;
-      if (target instanceof Element && target.closest('a, button')) return;
+      if (event.button !== 0 || (event.target as Element).closest('a, button')) return;
       focusWindow(win);
-      const startX = event.clientX - win.offsetLeft;
-      const startY = event.clientY - win.offsetTop;
+      const docked = win.hasAttribute('data-maximized') || win.hasAttribute('data-snap');
+      let detached = !docked;
+      let startX = event.clientX - win.offsetLeft;
+      let startY = event.clientY - win.offsetTop;
+      let side: 'left' | 'right' | null = null;
       handle.setPointerCapture(event.pointerId);
+
       const move = (e: PointerEvent) => {
+        if (!detached) {
+          if (Math.hypot(e.clientX - event.clientX, e.clientY - event.clientY) < DRAG_THRESHOLD) return;
+          // Leaving a maximized or snapped state: go back to the normal size under the pointer.
+          const rect = win.getBoundingClientRect();
+          const ratio = (event.clientX - rect.left) / rect.width;
+          win.removeAttribute('data-maximized');
+          win.removeAttribute('data-snap');
+          startX = ratio * win.offsetWidth;
+          startY = event.clientY - rect.top;
+          detached = true;
+        }
         const maxLeft = window.innerWidth - 80;
         const maxTop = window.innerHeight - 60;
         win.style.left = `${Math.min(Math.max(e.clientX - startX, 80 - win.offsetWidth), maxLeft)}px`;
         win.style.top = `${Math.min(Math.max(e.clientY - startY, MENU_HEIGHT), maxTop)}px`;
+        side = e.clientX < SNAP_EDGE ? 'left' : e.clientX > window.innerWidth - SNAP_EDGE ? 'right' : null;
+        if (snapPreview) {
+          snapPreview.hidden = !side;
+          snapPreview.style.left = side === 'right' ? 'calc(50vw + 4px)' : '8px';
+        }
       };
       const stop = () => {
         handle.removeEventListener('pointermove', move);
         handle.removeEventListener('pointerup', stop);
         handle.removeEventListener('pointercancel', stop);
+        if (snapPreview) snapPreview.hidden = true;
+        const target = side;
+        if (target) void relayout(win, () => win.setAttribute('data-snap', target));
       };
       handle.addEventListener('pointermove', move);
       handle.addEventListener('pointerup', stop);
@@ -115,23 +205,49 @@ if (desktop && fallback) {
     });
   };
 
+  const toggleExpose = () => (expose.active ? expose.exit() : expose.enter());
+
   const boot = () => {
     booted = true;
+    // Animations are only needed on the desktop, so they load with it.
+    import('./window-motion').then((m) => (motion = m)).catch(() => {});
+
     windows.forEach((win, id) => {
       enableDrag(win);
       win.addEventListener('pointerdown', () => focusWindow(win));
-      win.querySelector<HTMLElement>('[data-close]')?.addEventListener('click', () => close(id));
+      win.querySelector<HTMLElement>('[data-close]')?.addEventListener('click', () => void close(id));
+      win.querySelector<HTMLElement>('[data-minimize]')?.addEventListener('click', () => void minimize(id));
+      win.querySelector<HTMLElement>('[data-maximize]')?.addEventListener('click', () => void toggleMaximize(win));
     });
     desktop.querySelectorAll<HTMLElement>('[data-open]').forEach((button) => {
       button.addEventListener('click', () => {
         if (button.dataset.open) open(button.dataset.open, button);
       });
     });
-    document.addEventListener('keydown', (event) => {
-      if (event.key !== 'Escape' || desktop.classList.contains('hidden')) return;
-      const win = topWindow();
-      if (win?.dataset.window) close(win.dataset.window);
+    exposeButton?.addEventListener('click', toggleExpose);
+    window.addEventListener('tqd:open', (event) => {
+      const id = (event as CustomEvent<string>).detail;
+      if (!desktop.classList.contains('hidden')) open(id, dockItem(id) ?? undefined);
     });
+
+    document.addEventListener('keydown', (event) => {
+      if (desktop.classList.contains('hidden') || document.querySelector('dialog[open]')) return;
+      if (event.key === 'F3' || (event.key === 'ArrowUp' && event.ctrlKey)) {
+        event.preventDefault();
+        toggleExpose();
+        return;
+      }
+      if (event.key !== 'Escape') return;
+      if (expose.active) {
+        expose.exit();
+        return;
+      }
+      const win = topWindow();
+      if (win?.dataset.window) void close(win.dataset.window);
+    });
+
+    const dock = desktop.querySelector<HTMLElement>('.desktop-dock');
+    if (dock) enableDockMagnify(dock);
 
     const clock = desktop.querySelector<HTMLElement>('[data-clock]');
     if (clock) {
