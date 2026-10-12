@@ -70,3 +70,16 @@ Dials:     variance 5, motion 5, density 3.
 ## Unresolved questions
 
 - None blocking. Cormorant Garamond Vietnamese diacritic quality is verified on render, not assumed; verified on render: Cormorant diacritics are clean at 375–1440 px, so no fallback face was needed (font stack falls back to Georgia).
+
+## Result (2026-10-13)
+
+Status: DONE. Production version c64d25c7.
+
+- `astro check` 0 errors, 40 tests pass, build OK.
+- render-check 0 errors at 375/768/1440 on `/`, `/ho-so`, `/san-pham`, `/so-lieu`, `/bai-viet` and a temporary article (published, checked, deleted). Remaining warnings are intended: the sr-only `h1` and the window open on first load on the desktop home.
+- Fixed during review: the mobile header nav overflowed and the search button wrapped onto its own row (the nav now gets its own scrolling row below `lg`); nav, brand, search and footer links are 44 px; Cormorant's old-style figures collided in stat cards (now `lining-nums`); the TikTok title scrim is ink-based instead of black; dev page cache hid template edits (now skipped in dev).
+- Discovery scan on production: 0 errors; only `llms-full.txt` (Could) remains.
+- motion-check (effects-menu case replaces the theme case) and mascot-weather-check: ALL PASS on preview and production.
+- Lighthouse mobile, two runs: home 0.98/1.0, article 0.99/1.0.
+- `site.mjs` OK; `check:privacy` OK.
+- Follow-up for the owner: re-scrape `https://tqd.io.vn` in Facebook Sharing Debugger so shares show the new OG card.
