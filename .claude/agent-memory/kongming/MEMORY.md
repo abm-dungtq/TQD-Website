@@ -1,1 +1,2 @@
 - [User review style](user_review_style.md) — Vietnamese owner via orchestrator; wants must-fix vs later, file:line, Status line; Free-plan CF, shared D1/R2
+- [Luxury light redesign](project_luxury_light_redesign.md) — 2026-10-12 decisions: no dark mode, single champagne-gold accent, Cormorant display; why + counsel given
