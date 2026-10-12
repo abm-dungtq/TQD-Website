@@ -1,0 +1,259 @@
+---
+// Home-page "desktop": a menu bar, launcher icons, a dock and one window per section.
+// It stays hidden until src/scripts/desktop.ts enables it on wide screens; without
+// JavaScript or on phones the plain page in [data-fallback] is shown instead.
+import { Image } from 'astro:assets';
+import Icon from './Icon.astro';
+import SectionBody from './SectionBody.astro';
+import { person, sections } from '../data/profile';
+---
+
+<div id="desktop" class="desktop hidden" data-desktop>
+  <div class="desktop-menubar">
+    <a href="/" class="flex items-center gap-2 font-semibold text-ink no-underline">
+      <Image src={person.portrait} alt="" width={40} height={40} class="size-5 rounded-full object-cover" />
+      {person.handle}
+    </a>
+    <span class="text-muted">{person.role}</span>
+    <time class="ml-auto font-mono" data-clock></time>
+  </div>
+
+  <nav class="desktop-launcher" aria-label="Ứng dụng">
+    {
+      sections.map((s) => (
+        <button type="button" class="desktop-launch" data-open={s.id}>
+          <span class="desktop-glyph">
+            <Icon name={s.icon} size={26} />
+          </span>
+          <span class="text-xs font-semibold">{s.title}</span>
+        </button>
+      ))
+    }
+  </nav>
+
+  {
+    sections.map((s) => (
+      <section
+        class="desktop-window"
+        role="dialog"
+        aria-labelledby={`win-title-${s.id}`}
+        data-window={s.id}
+        hidden
+      >
+        <header class="desktop-titlebar" data-drag>
+          <span class="flex gap-1.5" aria-hidden="true">
+            <span class="size-3 rounded-full bg-[#ff5f57]" />
+            <span class="size-3 rounded-full bg-[#febc2e]" />
+            <span class="size-3 rounded-full bg-[#28c840]" />
+          </span>
+          <h2 id={`win-title-${s.id}`} class="text-sm font-semibold">
+            {s.title}
+          </h2>
+          <a href={`/${s.id}`} class="ml-auto text-xs font-semibold">
+            Mở trang riêng
+          </a>
+          <button type="button" class="desktop-close" data-close aria-label={`Đóng ${s.title}`}>
+            ×
+          </button>
+        </header>
+        <div class="desktop-body">
+          <SectionBody id={s.id} />
+        </div>
+      </section>
+    ))
+  }
+
+  <nav class="desktop-dock" aria-label="Dock">
+    {
+      sections.map((s) => (
+        <button type="button" class="desktop-dock-item" data-open={s.id} aria-label={s.title} data-tip={s.title}>
+          <Icon name={s.icon} size={24} />
+        </button>
+      ))
+    }
+  </nav>
+</div>
+
+<script>
+  import '../scripts/desktop.ts';
+</script>
+
+<style>
+  .desktop {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    background-color: var(--color-paper);
+    background-image: radial-gradient(var(--color-line) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+  .desktop-menubar {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0 1rem;
+    font-size: 0.8125rem;
+    background: color-mix(in srgb, var(--color-panel) 80%, transparent);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--color-line);
+    z-index: 1000;
+  }
+  .desktop-launcher {
+    position: absolute;
+    top: 56px;
+    left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .desktop-launch {
+    width: 92px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.5rem 0.25rem;
+    border-radius: 12px;
+    color: var(--color-ink);
+    cursor: pointer;
+  }
+  .desktop-launch:hover {
+    background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+  }
+  .desktop-glyph {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: var(--color-panel);
+    border: 1px solid var(--color-line);
+    color: var(--color-accent);
+    box-shadow: 0 1px 2px rgb(15 23 42 / 0.06);
+  }
+  .desktop-window {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    width: min(860px, 90vw);
+    height: min(640px, 80vh);
+    background: var(--color-panel);
+    border: 1px solid var(--color-line);
+    border-radius: 12px;
+    box-shadow: 0 24px 48px -12px rgb(15 23 42 / 0.25);
+    overflow: hidden;
+  }
+  .desktop-window[hidden] {
+    display: none;
+  }
+  .desktop-window[data-opening] {
+    animation: window-in 160ms ease-out;
+  }
+  .desktop-titlebar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    height: 40px;
+    padding: 0 0.75rem;
+    border-bottom: 1px solid var(--color-line);
+    background: var(--color-paper);
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+  }
+  .desktop-close {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    font-size: 1.25rem;
+    line-height: 1;
+    color: var(--color-muted);
+    cursor: pointer;
+  }
+  .desktop-close:hover {
+    background: var(--color-line);
+    color: var(--color-ink);
+  }
+  .desktop-body {
+    flex: 1;
+    overflow: auto;
+    padding: 1.5rem;
+  }
+  .desktop-dock {
+    position: absolute;
+    left: 50%;
+    bottom: 14px;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--color-panel) 75%, transparent);
+    backdrop-filter: blur(14px);
+    border: 1px solid var(--color-line);
+    box-shadow: 0 12px 32px -12px rgb(15 23 42 / 0.3);
+    z-index: 1000;
+  }
+  .desktop-dock-item {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    color: var(--color-accent);
+    background: var(--color-panel);
+    border: 1px solid var(--color-line);
+    cursor: pointer;
+    transition: transform 120ms ease-out;
+  }
+  .desktop-dock-item:hover,
+  .desktop-dock-item:focus-visible {
+    transform: translateY(-4px);
+  }
+  .desktop-dock-item::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+    background: var(--color-ink);
+    color: var(--color-panel);
+    font-size: 0.75rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .desktop-dock-item:hover::after,
+  .desktop-dock-item:focus-visible::after {
+    opacity: 1;
+  }
+  .desktop-dock-item[data-active]::before {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    width: 4px;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--color-ink);
+  }
+  @keyframes window-in {
+    from {
+      opacity: 0;
+      transform: scale(0.97);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .desktop-window[data-opening] {
+      animation: none;
+    }
+    .desktop-dock-item {
+      transition: none;
+    }
+  }
+</style>

@@ -1,10 +1,12 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import DesktopShell from '../components/DesktopShell.astro';
 import SectionBody from '../components/SectionBody.astro';
 import { person, sections } from '../data/profile';
 ---
 
 <BaseLayout description={`${person.role}. ${person.intro}`} path="/">
+  <DesktopShell slot="before" />
   <h1 class="sr-only">{person.name} ({person.handle})</h1>
   <SectionBody id="ho-so" eager />
   <h2 class="mb-4 mt-12 text-lg font-semibold">Các mục</h2>

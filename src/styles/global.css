@@ -12,22 +12,25 @@
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
-html {
-  color-scheme: light;
-}
+/* Base rules sit in the base layer so Tailwind utilities can override them. */
+@layer base {
+  html {
+    color-scheme: light;
+  }
 
-body {
-  background: var(--color-paper);
-  color: var(--color-ink);
-  font-family: var(--font-sans);
-}
+  body {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+  }
 
-a {
-  color: var(--color-accent);
-}
+  a {
+    color: var(--color-accent);
+  }
 
-a:focus-visible,
-button:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
+  a:focus-visible,
+  button:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
 }
