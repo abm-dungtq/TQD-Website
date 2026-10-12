@@ -70,7 +70,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
   }
 
-  if (!cacheable) return withSecurityHeaders(await next(), isPrivate);
+  // The build ID is fixed for a whole dev session, so caching there would hide template edits.
+  if (!cacheable || import.meta.env.DEV) return withSecurityHeaders(await next(), isPrivate);
 
   const version = await getVersion(env.DB);
   const key = new Request(`${url.origin}${path}?v=${version}&b=${__BUILD_ID__}`);
