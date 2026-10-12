@@ -84,4 +84,5 @@ export function llmsText(data: SiteData): string {
 }
 
 export const markdownResponse = (body: string, type = 'text/markdown') =>
-  new Response(body, { headers: { 'Content-Type': `${type}; charset=utf-8` } });
+  // Markdown twins and llms.txt are for agents; noindex keeps them from competing with the HTML pages in search.
+  new Response(body, { headers: { 'Content-Type': `${type}; charset=utf-8`, 'X-Robots-Tag': 'noindex' } });
