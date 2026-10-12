@@ -1,0 +1,145 @@
+---
+import { Image } from 'astro:assets';
+import ItemCard from './ItemCard.astro';
+import StatGrid from './StatGrid.astro';
+import { expertise, links, person, products, stats, trainings, videos, type SectionId } from '../data/profile';
+
+interface Props {
+  id: SectionId;
+  /** Loads the portrait eagerly when it is above the fold. */
+  eager?: boolean;
+}
+
+const { id, eager = false } = Astro.props;
+const groupCount = (label: string) => stats.byGroup.find((g) => g.label === label)?.count ?? 0;
+const gridClass = 'grid gap-4 sm:grid-cols-2';
+---
+
+{
+  id === 'ho-so' && (
+    <div class="grid items-start gap-8 sm:grid-cols-[13rem_1fr]">
+      <Image
+        src={person.portrait}
+        alt={person.portraitAlt}
+        widths={[240, 480]}
+        sizes="(min-width: 640px) 208px, 60vw"
+        loading={eager ? 'eager' : 'lazy'}
+        fetchpriority={eager ? 'high' : undefined}
+        class="aspect-[3/4] w-3/5 max-w-[13rem] rounded-2xl object-cover ring-1 ring-line sm:w-full"
+      />
+      <div class="flex flex-col gap-4">
+        <div>
+          <h2 class="text-2xl font-bold tracking-tight">{person.name}</h2>
+          <p class="mt-1 text-muted">{person.role}</p>
+        </div>
+        <p class="leading-relaxed">{person.intro}</p>
+        <ul class="flex flex-wrap gap-2">
+          {person.focus.map((f) => (
+            <li class="rounded-full bg-accent/10 px-3 py-1 text-sm text-accent-ink">{f}</li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  )
+}
+
+{
+  id === 'san-pham' && (
+    <div class={gridClass}>
+      {products.map((item) => (
+        <ItemCard item={item} />
+      ))}
+    </div>
+  )
+}
+
+{
+  id === 'dao-tao' && (
+    <div class={gridClass}>
+      {trainings.map((item) => (
+        <ItemCard item={item} />
+      ))}
+    </div>
+  )
+}
+
+{
+  id === 'video-ai' && (
+    <div class={gridClass}>
+      {videos.map((item) => (
+        <ItemCard item={item} />
+      ))}
+    </div>
+  )
+}
+
+{
+  id === 'chuyen-mon' && (
+    <div class="flex flex-col gap-6">
+      <p class="text-muted">
+        {groupCount('Hướng dẫn, quy trình & mẹo')} bài hướng dẫn · {groupCount('Bình luận tin tức AI')} bài bình luận tin
+        tức
+      </p>
+      <div class="grid gap-6 sm:grid-cols-2">
+        <div class="rounded-xl border border-line bg-panel p-5">
+          <h2 class="mb-3 text-base font-semibold">Hướng dẫn &amp; quy trình</h2>
+          <ul class="list-disc space-y-1.5 pl-5 text-sm">
+            {expertise.howTo.map((t) => (
+              <li>{t}</li>
+            ))}
+          </ul>
+        </div>
+        <div class="rounded-xl border border-line bg-panel p-5">
+          <h2 class="mb-3 text-base font-semibold">Theo dõi thị trường</h2>
+          <ul class="list-disc space-y-1.5 pl-5 text-sm">
+            {expertise.marketWatch.map((t) => (
+              <li>{t}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+{id === 'so-lieu' && <StatGrid />}
+
+{
+  id === 'lien-he' && (
+    <div class="flex flex-col gap-6">
+      <p class="leading-relaxed">Cần trao đổi về ứng dụng AI cho doanh nghiệp, đào tạo hay skill, agent? Nhắn mình qua:</p>
+      <dl class="grid gap-3 sm:grid-cols-2">
+        <div class="rounded-xl border border-line bg-panel p-5">
+          <dt class="text-sm text-muted">Email</dt>
+          <dd class="mt-1 text-lg font-semibold">
+            <a href={`mailto:${person.email}`}>{person.email}</a>
+          </dd>
+        </div>
+        <div class="rounded-xl border border-line bg-panel p-5">
+          <dt class="text-sm text-muted">Zalo</dt>
+          <dd class="mt-1 text-lg font-semibold">
+            <a href={person.zalo} target="_blank" rel="noopener">
+              {person.zalo.replace('https://', '')}
+            </a>
+          </dd>
+        </div>
+      </dl>
+      <ul class="flex flex-wrap gap-3">
+        {links
+          .filter((l) => l.label !== 'Email' && l.label !== 'Zalo')
+          .map((l) => (
+            <li>
+              <a
+                href={l.href}
+                target="_blank"
+                rel="noopener"
+                class="inline-block rounded-lg border border-line bg-panel px-4 py-2 font-semibold no-underline hover:border-accent"
+              >
+                {l.label}
+              </a>
+            </li>
+          ))}
+      </ul>
+    </div>
+  )
+}

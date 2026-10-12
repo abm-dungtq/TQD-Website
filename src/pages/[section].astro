@@ -1,0 +1,21 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SectionBody from '../components/SectionBody.astro';
+import { sections, type Section } from '../data/profile';
+
+export function getStaticPaths() {
+  return sections.map((s) => ({ params: { section: s.id }, props: { s } }));
+}
+
+interface Props {
+  s: Section;
+}
+
+const { s } = Astro.props;
+---
+
+<BaseLayout title={s.title} description={s.short} path={`/${s.id}`}>
+  <h1 class="mb-2 text-3xl font-bold tracking-tight">{s.title}</h1>
+  <p class="mb-8 text-muted">{s.short}</p>
+  <SectionBody id={s.id} eager />
+</BaseLayout>

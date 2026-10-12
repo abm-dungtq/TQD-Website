@@ -1,0 +1,92 @@
+---
+import '../styles/global.css';
+import { links, person, sections, stats } from '../data/profile';
+
+interface Props {
+  title?: string;
+  description: string;
+  path: string;
+}
+
+const { title, description, path } = Astro.props;
+const fullTitle = title ? `${title} · ${person.handle}` : `${person.name} (${person.handle})`;
+const canonical = new URL(path, Astro.site).href;
+const ogImage = new URL('/og.png', Astro.site).href;
+const current = path.replace(/^\//, '');
+---
+
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="alternate" type="text/markdown" href="/index.md" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="vi_VN" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap"
+    />
+    <slot name="head" />
+  </head>
+  <body class="min-h-screen">
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100] focus:rounded focus:bg-panel focus:px-3 focus:py-2"
+      >Bỏ qua tới nội dung</a
+    >
+    <slot name="before" />
+    <div data-fallback>
+      <header class="border-b border-line bg-panel/80 backdrop-blur">
+        <div class="mx-auto flex max-w-5xl flex-wrap items-center gap-x-6 gap-y-2 px-5 py-4">
+          <a href="/" class="text-lg font-bold text-ink no-underline">{person.handle}</a>
+          <nav aria-label="Các mục" class="-mx-1 flex gap-1 overflow-x-auto text-sm">
+            {
+              sections.map((s) => (
+                <a
+                  href={`/${s.id}`}
+                  aria-current={current === s.id ? 'page' : undefined}
+                  class="whitespace-nowrap rounded-md px-2 py-1 text-muted no-underline hover:bg-paper hover:text-ink aria-[current=page]:bg-accent/10 aria-[current=page]:text-accent-ink"
+                >
+                  {s.title}
+                </a>
+              ))
+            }
+          </nav>
+        </div>
+      </header>
+      <main id="main" class="mx-auto max-w-5xl px-5 py-10">
+        <slot />
+      </main>
+      <footer class="border-t border-line">
+        <div class="mx-auto flex max-w-5xl flex-col gap-3 px-5 py-8 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
+          <p>© 2026 {person.name}. {stats.source}</p>
+          <ul class="flex flex-wrap gap-4">
+            {
+              links.map((l) => (
+                <li>
+                  <a href={l.href} rel="noopener" target={l.href.startsWith('http') ? '_blank' : undefined}>
+                    {l.label}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>

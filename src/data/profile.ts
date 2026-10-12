@@ -82,7 +82,7 @@ export const products: Item[] = [
   {
     title: 'Agent tự dựng video',
     date: '25/09–05/10/2026',
-    summary: 'Agent tự dựng video, phát triển từ quy trình làm video tự động (02/08).',
+    summary: 'Agent tự dựng video; trước đó là quy trình làm video tự động (02/08).',
     tags: ['Agent', 'Video'],
   },
   {
@@ -116,7 +116,7 @@ export const trainings: Item[] = [
   {
     title: 'ABM đồng hành cùng doanh nghiệp',
     date: '09/10/2026',
-    summary: 'Hỗ trợ doanh nghiệp đưa AI Agent vào việc hằng ngày.',
+    summary: 'Đồng hành cùng doanh nghiệp ứng dụng AI Agent.',
     tags: ['ABM'],
   },
   {
