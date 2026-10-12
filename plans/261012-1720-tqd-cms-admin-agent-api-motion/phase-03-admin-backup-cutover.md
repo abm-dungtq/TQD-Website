@@ -1,7 +1,7 @@
 ---
 phase: 3
 title: "Admin, sao lưu và chuyển tqd.io.vn"
-status: pending
+status: completed
 priority: P1
 effort: 10h
 dependencies: [2]

@@ -1,7 +1,7 @@
 ---
 phase: 2
 title: "Trang công khai đọc D1, cache, kiểm tra quyền riêng tư"
-status: pending
+status: completed
 priority: P1
 effort: 6h
 dependencies: [1]

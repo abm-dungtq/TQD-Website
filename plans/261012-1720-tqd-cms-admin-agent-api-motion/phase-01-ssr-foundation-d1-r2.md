@@ -1,7 +1,7 @@
 ---
 phase: 1
 title: "Nền SSR, D1, R2, dữ liệu gốc, Worker preview"
-status: pending
+status: completed
 priority: P1
 effort: 6h
 dependencies: []
