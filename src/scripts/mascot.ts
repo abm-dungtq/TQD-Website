@@ -1,6 +1,6 @@
 // Desktop mascot: changes pose with what the visitor is doing and now and then strolls along the
 // bottom of the screen. Poses: wave on arrival, think while ⌘K is open, type while dragging a window,
-// point while over the dock, sleep after a minute without input. Only the idle image loads up front.
+// point while over the dock, sleep after a minute without input. Each pose image loads the first time it is shown.
 import { EASE, play, reducedMotion } from './motion';
 import { onPref, prefOn } from './prefs';
 
@@ -70,18 +70,21 @@ export const startMascot = (desktop: HTMLElement) => {
   };
 
   const range = () => Math.max(0, window.innerWidth - 128 - MARGIN * 2);
-  const place = () => {
-    offset = Math.min(0, Math.max(offset, -range()));
+  /** Moves the mascot to `offset`; on the left half of the screen the tip opens to the right so it stays in view. */
+  const moveTo = (x: number) => {
+    offset = Math.min(0, Math.max(x, -range()));
     wrap.style.transform = `translateX(${offset}px)`;
+    wrap.dataset.tip = offset < -range() / 2 ? 'right' : 'left';
   };
+  const place = () => moveTo(offset);
 
   const walk = async () => {
     if (!running || reducedMotion() || state.asleep || state.dragging || document.hidden) return;
     const from = offset;
-    offset = -Math.round(Math.random() * range());
-    if (Math.abs(offset - from) < 40) return;
-    wrap.dataset.dir = offset < from ? 'left' : 'right';
-    wrap.style.transform = `translateX(${offset}px)`;
+    const to = -Math.round(Math.random() * range());
+    if (Math.abs(to - from) < 40) return;
+    wrap.dataset.dir = to < from ? 'left' : 'right';
+    moveTo(to);
     await play(wrap, [{ transform: `translateX(${from}px)` }, { transform: `translateX(${offset}px)` }], {
       duration: WALK_MS,
       easing: EASE,

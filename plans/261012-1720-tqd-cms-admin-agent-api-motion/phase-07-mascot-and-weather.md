@@ -15,6 +15,8 @@ dependencies: [6]
 
 - Ảnh linh vật do Codex CLI (gọi qua Paseo) sinh, vì máy không có key Gemini/OpenRouter/MiniMax. Người dùng đã duyệt bộ 6 tư thế. Ảnh gốc nằm trong `.secrets/mascot-raw/` (không commit).
 - Production 619eed73: `mascot-weather-check.mjs` và `motion-check.mjs` (trong `C:/Users/ABM/.cache/tqd-verify/`) đều ALL PASS. Lighthouse mobile 2 lần: `/` 0.98/1.00, bài viết 0.99/1.00.
+- Sau go/no-go (GO): bong bóng mẹo đổi bên khi linh vật ở nửa trái, ghi nguồn Open-Meteo (CC BY 4.0), giảm tần suất vẽ lại canvas khi đổi kích thước. Production 4820c69d.
+- Việc sau: để linh vật nằm trên hay dưới cửa sổ (đang nằm trên, có thể che góc dưới phải của cửa sổ phóng to); dừng linh vật và canvas khi thu hẹp dưới 1024px.
 - Khác plan: nhịp "thở" khi đứng yên chạy trên ảnh, không chạy trên nút, để vùng bấm không rung. Mẹo ⌘K ghi `Ctrl K (⌘K trên Mac)`. Kéo cửa sổ chưa bị gắn chỉ bắt đầu sau 4 px.
 
 ## Goal

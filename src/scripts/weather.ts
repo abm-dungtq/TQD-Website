@@ -130,14 +130,20 @@ const startEffect = (host: HTMLElement, effect: Exclude<WeatherEffect, 'none'>) 
     last = 0;
     if (!document.hidden) frame = requestAnimationFrame(draw);
   };
+  let resizeTimer = 0;
+  const onResize = () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = window.setTimeout(resize, 150);
+  };
   resize();
   run();
-  window.addEventListener('resize', resize);
+  window.addEventListener('resize', onResize);
   document.addEventListener('visibilitychange', run);
 
   return () => {
     cancelAnimationFrame(frame);
-    window.removeEventListener('resize', resize);
+    clearTimeout(resizeTimer);
+    window.removeEventListener('resize', onResize);
     document.removeEventListener('visibilitychange', run);
     canvas.remove();
   };
@@ -150,6 +156,7 @@ export const startWeather = async (desktop: HTMLElement) => {
 
   if (label && current) {
     label.textContent = `Hà Nội ${Math.round(current.temperature)}°C · ${labelFor(current.code)}`;
+    label.title = 'Dữ liệu thời tiết: Open-Meteo.com (CC BY 4.0)';
     label.hidden = false;
   }
 
