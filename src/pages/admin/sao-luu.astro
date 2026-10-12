@@ -3,6 +3,9 @@ import { env } from 'cloudflare:workers';
 import AdminLayout from '../../layouts/AdminLayout.astro';
 import { BACKUP_PREFIX, runBackup } from '../../lib/backup';
 
+// Second line of defence; the middleware sets this only for a valid session.
+if (!Astro.locals.admin) return new Response('Unauthorized', { status: 401 });
+
 let written = '';
 if (Astro.request.method === 'POST') written = await runBackup(env);
 

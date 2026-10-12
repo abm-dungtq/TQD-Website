@@ -21,6 +21,10 @@ const request = (path, { method = 'GET', form, cookie, origin = base } = {}) => 
   return fetch(base + path, { method, headers, body: form ? new URLSearchParams(form) : undefined, redirect: 'manual' });
 };
 
+// The astro dev proxy resets its workerd connection when the Worker answers a POST
+// before the request body stream has ended; a short pause lets it recover.
+const settle = () => new Promise((resolve) => setTimeout(resolve, 200));
+
 const expect = (step, res, status) => {
   if (res.status !== status) fail(step, res.status);
 };
@@ -29,6 +33,15 @@ const expect = (step, res, status) => {
 let res = await request('/admin');
 expect(1, res, 303);
 if (!(res.headers.get('location') ?? '').endsWith('/admin/login')) fail(1, res.headers.get('location'));
+
+// 1b. Encoded, doubled-slash or upper-case paths must not slip past the session check.
+for (const path of ['/%61dmin/api/settings/person', '//admin/api/settings/person', '/ADMIN/api/settings/person']) {
+  res = await request(path);
+  if (res.status === 200) fail('1b', `${path} 200`);
+}
+res = await request('/%61dmin/ho-so', { method: 'POST', form: { role: 'bypass' } });
+await settle();
+if (res.status === 200 || res.status === 303) fail('1b', `POST /%61dmin/ho-so ${res.status}`);
 
 // 2. Correct login sets the session cookie.
 res = await request('/admin/login', { method: 'POST', form: { email, password } });
@@ -52,10 +65,6 @@ const profileForm = (role) => ({
   zalo: person.zalo,
   portraitAlt: person.portraitAlt,
 });
-
-// The astro dev proxy resets its workerd connection when the Worker answers a POST
-// before the request body stream has ended; a short pause lets it recover.
-const settle = () => new Promise((resolve) => setTimeout(resolve, 200));
 
 // 4-6 change the live profile, so 7 restores it even when one of them fails.
 const marker = `Kiểm thử ${Date.now()}`;

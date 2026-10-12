@@ -4,6 +4,9 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
 import { InputError, saveSetting } from '../../lib/admin-writes';
 import { getSite } from '../../lib/content';
 
+// Second line of defence; the middleware sets this only for a valid session.
+if (!Astro.locals.admin) return new Response('Unauthorized', { status: 401 });
+
 const site = await getSite(env.DB);
 let statsText = JSON.stringify(site.stats, null, 2);
 let topicsText = JSON.stringify(site.topics, null, 2);

@@ -5,6 +5,9 @@ import AdminLayout from '../../../../layouts/AdminLayout.astro';
 import { deleteItem, InputError, itemFromForm, KIND_BY_SLUG, KIND_LABEL, saveItem, type ItemInput } from '../../../../lib/admin-writes';
 import { getItem } from '../../../../lib/content';
 
+// Second line of defence; the middleware sets this only for a valid session.
+if (!Astro.locals.admin) return new Response('Unauthorized', { status: 401 });
+
 const slug = Astro.params.kind ?? '';
 const kind = KIND_BY_SLUG[slug];
 const id = Number(Astro.params.id);

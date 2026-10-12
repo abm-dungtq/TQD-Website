@@ -3,6 +3,9 @@ import { env } from 'cloudflare:workers';
 import AdminLayout from '../../layouts/AdminLayout.astro';
 import { getVersion } from '../../lib/content';
 
+// Second line of defence; the middleware sets this only for a valid session.
+if (!Astro.locals.admin) return new Response('Unauthorized', { status: 401 });
+
 const [counts, version] = await Promise.all([
   env.DB.prepare('SELECT kind, COUNT(*) AS n FROM items GROUP BY kind').all<{ kind: string; n: number }>(),
   getVersion(env.DB),

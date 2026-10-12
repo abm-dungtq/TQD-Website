@@ -34,11 +34,26 @@ const withSecurityHeaders = (res: Response, isPrivate: boolean): Response => {
 export const onRequest = defineMiddleware(async (context, next) => {
   const url = new URL(context.request.url);
   const path = url.pathname;
-  const isPrivate = path.startsWith('/admin') || path.startsWith('/api/');
+
+  // Astro routes on the decoded path and tolerates repeated slashes, so the checks
+  // below only hold for canonical paths. Every real route is plain ASCII; refuse the rest.
+  let decoded: string;
+  try {
+    decoded = decodeURI(path);
+  } catch {
+    return withSecurityHeaders(new Response('Bad request', { status: 400 }), true);
+  }
+  if (decoded !== path || /\/{2,}/.test(path)) {
+    return withSecurityHeaders(new Response('Not found', { status: 404 }), true);
+  }
+
+  const lower = path.toLowerCase();
+  const isAdmin = lower.startsWith('/admin');
+  const isPrivate = isAdmin || lower.startsWith('/api/');
   const cacheable =
     context.request.method === 'GET' && !isPrivate && !path.startsWith('/media/') && url.search === '';
 
-  if (path.startsWith('/admin')) {
+  if (isAdmin) {
     const method = context.request.method;
     if (WRITE_METHODS.has(method)) {
       const site = context.request.headers.get('Sec-Fetch-Site');
