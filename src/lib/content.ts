@@ -204,6 +204,10 @@ export const toArticle = (r: ArticleRow): Article => ({
   updatedAt: r.updated_at,
 });
 
+/** List views never need the bodies, which can be up to 100 000 characters each. */
+const LIST_COLUMNS =
+  "id, slug, title, summary, '' AS body_md, '' AS body_html, cover_key, tags, status, source, fb_overlap, version, published_at, updated_at";
+
 export async function listArticles(
   db: D1Database,
   opts: { includeDrafts?: boolean; limit?: number } = {},
@@ -211,7 +215,7 @@ export async function listArticles(
   const where = opts.includeDrafts ? '' : "WHERE status = 'published'";
   const order = opts.includeDrafts ? 'updated_at DESC' : 'published_at DESC';
   const { results } = await db
-    .prepare(`SELECT * FROM articles ${where} ORDER BY ${order}, id DESC LIMIT ?`)
+    .prepare(`SELECT ${LIST_COLUMNS} FROM articles ${where} ORDER BY ${order}, id DESC LIMIT ?`)
     .bind(opts.limit ?? 200)
     .all<ArticleRow>();
   return results.map(toArticle);
@@ -220,6 +224,11 @@ export async function listArticles(
 export async function getArticle(db: D1Database, slug: string, opts: { includeDrafts?: boolean } = {}): Promise<Article | null> {
   const where = opts.includeDrafts ? 'slug = ?' : "slug = ? AND status = 'published'";
   const row = await db.prepare(`SELECT * FROM articles WHERE ${where}`).bind(slug).first<ArticleRow>();
+  return row ? toArticle(row) : null;
+}
+
+export async function getArticleById(db: D1Database, id: number): Promise<Article | null> {
+  const row = await db.prepare('SELECT * FROM articles WHERE id = ?').bind(id).first<ArticleRow>();
   return row ? toArticle(row) : null;
 }
 

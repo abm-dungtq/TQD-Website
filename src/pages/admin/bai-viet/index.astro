@@ -1,0 +1,37 @@
+---
+import { env } from 'cloudflare:workers';
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { listArticles } from '../../../lib/content';
+
+// Second line of defence; the middleware sets this only for a valid session.
+if (!Astro.locals.admin) return new Response('Unauthorized', { status: 401 });
+
+const articles = await listArticles(env.DB, { includeDrafts: true });
+const time = (s: string) => new Date(s.replace(' ', 'T') + 'Z').toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
+const saved = Astro.url.searchParams.has('ok');
+---
+
+<AdminLayout title="Bài viết">
+  {saved && <p class="admin-ok">Đã lưu.</p>}
+  <p class="mb-6"><a href="/admin/bai-viet/moi" class="admin-btn no-underline">Viết bài mới</a></p>
+  <table class="admin-table">
+    <thead><tr><th>Tiêu đề</th><th>Slug</th><th>Trạng thái</th><th>Nguồn</th><th>Cập nhật</th></tr></thead>
+    <tbody>
+      {
+        articles.map((a) => (
+          <tr>
+            <td>
+              <a href={`/admin/bai-viet/${a.id}`}>{a.title}</a>
+              {a.fbOverlap && <span class="admin-flag">Có đoạn trùng bài Facebook</span>}
+            </td>
+            <td><code>{a.slug}</code></td>
+            <td>{a.status === 'published' ? 'Đã đăng' : 'Nháp'}</td>
+            <td>{a.source}</td>
+            <td>{time(a.updatedAt)}</td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+  {articles.length === 0 && <p class="mt-4 text-muted">Chưa có bài nào.</p>}
+</AdminLayout>

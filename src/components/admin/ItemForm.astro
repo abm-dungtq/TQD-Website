@@ -1,19 +1,66 @@
 ---
+import { env } from 'cloudflare:workers';
 import { formatLinks, LIMITS } from '../../lib/admin-writes';
-import type { Link } from '../../lib/content';
+import type { ItemKind, Link } from '../../lib/content';
 
 interface Props {
-  item?: { title?: string; date?: string | null; summary?: string; tags?: string[]; links?: Link[]; sort?: number; visible?: boolean };
+  kind: ItemKind;
+  item?: {
+    title?: string;
+    date?: string | null;
+    summary?: string;
+    tags?: string[];
+    links?: Link[];
+    sort?: number;
+    visible?: boolean;
+    tiktokId?: string | null;
+    coverKey?: string | null;
+  };
   submitLabel: string;
 }
 
-const { item = {}, submitLabel } = Astro.props;
+const { kind, item = {}, submitLabel } = Astro.props;
+const images =
+  kind === 'video'
+    ? (
+        await env.DB.prepare("SELECT key, alt FROM media WHERE content_type LIKE 'image/%' ORDER BY created_at DESC").all<{
+          key: string;
+          alt: string;
+        }>()
+      ).results
+    : [];
 ---
 
 <form method="post" class="admin-form">
   <label>Tiêu đề <input name="title" value={item.title ?? ''} required maxlength={LIMITS.title} /></label>
   <label>Ngày (tuỳ chọn, ví dụ 2026-10) <input name="date" value={item.date ?? ''} /></label>
   <label>Tóm tắt <textarea name="summary" maxlength={LIMITS.summary}>{item.summary ?? ''}</textarea></label>
+  {
+    kind === 'video' && (
+      <>
+        <label>
+          Link TikTok (để trống nếu chưa có)
+          <input
+            name="tiktokUrl"
+            value={item.tiktokId ? `https://www.tiktok.com/player/v1/${item.tiktokId}` : ''}
+            placeholder="https://www.tiktok.com/@kenh/video/7420000000000000001"
+            class="mono"
+          />
+        </label>
+        <label>
+          Ảnh bìa (tuỳ chọn)
+          <select name="coverKey">
+            <option value="">Không có</option>
+            {images.map((m) => (
+              <option value={m.key} selected={m.key === item.coverKey}>
+                {m.alt || m.key}
+              </option>
+            ))}
+          </select>
+        </label>
+      </>
+    )
+  }
   <label>Thẻ (phân cách dấu phẩy) <input name="tags" value={(item.tags ?? []).join(', ')} /></label>
   <label>Liên kết (mỗi dòng: Nhãn | https://...) <textarea name="links" class="mono">{formatLinks(item.links)}</textarea></label>
   <label>Thứ tự <input name="sort" type="number" step="1" value={item.sort ?? 0} /></label>

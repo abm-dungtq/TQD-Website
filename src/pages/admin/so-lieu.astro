@@ -22,6 +22,11 @@ const parse = (label: string, text: string): Record<string, unknown> => {
   throw new InputError(`${label}: JSON không hợp lệ.`);
 };
 const isStringList = (v: unknown) => Array.isArray(v) && v.every((s) => typeof s === 'string');
+// Every public page renders the stats, so a malformed entry would break the whole site.
+const isRecord = (v: unknown): v is Record<string, unknown> => Boolean(v) && typeof v === 'object' && !Array.isArray(v);
+const isHeadline = (v: unknown) =>
+  isRecord(v) && typeof v.label === 'string' && typeof v.value === 'string' && (v.note === undefined || typeof v.note === 'string');
+const isGroup = (v: unknown) => isRecord(v) && typeof v.label === 'string' && typeof v.count === 'number' && Number.isFinite(v.count) && v.count >= 0;
 
 if (Astro.request.method === 'POST') {
   const form = await Astro.request.formData();
@@ -33,6 +38,12 @@ if (Astro.request.method === 'POST') {
       const stats = parse('Số liệu', text);
       if (!Array.isArray(stats.headline) || !Array.isArray(stats.byGroup)) {
         throw new InputError('Số liệu cần mảng "headline" và "byGroup".');
+      }
+      if (!stats.headline.every(isHeadline)) {
+        throw new InputError('Mỗi mục "headline" cần "label" và "value" là chuỗi ("note" tuỳ chọn).');
+      }
+      if (!stats.byGroup.every(isGroup)) {
+        throw new InputError('Mỗi mục "byGroup" cần "label" là chuỗi và "count" là số không âm.');
       }
       await saveSetting(env.DB, 'stats', stats);
     } else if (target === 'topics') {

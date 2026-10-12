@@ -1,0 +1,23 @@
+---
+// Click-to-play TikTok facade: no TikTok request until the visitor presses play.
+interface Props {
+  id: string;
+  title: string;
+  coverUrl?: string;
+}
+
+const { id, title, coverUrl } = Astro.props;
+---
+
+<button type="button" class="tiktok-facade" data-tiktok-id={id} data-title={title} aria-label={'Phát video: ' + title}>
+  {coverUrl && <img src={coverUrl} alt="" loading="lazy" decoding="async" />}
+  <svg class="tiktok-play" viewBox="0 0 64 64" aria-hidden="true">
+    <circle cx="32" cy="32" r="30" fill="rgb(0 0 0 / 0.55)"></circle>
+    <path d="M26 20 46 32 26 44Z" fill="#fff"></path>
+  </svg>
+  <span class="tiktok-title">{title}</span>
+</button>
+
+<script>
+  import '../scripts/tiktok.ts';
+</script>

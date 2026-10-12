@@ -1,7 +1,8 @@
 ---
 import ItemCard from './ItemCard.astro';
 import StatGrid from './StatGrid.astro';
-import type { SectionId, SiteData } from '../lib/content';
+import TikTokPlayer from './TikTokPlayer.astro';
+import { mediaUrl, type SectionId, type SiteData } from '../lib/content';
 
 interface Props {
   id: SectionId;
@@ -71,9 +72,17 @@ const formatDate = (iso?: string) => (iso ? iso.slice(0, 10).split('-').reverse(
 {
   id === 'video-ai' && (
     <div class={gridClass}>
-      {videos.map((item) => (
-        <ItemCard item={item} />
-      ))}
+      {videos.map((item) =>
+        item.tiktokId ? (
+          <article class="flex flex-col gap-3">
+            <TikTokPlayer id={item.tiktokId} title={item.title} coverUrl={item.coverKey ? mediaUrl(item.coverKey) : undefined} />
+            <h3 class="font-semibold">{item.title}</h3>
+            <p class="text-sm text-muted">{item.summary}</p>
+          </article>
+        ) : (
+          <ItemCard item={item} />
+        ),
+      )}
     </div>
   )
 }

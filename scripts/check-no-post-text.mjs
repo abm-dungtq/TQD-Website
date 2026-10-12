@@ -1,6 +1,7 @@
 // Fails when any Facebook post text from the source export appears on the public site.
 // Usage: node scripts/check-no-post-text.mjs [base-url] [path-to-portfolio-ai-3-thang.json]
 import fs from 'node:fs';
+import { normalizeText as normalize } from '../src/lib/normalize-text.ts';
 
 const DEFAULT_SOURCE = 'D:/TQD/tqd-browser/automation_data/portfolio/portfolio-ai-3-thang.json';
 const WINDOW = 60;
@@ -13,16 +14,6 @@ if (!fs.existsSync(source)) {
   console.log('SOURCE_MISSING', source);
   process.exit(2);
 }
-
-const entities = { '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'" };
-const normalize = (text) =>
-  text
-    .normalize('NFC')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&(amp|lt|gt|quot|#39);/g, (m) => entities[m])
-    .toLowerCase()
-    .replace(/\s+/g, ' ')
-    .trim();
 
 const sitemap = await (await fetch(`${base}/sitemap.xml`)).text();
 const pages = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => new URL(m[1]).pathname);

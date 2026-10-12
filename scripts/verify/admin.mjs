@@ -64,6 +64,7 @@ const profileForm = (role) => ({
   email: person.email,
   zalo: person.zalo,
   portraitAlt: person.portraitAlt,
+  portraitKey: person.portrait.startsWith('/media/') ? person.portrait.slice('/media/'.length) : '',
 });
 
 // 4-6 change the live profile, so 7 restores it even when one of them fails.

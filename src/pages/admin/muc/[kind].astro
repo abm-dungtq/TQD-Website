@@ -16,7 +16,7 @@ let error = '';
 let draft: ItemInput | undefined;
 if (Astro.request.method === 'POST') {
   try {
-    draft = itemFromForm(await Astro.request.formData(), kind);
+    draft = await itemFromForm(await Astro.request.formData(), kind, env.DB);
     await saveItem(env.DB, draft);
     return Astro.redirect(`/admin/muc/${slug}?ok=1`, 303);
   } catch (e) {
@@ -49,5 +49,5 @@ const saved = Astro.url.searchParams.has('ok');
   </table>
   <h2 class="mb-4 text-lg font-bold">Thêm mới</h2>
   {error && <p class="admin-error" role="alert">{error}</p>}
-  <ItemForm item={draft} submitLabel="Thêm" />
+  <ItemForm kind={kind} item={draft} submitLabel="Thêm" />
 </AdminLayout>

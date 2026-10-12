@@ -11,6 +11,8 @@ const { title, bare = false } = Astro.props;
 const path = Astro.url.pathname;
 const menu = [
   { href: '/admin', label: 'Tổng quan' },
+  { href: '/admin/bai-viet', label: 'Bài viết' },
+  { href: '/admin/media', label: 'Media' },
   { href: '/admin/ho-so', label: 'Hồ sơ' },
   { href: '/admin/muc/san-pham', label: 'Sản phẩm' },
   { href: '/admin/muc/dao-tao', label: 'Đào tạo' },
@@ -132,6 +134,14 @@ const active = (href: string) => (href === '/admin' ? path === '/admin' : path.s
     background: #fee2e2;
     color: #7f1d1d;
     white-space: pre-line;
+  }
+  .admin-flag {
+    margin-left: 0.5rem;
+    border-radius: 9999px;
+    background: #fef3c7;
+    color: #78350f;
+    padding: 0.1rem 0.5rem;
+    font-size: 0.75rem;
   }
   .admin-table {
     width: 100%;

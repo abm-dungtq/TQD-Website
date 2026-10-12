@@ -1,5 +1,6 @@
 // Admin writes. Every write runs in one db.batch() with bumpVersion so cached pages refresh.
 import { bumpVersion, type ItemKind, type Link } from './content';
+import { resolveTikTokId } from './tiktok';
 
 /** Bad form input; the message is shown to the admin as is. */
 export class InputError extends Error {}
@@ -57,14 +58,34 @@ export interface ItemInput {
   links: Link[];
   sort: number;
   visible: boolean;
+  tiktokId: string | null;
+  coverKey: string | null;
 }
 
-export function itemFromForm(form: FormData, kind: ItemKind): ItemInput {
+export async function itemFromForm(form: FormData, kind: ItemKind, db: D1Database): Promise<ItemInput> {
   const text = (name: string) => String(form.get(name) ?? '').trim();
   const title = checkLength('Tiêu đề', text('title'), LIMITS.title);
   if (!title) throw new InputError('Cần tiêu đề.');
   const sort = Number(text('sort') || 0);
   if (!Number.isInteger(sort)) throw new InputError('Thứ tự phải là số nguyên.');
+
+  // Only videos carry a TikTok id and a cover image.
+  let tiktokId: string | null = null;
+  let coverKey: string | null = null;
+  if (kind === 'video') {
+    const tiktokUrl = text('tiktokUrl');
+    if (tiktokUrl) {
+      tiktokId = await resolveTikTokId(tiktokUrl);
+      if (!tiktokId) {
+        throw new InputError('Không đọc được link TikTok. Dán link đầy đủ dạng https://www.tiktok.com/@kenh/video/<số>.');
+      }
+    }
+    coverKey = text('coverKey') || null;
+    if (coverKey && !(await db.prepare("SELECT 1 FROM media WHERE key = ?1 AND content_type LIKE 'image/%'").bind(coverKey).first())) {
+      throw new InputError('Ảnh bìa không có trong thư viện media.');
+    }
+  }
+
   return {
     kind,
     title,
@@ -77,6 +98,8 @@ export function itemFromForm(form: FormData, kind: ItemKind): ItemInput {
     links: parseLinks(text('links')),
     sort,
     visible: form.get('visible') === 'on',
+    tiktokId,
+    coverKey,
   };
 }
 
@@ -89,18 +112,20 @@ export async function saveItem(db: D1Database, input: ItemInput): Promise<void> 
     JSON.stringify(input.links),
     input.sort,
     input.visible ? 1 : 0,
+    input.tiktokId,
+    input.coverKey,
   ];
   const write = input.id
     ? db
         .prepare(
           `UPDATE items SET title = ?1, date = ?2, summary = ?3, tags = ?4, links = ?5, sort = ?6, visible = ?7,
-           updated_at = datetime('now') WHERE id = ?8`,
+           tiktok_id = ?8, cover_key = ?9, updated_at = datetime('now') WHERE id = ?10`,
         )
         .bind(...values, input.id)
     : db
         .prepare(
-          `INSERT INTO items(title, date, summary, tags, links, sort, visible, kind, updated_at)
-           VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, datetime('now'))`,
+          `INSERT INTO items(title, date, summary, tags, links, sort, visible, tiktok_id, cover_key, kind, updated_at)
+           VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, datetime('now'))`,
         )
         .bind(...values, input.kind);
   await db.batch([write, bumpVersion(db)]);

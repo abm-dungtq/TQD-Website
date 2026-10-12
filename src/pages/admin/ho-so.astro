@@ -8,6 +8,10 @@ import { getSite, type Person } from '../../lib/content';
 if (!Astro.locals.admin) return new Response('Unauthorized', { status: 401 });
 
 const site = await getSite(env.DB);
+const DEFAULT_PORTRAIT = { portrait: '/img/portrait-480.webp', portraitSmall: '/img/portrait-240.webp' };
+const { results: images } = await env.DB.prepare(
+  "SELECT key, alt FROM media WHERE content_type LIKE 'image/%' ORDER BY created_at DESC",
+).all<{ key: string; alt: string }>();
 let person: Person = site.person;
 let error = '';
 
@@ -29,8 +33,14 @@ if (Astro.request.method === 'POST') {
     zalo: text('zalo'),
     portraitAlt: text('portraitAlt'),
   };
+  const portraitKey = text('portraitKey');
+  if (!portraitKey) Object.assign(next, DEFAULT_PORTRAIT);
+  else if (images.some((m) => m.key === portraitKey)) next.portrait = next.portraitSmall = `/media/${portraitKey}`;
   try {
     if (!next.name) throw new InputError('Cần tên.');
+    if (next.zalo && !/^https:\/\/zalo\.me\/[\w.-]+$/.test(next.zalo)) {
+      throw new InputError('Zalo cần dạng https://zalo.me/<tên hoặc số>.');
+    }
     checkLength('Vai trò', next.role, LIMITS.title);
     checkLength('Giới thiệu', next.intro, LIMITS.intro);
     await saveSetting(env.DB, 'person', next);
@@ -57,6 +67,12 @@ const saved = Astro.url.searchParams.has('ok');
     <label>Trọng tâm (mỗi dòng một ý) <textarea name="focus">{person.focus.join('\n')}</textarea></label>
     <label>Email <input name="email" type="email" value={person.email} /></label>
     <label>Zalo <input name="zalo" value={person.zalo} /></label>
+    <label>Ảnh chân dung
+      <select name="portraitKey">
+        <option value="">Ảnh mặc định</option>
+        {images.map((m) => <option value={m.key} selected={person.portrait === `/media/${m.key}`}>{m.alt || m.key}</option>)}
+      </select>
+    </label>
     <label>Mô tả ảnh chân dung <input name="portraitAlt" value={person.portraitAlt} /></label>
     <button type="submit" class="admin-btn">Lưu</button>
   </form>

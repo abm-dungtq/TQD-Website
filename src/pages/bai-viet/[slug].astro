@@ -1,0 +1,46 @@
+---
+import { env } from 'cloudflare:workers';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getArticle, getSite, mediaUrl } from '../../lib/content';
+
+const slug = Astro.params.slug ?? '';
+const [site, article] = await Promise.all([getSite(env.DB), getArticle(env.DB, slug)]);
+if (!article) return Astro.rewrite('/404');
+
+const published = article.publishedAt
+  ? new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', day: '2-digit', month: '2-digit', year: 'numeric' }).format(
+      new Date(article.publishedAt.replace(' ', 'T') + 'Z'),
+    )
+  : '';
+---
+
+<BaseLayout
+  site={site}
+  title={article.title}
+  description={article.summary || article.title}
+  path={`/bai-viet/${article.slug}`}
+  ogType="article"
+  markdownPath={`/bai-viet/${article.slug}.md`}
+>
+  <article class="mx-auto max-w-3xl">
+    <p class="mb-4"><a href="/bai-viet">← Tất cả bài viết</a></p>
+    <h1 class="mb-2 text-3xl font-bold tracking-tight">{article.title}</h1>
+    {published && <p class="mb-6 text-sm text-muted"><time datetime={article.publishedAt}>{published}</time></p>}
+    {article.coverKey && <img src={mediaUrl(article.coverKey)} alt="" class="article-cover" width="1200" height="675" />}
+    {
+      article.tags.length > 0 && (
+        <ul class="mb-6 flex flex-wrap gap-2 text-xs">
+          {article.tags.map((t) => (
+            <li class="rounded-full border border-line px-2 py-0.5 text-muted">{t}</li>
+          ))}
+        </ul>
+      )
+    }
+    {/* bodyHtml comes from renderMarkdown, which sanitizes it; this is the only set:html on user content. */}
+    <div class="prose-article" set:html={article.bodyHtml} />
+  </article>
+</BaseLayout>
+
+<script>
+  import '../../scripts/tiktok.ts';
+</script>

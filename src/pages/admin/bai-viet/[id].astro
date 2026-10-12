@@ -1,0 +1,132 @@
+---
+import { env } from 'cloudflare:workers';
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { type ArticleInput, ConflictError, deleteArticle, saveArticle, slugify, ValidationError } from '../../../lib/articles';
+import { type Article, getArticleById } from '../../../lib/content';
+
+// Second line of defence; the middleware sets this only for a valid session.
+if (!Astro.locals.admin) return new Response('Unauthorized', { status: 401 });
+
+const param = Astro.params.id ?? '';
+const isNew = param === 'moi';
+const id = Number(param);
+const existing: Article | null = isNew ? null : Number.isInteger(id) ? await getArticleById(env.DB, id) : null;
+if (!isNew && !existing) return new Response('Not found', { status: 404 });
+
+let error = '';
+let draft: (ArticleInput & { version?: number }) | null = null;
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  if (form.get('_action') === 'delete' && existing) {
+    await deleteArticle(env.DB, existing.slug);
+    return Astro.redirect('/admin/bai-viet?ok=1', 303);
+  }
+  const text = (name: string) => String(form.get(name) ?? '').trim();
+  const title = text('title');
+  draft = {
+    id: existing?.id,
+    slug: text('slug') || slugify(title),
+    title,
+    summary: text('summary'),
+    bodyMd: String(form.get('bodyMd') ?? ''),
+    tags: text('tags')
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean),
+    coverKey: text('coverKey') || null,
+    status: text('status') === 'published' ? 'published' : 'draft',
+    version: existing?.version,
+  };
+  const expected = Number(text('version'));
+  try {
+    const { article } = await saveArticle(env.DB, draft, {
+      source: 'admin',
+      expectedVersion: existing && Number.isInteger(expected) && expected > 0 ? expected : undefined,
+    });
+    return Astro.redirect(`/admin/bai-viet/${article.id}?ok=1`, 303);
+  } catch (e) {
+    if (e instanceof ConflictError) error = 'Bài đã được sửa ở nơi khác. Tải lại trang để xem bản mới.';
+    else if (e instanceof ValidationError) error = e.errors.join('\n');
+    else throw e;
+    Astro.response.status = e instanceof ConflictError ? 409 : 400;
+  }
+}
+
+const form = draft ?? {
+  slug: existing?.slug ?? '',
+  title: existing?.title ?? '',
+  summary: existing?.summary ?? '',
+  bodyMd: existing?.bodyMd ?? '',
+  tags: existing?.tags ?? [],
+  coverKey: existing?.coverKey ?? null,
+  status: existing?.status ?? 'draft',
+  version: existing?.version,
+};
+const { results: images } = await env.DB.prepare(
+  "SELECT key, alt FROM media WHERE content_type LIKE 'image/%' ORDER BY created_at DESC",
+).all<{ key: string; alt: string }>();
+const saved = Astro.url.searchParams.has('ok');
+---
+
+<AdminLayout title={isNew ? 'Viết bài mới' : 'Sửa bài'}>
+  <p class="mb-4"><a href="/admin/bai-viet">← Bài viết</a>{existing?.status === 'published' && <> · <a href={`/bai-viet/${existing.slug}`}>Xem trên site</a></>}</p>
+  {saved && <p class="admin-ok">Đã lưu.</p>}
+  {existing?.fbOverlap && <p class="admin-error">Có đoạn trùng bài Facebook (≥ 60 ký tự). Nên viết lại đoạn đó trước khi đăng.</p>}
+  {error && <p class="admin-error" role="alert">{error}</p>}
+  <form method="post" class="admin-form">
+    <input type="hidden" name="_action" value="save" />
+    <input type="hidden" name="version" value={form.version ?? ''} />
+    <label>Tiêu đề <input name="title" value={form.title} required maxlength="200" /></label>
+    <label>Slug (để trống sẽ tạo từ tiêu đề) <input name="slug" value={form.slug} maxlength="80" class="mono" /></label>
+    <label>Tóm tắt <textarea name="summary" maxlength="500">{form.summary}</textarea></label>
+    <label>Thẻ (phân cách dấu phẩy) <input name="tags" value={form.tags.join(', ')} /></label>
+    <label>Ảnh bìa
+      <select name="coverKey">
+        <option value="">Không có</option>
+        {images.map((m) => <option value={m.key} selected={m.key === form.coverKey}>{m.alt || m.key}</option>)}
+      </select>
+    </label>
+    <label>Nội dung (Markdown) <textarea name="bodyMd" class="mono" rows="24" data-body>{form.bodyMd}</textarea></label>
+    <label>Trạng thái
+      <select name="status">
+        <option value="draft" selected={form.status === 'draft'}>Nháp</option>
+        <option value="published" selected={form.status === 'published'}>Đăng</option>
+      </select>
+    </label>
+    <div class="flex gap-3">
+      <button type="submit" class="admin-btn">Lưu</button>
+      <button type="button" class="admin-btn-ghost" data-preview>Xem trước</button>
+    </div>
+  </form>
+  <section class="mt-8" hidden data-preview-box>
+    <h2 class="mb-3 text-lg font-bold">Xem trước</h2>
+    <div class="prose-article rounded-lg border border-line bg-panel p-5" data-preview-html></div>
+  </section>
+  {
+    existing && (
+      <form method="post" class="mt-10" onsubmit="return confirm('Xoá bài này?')">
+        <input type="hidden" name="_action" value="delete" />
+        <button type="submit" class="admin-btn-danger">Xoá bài</button>
+      </form>
+    )
+  }
+</AdminLayout>
+
+<script>
+  const button = document.querySelector<HTMLButtonElement>('[data-preview]');
+  const body = document.querySelector<HTMLTextAreaElement>('[data-body]');
+  const box = document.querySelector<HTMLElement>('[data-preview-box]');
+  const out = document.querySelector<HTMLElement>('[data-preview-html]');
+  button?.addEventListener('click', async () => {
+    if (!body || !box || !out) return;
+    const res = await fetch('/admin/api/preview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bodyMd: body.value }),
+    });
+    // The HTML comes from renderMarkdown, which sanitizes it on the server.
+    out.innerHTML = res.ok ? ((await res.json()) as { html: string }).html : 'Không xem trước được.';
+    box.hidden = false;
+  });
+</script>

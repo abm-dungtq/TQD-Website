@@ -1,0 +1,89 @@
+---
+import { env } from 'cloudflare:workers';
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { LIMITS } from '../../lib/media';
+
+// Second line of defence; the middleware sets this only for a valid session.
+if (!Astro.locals.admin) return new Response('Unauthorized', { status: 401 });
+
+const { results: media } = await env.DB.prepare(
+  'SELECT key, content_type, size, alt FROM media ORDER BY created_at DESC',
+).all<{ key: string; content_type: string; size: number; alt: string }>();
+const size = (bytes: number) => (bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${(bytes / 1024).toFixed(0)} KB`);
+const snippet = (m: { key: string; content_type: string; alt: string }) =>
+  m.content_type.startsWith('image/') ? `![${m.alt}](/media/${m.key})` : `/media/${m.key}`;
+---
+
+<AdminLayout title="Media">
+  <form class="admin-form mb-10" data-upload>
+    <label>Tệp (ảnh ≤ {LIMITS.image / 1024 / 1024} MB, video MP4/WebM ≤ {LIMITS.video / 1024 / 1024} MB)
+      <input type="file" name="file" accept="image/*,video/mp4,video/webm" required />
+    </label>
+    <label>Mô tả (alt) <input name="alt" maxlength="300" /></label>
+    <button type="submit" class="admin-btn">Tải lên</button>
+    <p class="text-sm" role="status" data-upload-status></p>
+  </form>
+
+  <table class="admin-table">
+    <thead><tr><th>Xem</th><th>Tệp</th><th>Loại</th><th>Dung lượng</th><th></th></tr></thead>
+    <tbody>
+      {
+        media.map((m) => (
+          <tr>
+            <td>
+              {m.content_type.startsWith('image/') ? (
+                <img src={`/media/${m.key}`} alt={m.alt} width="64" height="64" class="h-16 w-16 rounded object-cover" loading="lazy" />
+              ) : (
+                <span class="text-muted">video</span>
+              )}
+            </td>
+            <td><code class="text-xs">{m.key}</code><br /><span class="text-sm text-muted">{m.alt}</span></td>
+            <td>{m.content_type}</td>
+            <td>{size(m.size)}</td>
+            <td class="whitespace-nowrap">
+              <button type="button" class="admin-btn-ghost" data-copy={snippet(m)}>Chép Markdown</button>
+              <button type="button" class="admin-btn-danger" data-delete={m.key}>Xoá</button>
+            </td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+  {media.length === 0 && <p class="mt-4 text-muted">Chưa có tệp nào.</p>}
+</AdminLayout>
+
+<script>
+  const form = document.querySelector<HTMLFormElement>('[data-upload]');
+  const status = document.querySelector<HTMLElement>('[data-upload-status]');
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const file = (form.elements.namedItem('file') as HTMLInputElement).files?.[0];
+    const alt = (form.elements.namedItem('alt') as HTMLInputElement).value;
+    if (!file || !status) return;
+    status.textContent = 'Đang tải lên…';
+    const query = new URLSearchParams({ filename: file.name, alt });
+    const res = await fetch(`/admin/api/media?${query}`, {
+      method: 'POST',
+      headers: { 'Content-Type': file.type || 'application/octet-stream' },
+      body: file,
+    });
+    if (res.ok) location.reload();
+    else status.textContent = ((await res.json().catch(() => null)) as { error?: string } | null)?.error ?? `Lỗi ${res.status}`;
+  });
+
+  document.addEventListener('click', async (event) => {
+    const target = event.target as HTMLElement;
+    const copy = target.closest<HTMLElement>('[data-copy]');
+    if (copy) {
+      await navigator.clipboard.writeText(copy.dataset.copy ?? '');
+      copy.textContent = 'Đã chép';
+      return;
+    }
+    const del = target.closest<HTMLElement>('[data-delete]');
+    if (del && confirm('Xoá tệp này? Bài viết đang dùng tệp sẽ mất ảnh.')) {
+      const res = await fetch(`/admin/api/media?key=${encodeURIComponent(del.dataset.delete ?? '')}`, { method: 'DELETE' });
+      if (res.ok) location.reload();
+      else alert(`Không xoá được (${res.status}).`);
+    }
+  });
+</script>
