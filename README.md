@@ -11,6 +11,10 @@ Giao diện lấy cảm hứng từ zuey.me; mã nguồn viết mới, không sa
 - Bản cho máy đọc: `/llms.txt`, `/index.md`, `/{mục}.md`, `/sitemap.xml`.
 - Sao lưu D1 → R2 hằng đêm và cách khôi phục: [docs/backup-restore.md](docs/backup-restore.md).
 
+## Đăng bài từ agent
+
+Agent (Claude Code, Codex) đăng bài, ảnh và video qua API `/api/v1` bằng API key tạo tại `/admin/api-keys`. Skill đóng gói sẵn nằm ở `skills/tqd-publish`. Hợp đồng API, ví dụ và cách cài skill: [docs/agent-publishing.md](docs/agent-publishing.md).
+
 ## Lệnh
 
 | Lệnh | Việc |
@@ -23,6 +27,6 @@ Giao diện lấy cảm hứng từ zuey.me; mã nguồn viết mới, không sa
 | `npm run deploy:preview` | Deploy bản preview `tqd-next` |
 | `npm run deploy` | Deploy production lên `tqd.io.vn` |
 
-Các kiểm tra khác nằm trong `scripts/verify/` (`site`, `admin`, `cache`, `seed`, `live`).
+Các kiểm tra khác nằm trong `scripts/verify/` (`site`, `admin`, `articles`, `api`, `cache`, `seed`, `live`).
 
 Cách deploy, secret admin, cache và rollback: [docs/deployment.md](docs/deployment.md).

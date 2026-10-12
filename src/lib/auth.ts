@@ -9,7 +9,7 @@ export async function sha256Hex(text: string): Promise<string> {
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-const randomToken = (): string =>
+export const randomToken = (): string =>
   btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32))))
     .replace(/\+/g, '-')
     .replace(/\//g, '_')

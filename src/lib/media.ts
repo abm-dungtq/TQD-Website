@@ -100,7 +100,13 @@ export async function storeMedia(
   const putP = env.MEDIA.put(key, readable, {
     httpMetadata: { contentType, cacheControl: 'public, max-age=31536000, immutable' },
   });
-  await Promise.all([rebuilt.pipeTo(writable), putP]);
+  try {
+    await Promise.all([rebuilt.pipeTo(writable), putP]);
+  } catch {
+    // The body ended before Content-Length bytes (client abort or a lying header).
+    await reader.cancel().catch(() => {});
+    throw new MediaError(400, 'Tệp gửi lên không đủ dung lượng đã khai báo.');
+  }
 
   await env.DB.prepare('INSERT INTO media (key, content_type, size, alt, source) VALUES (?1, ?2, ?3, ?4, ?5)')
     .bind(key, contentType, length, alt.slice(0, 300), source)

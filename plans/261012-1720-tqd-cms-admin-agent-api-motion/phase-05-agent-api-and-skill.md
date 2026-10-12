@@ -1,7 +1,7 @@
 ---
 phase: 5
 title: "API cho agent và skill tqd-publish"
-status: pending
+status: completed
 priority: P1
 effort: 8h
 dependencies: [4]

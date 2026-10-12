@@ -60,8 +60,8 @@ export async function saveArticle(
 ): Promise<{ article: Article; created: boolean }> {
   const errors = validateArticle(input);
   const coverKey = input.coverKey || null;
-  if (coverKey && !(await db.prepare('SELECT 1 FROM media WHERE key = ?1').bind(coverKey).first())) {
-    errors.push('Ảnh bìa không có trong thư viện media.');
+  if (coverKey && !(await db.prepare("SELECT 1 FROM media WHERE key = ?1 AND content_type LIKE 'image/%'").bind(coverKey).first())) {
+    errors.push('Ảnh bìa phải là ảnh trong thư viện media.');
   }
   const current = input.id
     ? await db.prepare('SELECT id, slug, version FROM articles WHERE id = ?1').bind(input.id).first<{ id: number; slug: string; version: number }>()
@@ -94,7 +94,15 @@ export async function saveArticle(
            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, CASE WHEN ?8 = 'published' THEN datetime('now') END) RETURNING *`,
         )
         .bind(...values);
-  const [result] = await db.batch([write, bumpVersion(db)]);
+  let result: D1Result;
+  try {
+    [result] = await db.batch([write, bumpVersion(db)]);
+  } catch (e) {
+    // Another writer took the slug between the read and the write.
+    if (!String(e).includes('UNIQUE constraint failed')) throw e;
+    const taken = await db.prepare('SELECT version FROM articles WHERE slug = ?1').bind(input.slug).first<{ version: number }>();
+    throw new ConflictError(taken?.version ?? 0);
+  }
   const row = result.results[0] as Parameters<typeof toArticle>[0] | undefined;
   // Another writer won between the read and the update.
   if (!row) throw new ConflictError(current ? current.version + 1 : 0);

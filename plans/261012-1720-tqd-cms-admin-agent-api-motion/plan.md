@@ -76,8 +76,8 @@ Trình duyệt ──► Worker tqd-website (src/worker.ts)
 | 1 | Nền SSR, D1, R2, dữ liệu gốc, Worker preview | [phase-01](phase-01-ssr-foundation-d1-r2.md) | — | completed |
 | 2 | Trang công khai đọc D1, cache, kiểm tra quyền riêng tư | [phase-02](phase-02-public-pages-from-d1.md) | 1 | completed |
 | 3 | Admin, sao lưu và chuyển `tqd.io.vn` | [phase-03](phase-03-admin-backup-cutover.md) | 2 | completed |
-| 4 | Bài viết, media R2, player TikTok | [phase-04](phase-04-articles-media-tiktok.md) | 3 | pending |
-| 5 | API cho agent và skill `tqd-publish` | [phase-05](phase-05-agent-api-and-skill.md) | 4 | pending |
+| 4 | Bài viết, media R2, player TikTok | [phase-04](phase-04-articles-media-tiktok.md) | 3 | in-progress (chờ link TikTok, task 4.9) |
+| 5 | API cho agent và skill `tqd-publish` | [phase-05](phase-05-agent-api-and-skill.md) | 4 | completed |
 | 6 | Hiệu ứng: ⌘K, mobile, cửa sổ/dock/Exposé, hình nền | [phase-06](phase-06-motion-os-shell.md) | 4 | pending |
 | 7 | Linh vật và thời tiết | [phase-07](phase-07-mascot-and-weather.md) | 6 | pending |
 

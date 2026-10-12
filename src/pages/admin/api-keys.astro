@@ -1,0 +1,93 @@
+---
+import { env } from 'cloudflare:workers';
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { generateApiKey, SCOPES } from '../../lib/api-key';
+
+// Second line of defence; the middleware sets this only for a valid session.
+if (!Astro.locals.admin) return new Response('Unauthorized', { status: 401 });
+
+const DEFAULT_SCOPES = ['articles:write', 'media:write'];
+let created = '';
+let error = '';
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  if (form.get('_action') === 'revoke') {
+    await env.DB.prepare("UPDATE api_keys SET revoked_at = datetime('now') WHERE id = ?1 AND revoked_at IS NULL")
+      .bind(Number(form.get('id')))
+      .run();
+    return Astro.redirect('/admin/api-keys', 303);
+  }
+  const name = String(form.get('name') ?? '').trim();
+  const scopes = SCOPES.filter((s) => form.getAll('scopes').includes(s));
+  if (!name || name.length > 60) error = 'Tên cần 1–60 ký tự.';
+  else if (!scopes.length) error = 'Chọn ít nhất một quyền.';
+  else {
+    const { key, prefix, hash } = await generateApiKey();
+    await env.DB.prepare('INSERT INTO api_keys (name, prefix, hash, scopes) VALUES (?1, ?2, ?3, ?4)')
+      .bind(name, prefix, hash, scopes.join(','))
+      .run();
+    // Shown once in the response body only; never put the key in a URL or redirect.
+    created = key;
+  }
+  if (error) Astro.response.status = 400;
+}
+
+const { results: keys } = await env.DB.prepare(
+  'SELECT id, name, prefix, scopes, created_at, last_used_at, revoked_at FROM api_keys ORDER BY revoked_at IS NOT NULL, created_at DESC',
+).all<{ id: number; name: string; prefix: string; scopes: string; created_at: string; last_used_at: string | null; revoked_at: string | null }>();
+---
+
+<AdminLayout title="API key">
+  {
+    created && (
+      <div class="admin-ok">
+        <p class="mb-2">Chép key ngay, key sẽ không hiện lại.</p>
+        <input class="mono w-full" readonly value={created} data-new-key aria-label="API key mới" />
+      </div>
+    )
+  }
+  {error && <p class="admin-error" role="alert">{error}</p>}
+  <form method="post" class="admin-form mb-8">
+    <label>Tên key <input name="name" maxlength="60" required placeholder="vd: claude-may-ban" /></label>
+    <fieldset class="flex flex-wrap gap-4">
+      <legend class="mb-1 text-sm">Quyền</legend>
+      {
+        SCOPES.map((s) => (
+          <label class="flex items-center gap-2">
+            <input type="checkbox" name="scopes" value={s} checked={DEFAULT_SCOPES.includes(s)} /> {s}
+          </label>
+        ))
+      }
+    </fieldset>
+    <p class="text-sm text-muted">Thiếu quyền <code>publish</code> thì agent chỉ tạo được bài nháp.</p>
+    <button type="submit" class="admin-btn">Tạo key</button>
+  </form>
+  <table class="admin-table">
+    <thead><tr><th>Tên</th><th>Prefix</th><th>Quyền</th><th>Tạo lúc</th><th>Dùng lần cuối</th><th>Trạng thái</th><th></th></tr></thead>
+    <tbody>
+      {
+        keys.map((k) => (
+          <tr>
+            <td>{k.name}</td>
+            <td><code>{k.prefix}…</code></td>
+            <td>{k.scopes.split(',').join(', ')}</td>
+            <td>{k.created_at}</td>
+            <td>{k.last_used_at ?? '—'}</td>
+            <td>{k.revoked_at ? `Thu hồi ${k.revoked_at}` : 'Đang dùng'}</td>
+            <td>
+              {!k.revoked_at && (
+                <form method="post">
+                  <input type="hidden" name="_action" value="revoke" />
+                  <input type="hidden" name="id" value={k.id} />
+                  <button type="submit" class="admin-btn-danger">Thu hồi</button>
+                </form>
+              )}
+            </td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+  <p class="mt-4 text-sm text-muted">Giờ ghi theo UTC. Hướng dẫn dùng key: <code>docs/agent-publishing.md</code>.</p>
+</AdminLayout>
