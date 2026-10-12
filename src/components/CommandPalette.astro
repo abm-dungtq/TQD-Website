@@ -46,7 +46,7 @@
     border-radius: 16px;
     background: var(--color-panel);
     color: var(--color-ink);
-    box-shadow: 0 32px 64px -20px rgb(2 6 23 / 0.45);
+    box-shadow: var(--shadow-lift);
     overflow: hidden;
   }
   .cmdk[open] {
@@ -55,7 +55,7 @@
     animation: cmdk-in 280ms var(--os-ease);
   }
   .cmdk::backdrop {
-    background: rgb(2 6 23 / 0.4);
+    background: rgb(27 32 48 / 0.18);
     backdrop-filter: blur(8px);
   }
   .cmdk-field {
@@ -109,7 +109,7 @@
     cursor: pointer;
   }
   .cmdk-option[aria-selected='true'] {
-    background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+    background: color-mix(in srgb, var(--color-champagne) 16%, transparent);
     color: var(--color-accent-ink);
   }
   .cmdk-option span:last-child {
@@ -150,7 +150,7 @@
     cursor: pointer;
   }
   .cmdk-trigger:hover {
-    background: color-mix(in srgb, var(--color-ink) 8%, transparent);
+    background: color-mix(in srgb, var(--color-champagne) 14%, transparent);
   }
   .cmdk-trigger kbd {
     font-family: var(--font-mono);

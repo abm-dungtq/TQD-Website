@@ -8,7 +8,7 @@ Giao diện lấy cảm hứng từ zuey.me; mã nguồn viết mới, không sa
 
 Trên màn hình rộng: tìm nhanh bằng `Ctrl K` / `⌘K`; cửa sổ mở, thu nhỏ, phóng to, ghép nửa màn hình; nút **Tất cả cửa sổ** (hoặc `F3`) bày mọi cửa sổ kiểu Exposé; dock phóng to icon khi rê chuột; nền aurora; linh vật DũngTQ đổi tư thế theo thao tác và thỉnh thoảng đi dạo; thời tiết Hà Nội ở thanh menu kèm mưa/tuyết trên nền khi trời mưa/tuyết (trình duyệt lấy trực tiếp từ [Open-Meteo](https://open-meteo.com/), giấy phép CC BY 4.0). Trên điện thoại mỗi mục mở thành một tấm trượt lên, kéo xuống để đóng.
 
-Menu **Giao diện** chọn sáng/tối/tự động, màu nhấn, và tắt/bật **Linh vật**, **Hiệu ứng thời tiết**. Khi hệ điều hành bật giảm chuyển động (`prefers-reduced-motion`), mọi hiệu ứng đứng yên. Ảnh linh vật tạo lại bằng `node scripts/make-mascot.mjs` (hoặc `--fallback` để dùng ảnh chân dung tròn).
+Giao diện chỉ có một bảng màu sáng: nền ngà `#faf7f1`, chữ mực `#1b2030`, màu chữ ký vàng champagne (`#8a6420` cho chữ và nút, `#b8935a` chỉ để trang trí); tiêu đề dùng Cormorant Garamond. Token màu nằm trong `src/styles/global.css`. Menu **Hiệu ứng** tắt/bật **Linh vật** và **Hiệu ứng thời tiết**. Khi hệ điều hành bật giảm chuyển động (`prefers-reduced-motion`), mọi hiệu ứng đứng yên. Ảnh linh vật tạo lại bằng `node scripts/make-mascot.mjs` (hoặc `--fallback` để dùng ảnh chân dung tròn).
 
 ## Nội dung
 

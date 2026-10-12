@@ -1,8 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
-  <rect width="1200" height="630" fill="#0f172a"/>
-  <rect x="64" y="96" width="56" height="6" rx="3" fill="#2563eb"/>
-  <text x="64" y="200" font-family="Arial, sans-serif" font-size="64" font-weight="700" fill="#ffffff">Trịnh Quang Dũng</text>
-  <text x="64" y="262" font-family="Arial, sans-serif" font-size="30" fill="#cbd5e1">Ứng dụng AI vào vận hành doanh nghiệp</text>
-  <text x="64" y="352" font-family="Arial, sans-serif" font-size="26" fill="#94a3b8">Agent · Skill · Video AI · Đào tạo doanh nghiệp</text>
-  <text x="64" y="560" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#60a5fa">tqd.io.vn</text>
+  <defs>
+    <radialGradient id="glow" cx="18%" cy="22%" r="70%">
+      <stop offset="0" stop-color="#b8935a" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#faf7f1" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="pearl" cx="62%" cy="90%" r="60%">
+      <stop offset="0" stop-color="#dce3ea" stop-opacity="0.8"/>
+      <stop offset="1" stop-color="#faf7f1" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="#faf7f1"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  <rect width="1200" height="630" fill="url(#pearl)"/>
+  <rect x="24" y="24" width="1152" height="582" rx="20" fill="none" stroke="#b8935a" stroke-opacity="0.55"/>
+  <text x="72" y="118" font-family="Consolas, 'Courier New', monospace" font-size="20" letter-spacing="3" fill="#8a6420">01 — TQD.IO.VN</text>
+  <text x="72" y="228" font-family="Georgia, 'Times New Roman', serif" font-size="58" font-weight="700" fill="#1b2030">Trịnh Quang Dũng</text>
+  <rect x="72" y="262" width="72" height="2" fill="#b8935a"/>
+  <text x="72" y="322" font-family="Arial, sans-serif" font-size="30" fill="#1b2030">Ứng dụng AI vào vận hành doanh nghiệp</text>
+  <text x="72" y="372" font-family="Arial, sans-serif" font-size="24" fill="#6a6253">Agent · Skill · Video AI · Đào tạo doanh nghiệp</text>
+  <text x="72" y="548" font-family="Georgia, 'Times New Roman', serif" font-size="30" font-weight="700" fill="#8a6420">DũngTQ</text>
 </svg>

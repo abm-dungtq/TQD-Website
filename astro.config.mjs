@@ -23,6 +23,16 @@ export default defineConfig({
       fallbacks: ['system-ui', 'sans-serif'],
     },
     {
+      // Display serif for content headings only; one weight keeps the payload small.
+      provider: fontProviders.google(),
+      name: 'Cormorant Garamond',
+      cssVariable: '--font-cormorant',
+      weights: [600],
+      styles: ['normal'],
+      subsets: ['latin', 'vietnamese'],
+      fallbacks: ['Georgia', 'Times New Roman', 'serif'],
+    },
+    {
       provider: fontProviders.google(),
       name: 'JetBrains Mono',
       cssVariable: '--font-jetbrains-mono',

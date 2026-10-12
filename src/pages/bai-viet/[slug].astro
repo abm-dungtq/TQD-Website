@@ -2,6 +2,7 @@
 import { env } from 'cloudflare:workers';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getArticle, getSite, mediaUrl } from '../../lib/content';
+import { articleNode } from '../../lib/structured-data';
 
 const slug = Astro.params.slug ?? '';
 const [site, article] = await Promise.all([getSite(env.DB), getArticle(env.DB, slug)]);
@@ -21,17 +22,22 @@ const published = article.publishedAt
   path={`/bai-viet/${article.slug}`}
   ogType="article"
   markdownPath={`/bai-viet/${article.slug}.md`}
+  jsonLd={[articleNode(article, new URL(`/bai-viet/${article.slug}`, Astro.site).href)]}
 >
   <article class="mx-auto max-w-3xl">
-    <p class="mb-4"><a href="/bai-viet">← Tất cả bài viết</a></p>
-    <h1 class="mb-2 text-3xl font-bold tracking-tight">{article.title}</h1>
-    {published && <p class="mb-6 text-sm text-muted"><time datetime={article.publishedAt}>{published}</time></p>}
+    <p class="eyebrow mb-6">
+      <a href="/bai-viet" class="no-underline">← Bài viết</a>
+      <span class="eyebrow-rule" aria-hidden="true" />
+      {published && <time class="eyebrow-index" datetime={article.publishedAt}>{published}</time>}
+    </p>
+    <h1 class="display mb-8 text-[2.5rem] sm:text-6xl">{article.title}</h1>
+    {article.summary && <p class="mb-8 text-lg text-muted">{article.summary}</p>}
     {article.coverKey && <img src={mediaUrl(article.coverKey)} alt="" class="article-cover" width="1200" height="675" fetchpriority="high" />}
     {
       article.tags.length > 0 && (
         <ul class="mb-6 flex flex-wrap gap-2 text-xs">
           {article.tags.map((t) => (
-            <li class="rounded-full border border-line px-2 py-0.5 text-muted">{t}</li>
+            <li class="lux-chip px-2.5 py-0.5">{t}</li>
           ))}
         </ul>
       )

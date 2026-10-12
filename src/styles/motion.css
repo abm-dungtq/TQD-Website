@@ -13,12 +13,6 @@
   animation-duration: 250ms;
 }
 
-/* Theme switches cross-fade a little slower than page navigations. */
-html[data-theme-switching]::view-transition-old(root),
-html[data-theme-switching]::view-transition-new(root) {
-  animation-duration: 350ms;
-}
-
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

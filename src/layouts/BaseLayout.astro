@@ -3,7 +3,6 @@ import { Font } from 'astro:assets';
 import '../styles/global.css';
 import type { Site } from '../lib/content';
 import CommandPalette from '../components/CommandPalette.astro';
-import ThemeMenu from '../components/ThemeMenu.astro';
 
 interface Props {
   site: Site;
@@ -12,14 +11,28 @@ interface Props {
   path: string;
   ogType?: 'website' | 'article';
   markdownPath?: string;
+  /** Extra schema.org nodes for this page (Person, ProfilePage, Article…); WebSite and WebPage are always added. */
+  jsonLd?: Record<string, unknown>[];
 }
 
-const { site, title, description, path, ogType = 'website', markdownPath = '/index.md' } = Astro.props;
+const { site, title, description, path, ogType = 'website', markdownPath = '/index.md', jsonLd = [] } = Astro.props;
 const { links, person, sections, stats } = site;
 const fullTitle = title ? `${title} · ${person.handle}` : `${person.name} (${person.handle})`;
 const canonical = new URL(path, Astro.site).href;
+const origin = new URL('/', Astro.site).href;
 const ogImage = new URL('/og.png', Astro.site).href;
-const current = path.replace(/^\//, '');
+const current = path.replace(/^\//, '').split('/')[0];
+
+const structured = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    { '@type': 'WebSite', '@id': `${origin}#website`, url: origin, name: person.handle, inLanguage: 'vi' },
+    { '@type': 'WebPage', '@id': `${canonical}#webpage`, url: canonical, name: fullTitle, description, isPartOf: { '@id': `${origin}#website` }, inLanguage: 'vi' },
+    ...jsonLd,
+  ],
+};
+// Escape "<" so no title or summary can close the script element.
+const structuredJson = JSON.stringify(structured).replace(/</g, '\\u003c');
 ---
 
 <!doctype html>
@@ -27,20 +40,7 @@ const current = path.replace(/^\//, '');
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script is:inline>
-      // Applies the saved theme before first paint (src/scripts/theme.ts handles later changes).
-      (function () {
-        try {
-          var t = localStorage.getItem('tqd-theme') || 'auto';
-          var a = localStorage.getItem('tqd-accent') || 'blue';
-          var dark = t === 'dark' || (t === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
-          document.documentElement.dataset.theme = dark ? 'dark' : 'light';
-          document.documentElement.dataset.accent = a;
-        } catch (e) {}
-      })();
-    </script>
-    <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0b1120" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#faf7f1" />
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
@@ -54,12 +54,21 @@ const current = path.replace(/^\//, '');
     <meta property="og:image" content={ogImage} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={`${person.name} – ${person.role}`} />
     <meta name="twitter:card" content="summary_large_image" />
+    <script type="application/ld+json" is:inline set:html={structuredJson} />
     <Font
       cssVariable="--font-be-vietnam-pro"
       preload={[
         { weight: '400', subset: 'vietnamese' },
         { weight: '400', subset: 'latin' },
+      ]}
+    />
+    <Font
+      cssVariable="--font-cormorant"
+      preload={[
+        { weight: '600', subset: 'vietnamese' },
+        { weight: '600', subset: 'latin' },
       ]}
     />
     <Font cssVariable="--font-jetbrains-mono" />
@@ -74,39 +83,41 @@ const current = path.replace(/^\//, '');
     >
     <slot name="before" />
     <div data-fallback>
-      <header class="border-b border-line bg-panel/80 backdrop-blur">
-        <div class="mx-auto flex max-w-5xl flex-wrap items-center gap-x-6 gap-y-2 px-5 py-4">
-          <a href="/" class="text-lg font-bold text-ink no-underline">{person.handle}</a>
-          <nav aria-label="Các mục" class="-mx-1 flex gap-1 overflow-x-auto text-sm">
+      <header class="site-header">
+        <div class="mx-auto flex max-w-5xl flex-wrap items-center gap-x-8 gap-y-2 px-5 py-4">
+          <a href="/" class="site-brand">
+            <span class="site-mark" aria-hidden="true">{person.initials}</span>
+            <span class="display text-2xl">{person.handle}</span>
+          </a>
+          <nav aria-label="Các mục" class="site-nav -mx-1 order-last flex w-full gap-1 overflow-x-auto text-sm lg:order-none lg:w-auto">
             {
               sections.map((s) => (
-                <a
-                  href={`/${s.id}`}
-                  aria-current={current === s.id ? 'page' : undefined}
-                  class="whitespace-nowrap rounded-md px-2 py-1 text-muted no-underline hover:bg-paper hover:text-ink aria-[current=page]:bg-accent/10 aria-[current=page]:text-accent-ink"
-                >
+                <a href={`/${s.id}`} aria-current={current === s.id ? 'page' : undefined} class="site-nav-link">
                   {s.title}
                 </a>
               ))
             }
           </nav>
           <div class="ml-auto flex items-center gap-1">
-            <button type="button" class="cmdk-trigger" data-cmdk-open hidden>Tìm <kbd>Ctrl K</kbd></button>
-            <ThemeMenu id="theme-page" />
+            <button type="button" class="cmdk-trigger" data-cmdk-open hidden>Tìm <kbd class="hidden sm:inline">Ctrl K</kbd></button>
           </div>
         </div>
       </header>
-      <main id="main" class="mx-auto max-w-5xl px-5 py-10">
+      <main id="main" class="mx-auto max-w-5xl px-5 py-12 sm:py-16">
         <slot />
       </main>
-      <footer class="border-t border-line">
-        <div class="mx-auto flex max-w-5xl flex-col gap-3 px-5 py-8 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
-          <p>© 2026 {person.name}. {stats.source}</p>
-          <ul class="flex flex-wrap gap-4">
+      <footer class="site-footer">
+        <div class="mx-auto flex max-w-5xl flex-col gap-6 px-5 py-12 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p class="display text-2xl">{person.name}</p>
+            <p class="mt-1 text-sm text-muted">{person.role}</p>
+            <p class="mt-4 text-xs text-muted">© 2026 {person.name}. {stats.source}</p>
+          </div>
+          <ul class="flex flex-wrap gap-x-5 text-sm font-semibold">
             {
               links.map((l) => (
                 <li>
-                  <a href={l.href} rel="noopener" target={l.href.startsWith('http') ? '_blank' : undefined}>
+                  <a href={l.href} rel="noopener" target={l.href.startsWith('http') ? '_blank' : undefined} class="site-footer-link">
                     {l.label}
                   </a>
                 </li>
@@ -119,3 +130,91 @@ const current = path.replace(/^\//, '');
     <CommandPalette />
   </body>
 </html>
+
+<style is:global>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    border-bottom: 1px solid var(--color-line);
+    background: color-mix(in srgb, var(--color-paper) 82%, transparent);
+    backdrop-filter: blur(14px) saturate(1.2);
+  }
+  .site-brand {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    gap: 0.6rem;
+    color: var(--color-ink);
+    text-decoration: none;
+  }
+  .site-mark {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    border: 1px solid var(--color-champagne);
+    background: var(--color-tint);
+    color: var(--color-accent-ink);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+  }
+  /* On narrow screens the nav scrolls sideways; the fade shows there is more to the right. */
+  @media (width < 64rem) {
+    .site-nav {
+      scrollbar-width: none;
+      mask-image: linear-gradient(90deg, #000 85%, transparent);
+    }
+  }
+  .site-nav-link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    white-space: nowrap;
+    padding: 0 0.5rem;
+    color: var(--color-muted);
+    text-decoration: none;
+    transition: color 200ms var(--os-ease);
+  }
+  .site-header .cmdk-trigger {
+    min-height: 44px;
+    padding: 0 0.75rem;
+  }
+  .site-nav-link::after {
+    content: '';
+    position: absolute;
+    inset: auto 0.5rem 0.1rem;
+    height: 1px;
+    background: var(--color-champagne);
+    transform: scaleX(0);
+    transition: transform 250ms var(--os-ease);
+  }
+  .site-nav-link:hover,
+  .site-nav-link[aria-current='page'] {
+    color: var(--color-ink);
+  }
+  .site-nav-link:hover::after,
+  .site-nav-link[aria-current='page']::after {
+    transform: scaleX(1);
+  }
+  .site-footer {
+    border-top: 1px solid var(--color-line);
+    background: linear-gradient(180deg, var(--color-paper), var(--color-tint));
+  }
+  .site-footer-link {
+    display: inline-flex;
+    align-items: center;
+    min-width: 44px;
+    min-height: 44px;
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+  .site-footer-link:hover {
+    text-decoration: underline;
+    text-decoration-color: var(--color-champagne);
+    text-underline-offset: 0.25em;
+  }
+</style>

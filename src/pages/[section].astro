@@ -1,16 +1,20 @@
 ---
 import { env } from 'cloudflare:workers';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeading from '../components/PageHeading.astro';
 import SectionBody from '../components/SectionBody.astro';
 import { loadSiteData } from '../lib/content';
+import { personNode, profilePageNode } from '../lib/structured-data';
 
 const data = await loadSiteData(env.DB);
-const s = data.site.sections.find((x) => x.id === Astro.params.section);
+const index = data.site.sections.findIndex((x) => x.id === Astro.params.section);
+const s = data.site.sections[index];
 if (!s) return Astro.rewrite('/404');
+const url = new URL(`/${s.id}`, Astro.site).href;
+const jsonLd = s.id === 'ho-so' ? [personNode(data.site), profilePageNode(url)] : [];
 ---
 
-<BaseLayout site={data.site} title={s.title} description={s.short} path={`/${s.id}`} markdownPath={`/${s.id}.md`}>
-  <h1 class="mb-2 text-3xl font-bold tracking-tight">{s.title}</h1>
-  <p class="mb-8 text-muted">{s.short}</p>
+<BaseLayout site={data.site} title={s.title} description={s.short} path={`/${s.id}`} markdownPath={`/${s.id}.md`} jsonLd={jsonLd}>
+  <PageHeading index={index + 1} label={data.site.person.handle} title={s.title} lede={s.short} />
   <SectionBody id={s.id} data={data} eager />
 </BaseLayout>

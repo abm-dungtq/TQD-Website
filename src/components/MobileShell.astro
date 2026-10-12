@@ -19,7 +19,7 @@ const { person, sections } = Astro.props.site;
   <div class="m-profile">
     <img src={person.portraitSmall} alt="" width="56" height="56" class="m-avatar" />
     <div>
-      <p class="font-semibold">{person.name}</p>
+      <p class="display text-xl">{person.name}</p>
       <p class="text-sm text-muted">{person.role}</p>
     </div>
   </div>
@@ -80,11 +80,12 @@ const { person, sections } = Astro.props.site;
     padding: 0.5rem 0 1.75rem;
   }
   .m-clock {
-    font-size: 3.5rem;
-    font-weight: 300;
+    font-family: var(--font-display);
+    font-size: 4.25rem;
+    font-weight: 600;
     line-height: 1;
     letter-spacing: -0.02em;
-    font-variant-numeric: tabular-nums;
+    font-variant-numeric: lining-nums tabular-nums;
   }
   .m-date {
     margin-top: 0.4rem;
@@ -100,6 +101,7 @@ const { person, sections } = Astro.props.site;
     border: 1px solid var(--color-line);
     border-radius: 20px;
     background: color-mix(in srgb, var(--color-panel) 80%, transparent);
+    box-shadow: var(--shadow-soft);
     backdrop-filter: blur(12px);
   }
   .m-avatar {
@@ -128,9 +130,13 @@ const { person, sections } = Astro.props.site;
     width: 60px;
     height: 60px;
     border-radius: 16px;
-    color: #fff;
-    background: linear-gradient(150deg, color-mix(in srgb, var(--color-accent) 70%, #fff), var(--color-accent));
-    box-shadow: 0 8px 18px -8px color-mix(in srgb, var(--color-accent) 70%, transparent);
+    color: var(--color-accent);
+    background: linear-gradient(160deg, var(--color-panel), var(--color-tint));
+    border: 1px solid var(--color-line);
+    box-shadow:
+      inset 0 0 0 3px var(--color-panel),
+      inset 0 0 0 4px color-mix(in srgb, var(--color-champagne) 35%, transparent),
+      var(--shadow-soft);
     transition: transform 150ms var(--os-ease);
   }
   .m-app:active .m-icon {
@@ -151,7 +157,7 @@ const { person, sections } = Astro.props.site;
     position: fixed;
     inset: 0;
     z-index: 1090;
-    background: rgb(2 6 23 / 0.3);
+    background: rgb(27 32 48 / 0.18);
   }
   .m-scrim[hidden],
   .m-sheet[hidden] {
@@ -166,7 +172,7 @@ const { person, sections } = Astro.props.site;
     height: 92dvh;
     border-radius: 18px 18px 0 0;
     background: var(--color-panel);
-    box-shadow: 0 -12px 40px -12px rgb(2 6 23 / 0.35);
+    box-shadow: 0 -20px 50px -24px rgb(94 68 19 / 0.4);
   }
   .m-sheet-head {
     position: relative;

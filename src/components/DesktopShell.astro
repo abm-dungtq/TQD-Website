@@ -3,7 +3,7 @@
 // It stays hidden until src/scripts/desktop.ts enables it on wide screens; without
 // JavaScript or on phones the plain page in [data-fallback] is shown instead.
 import Icon from './Icon.astro';
-import ThemeMenu from './ThemeMenu.astro';
+import EffectsMenu from './EffectsMenu.astro';
 import SectionBody from './SectionBody.astro';
 import Mascot from './Mascot.astro';
 import type { SiteData } from '../lib/content';
@@ -34,7 +34,7 @@ const { person, sections } = data.site;
         Tất cả cửa sổ
       </button>
       <span class="desktop-weather" data-weather hidden></span>
-      <ThemeMenu id="theme-desktop" effects />
+      <EffectsMenu />
       <time class="ml-2 font-mono" data-clock></time>
     </div>
   </div>
@@ -113,18 +113,18 @@ const { person, sections } = data.site;
     overflow: hidden;
     background-color: var(--color-paper);
   }
-  /* Aurora wallpaper: soft accent glows drifting slowly; the first layer is the static dot grid. */
+  /* Aurora wallpaper: champagne and pearl glows drifting slowly over a fine static dot grid. */
   .desktop::before {
     content: '';
     position: absolute;
     inset: 0;
     pointer-events: none;
     background-image:
-      radial-gradient(color-mix(in srgb, var(--color-ink) 9%, transparent) 1px, transparent 1px),
-      radial-gradient(38% 46% at 18% 28%, color-mix(in srgb, var(--color-accent) 24%, transparent), transparent 70%),
-      radial-gradient(34% 40% at 82% 18%, color-mix(in srgb, color-mix(in oklch, var(--color-accent), #22d3ee 45%) 20%, transparent), transparent 70%),
-      radial-gradient(40% 44% at 70% 82%, color-mix(in srgb, color-mix(in oklch, var(--color-accent), #e879f9 40%) 18%, transparent), transparent 70%),
-      radial-gradient(30% 36% at 30% 86%, color-mix(in srgb, var(--color-accent) 14%, transparent), transparent 70%);
+      radial-gradient(color-mix(in srgb, var(--color-champagne) 22%, transparent) 1px, transparent 1px),
+      radial-gradient(38% 46% at 18% 28%, color-mix(in srgb, var(--color-champagne) 26%, transparent), transparent 70%),
+      radial-gradient(34% 40% at 82% 18%, rgb(220 227 234 / 0.75), transparent 70%),
+      radial-gradient(40% 44% at 70% 82%, color-mix(in srgb, var(--color-champagne) 18%, transparent), transparent 70%),
+      radial-gradient(30% 36% at 30% 86%, rgb(232 228 240 / 0.7), transparent 70%);
     background-size:
       22px 22px,
       200% 200%,
@@ -159,8 +159,8 @@ const { person, sections } = data.site;
     gap: 1rem;
     padding: 0 0.5rem 0 1rem;
     font-size: 0.8125rem;
-    background: color-mix(in srgb, var(--color-panel) 72%, transparent);
-    backdrop-filter: blur(16px) saturate(1.4);
+    background: color-mix(in srgb, var(--color-panel) 70%, transparent);
+    backdrop-filter: blur(18px) saturate(1.2);
     border-bottom: 1px solid var(--color-line);
     z-index: 1000;
   }
@@ -176,7 +176,7 @@ const { person, sections } = data.site;
   }
   .desktop-menu-btn:hover,
   .desktop-menu-btn[aria-pressed='true'] {
-    background: color-mix(in srgb, var(--color-ink) 8%, transparent);
+    background: color-mix(in srgb, var(--color-champagne) 14%, transparent);
   }
   .desktop-weather {
     padding: 0 0.5rem;
@@ -215,7 +215,7 @@ const { person, sections } = data.site;
     transition: background-color 150ms var(--os-ease);
   }
   .desktop-launch:hover {
-    background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+    background: color-mix(in srgb, var(--color-champagne) 12%, transparent);
   }
   .desktop-launch:active .desktop-glyph {
     transform: scale(0.94);
@@ -225,11 +225,14 @@ const { person, sections } = data.site;
     place-items: center;
     width: 52px;
     height: 52px;
-    border-radius: 14px;
-    background: color-mix(in srgb, var(--color-panel) 85%, transparent);
+    border-radius: 16px;
+    background: linear-gradient(160deg, var(--color-panel), var(--color-tint));
     border: 1px solid var(--color-line);
     color: var(--color-accent);
-    box-shadow: 0 4px 12px -6px rgb(15 23 42 / 0.25);
+    box-shadow:
+      inset 0 0 0 3px var(--color-panel),
+      inset 0 0 0 4px color-mix(in srgb, var(--color-champagne) 35%, transparent),
+      var(--shadow-soft);
     transition: transform 150ms var(--os-ease);
   }
   .desktop-window {
@@ -240,8 +243,11 @@ const { person, sections } = data.site;
     height: min(640px, 80vh);
     background: var(--color-panel);
     border: 1px solid var(--color-line);
-    border-radius: 12px;
-    box-shadow: 0 30px 60px -18px rgb(2 6 23 / 0.35);
+    border-radius: 14px;
+    box-shadow:
+      0 0 0 1px rgb(255 255 255 / 0.6) inset,
+      0 44px 90px -36px rgb(94 68 19 / 0.38),
+      0 8px 20px -12px rgb(94 68 19 / 0.18);
     overflow: hidden;
   }
   .desktop-window[hidden] {
@@ -271,9 +277,9 @@ const { person, sections } = data.site;
     top: 40px;
     height: calc(100vh - 40px - 92px);
     width: calc(50vw - 12px);
-    border: 2px solid color-mix(in srgb, var(--color-accent) 60%, transparent);
-    border-radius: 12px;
-    background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+    border: 1px solid var(--color-champagne);
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--color-champagne) 12%, transparent);
     backdrop-filter: blur(4px);
     pointer-events: none;
     z-index: 900;
@@ -288,7 +294,7 @@ const { person, sections } = data.site;
     height: 40px;
     padding: 0 0.75rem 0 0.5rem;
     border-bottom: 1px solid var(--color-line);
-    background: var(--color-paper);
+    background: linear-gradient(180deg, var(--color-panel), var(--color-paper));
     cursor: grab;
     user-select: none;
     touch-action: none;
@@ -339,7 +345,7 @@ const { person, sections } = data.site;
   .desktop-body {
     flex: 1;
     overflow: auto;
-    padding: 1.5rem;
+    padding: 2rem;
   }
   /* Exposé */
   .is-expose .desktop-window {
@@ -350,7 +356,8 @@ const { person, sections } = data.site;
     pointer-events: none;
   }
   .is-expose .desktop-window:hover {
-    outline: 3px solid var(--color-accent);
+    outline: 2px solid var(--color-champagne);
+    outline-offset: 3px;
   }
   .is-expose .desktop-launcher {
     opacity: 0;
@@ -359,8 +366,8 @@ const { person, sections } = data.site;
     position: absolute;
     inset: 0;
     z-index: 5;
-    background: rgb(2 6 23 / 0.28);
-    backdrop-filter: blur(6px);
+    background: rgb(27 32 48 / 0.16);
+    backdrop-filter: blur(8px) saturate(1.1);
   }
   .expose-layer[hidden] {
     display: none;
@@ -375,7 +382,8 @@ const { person, sections } = data.site;
     font-weight: 600;
     white-space: nowrap;
     transform: translateX(-50%);
-    box-shadow: 0 4px 12px -4px rgb(2 6 23 / 0.3);
+    border: 1px solid var(--color-line);
+    box-shadow: var(--shadow-soft);
   }
   /* Dock */
   .desktop-dock {
@@ -395,11 +403,11 @@ const { person, sections } = data.site;
     position: absolute;
     inset: 0 calc(-1 * var(--dock-grow));
     z-index: -1;
-    border-radius: 18px;
-    background: color-mix(in srgb, var(--color-panel) 68%, transparent);
-    backdrop-filter: blur(16px) saturate(1.4);
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--color-panel) 66%, transparent);
+    backdrop-filter: blur(18px) saturate(1.2);
     border: 1px solid var(--color-line);
-    box-shadow: 0 12px 32px -12px rgb(15 23 42 / 0.3);
+    box-shadow: var(--shadow-lift);
     transition: inset 200ms var(--os-ease);
   }
   .desktop-dock.is-magnify::before {
@@ -413,7 +421,7 @@ const { person, sections } = data.site;
     height: 46px;
     border-radius: 12px;
     color: var(--color-accent);
-    background: var(--color-panel);
+    background: linear-gradient(160deg, var(--color-panel), var(--color-tint));
     border: 1px solid var(--color-line);
     cursor: pointer;
     transform-origin: 50% 100%;
@@ -432,9 +440,11 @@ const { person, sections } = data.site;
     bottom: calc(100% + 10px);
     left: 50%;
     padding: 0.2rem 0.5rem;
-    border-radius: 6px;
-    background: var(--color-ink);
-    color: var(--color-panel);
+    border-radius: 8px;
+    border: 1px solid var(--color-line);
+    background: var(--color-panel);
+    color: var(--color-ink);
+    box-shadow: var(--shadow-soft);
     font-size: 0.75rem;
     white-space: nowrap;
     opacity: 0;
@@ -455,7 +465,7 @@ const { person, sections } = data.site;
     width: 4px;
     height: 4px;
     border-radius: 999px;
-    background: var(--color-ink);
+    background: var(--color-accent);
   }
   @media (prefers-reduced-motion: reduce) {
     .desktop::before {

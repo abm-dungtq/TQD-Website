@@ -85,10 +85,10 @@ const startEffect = (host: HTMLElement, effect: Exclude<WeatherEffect, 'none'>) 
     canvas.dataset.particles = String(count);
   };
 
-  const rainColor = () =>
-    document.documentElement.dataset.theme === 'dark' ? 'rgb(186 230 253 / 0.35)' : 'rgb(30 64 175 / 0.28)';
-  const snowColor = () =>
-    document.documentElement.dataset.theme === 'dark' ? 'rgb(255 255 255 / 0.85)' : 'rgb(148 163 184 / 0.75)';
+  // Soft ink rain and pearl snow with a champagne edge, tuned for the ivory wallpaper.
+  const RAIN = 'rgb(27 32 48 / 0.22)';
+  const SNOW = 'rgb(255 255 255 / 0.95)';
+  const SNOW_EDGE = 'rgb(184 147 90 / 0.45)';
 
   let frame = 0;
   let last = 0;
@@ -97,7 +97,7 @@ const startEffect = (host: HTMLElement, effect: Exclude<WeatherEffect, 'none'>) 
     last = now;
     ctx.clearRect(0, 0, width, height);
     if (effect === 'rain') {
-      ctx.strokeStyle = rainColor();
+      ctx.strokeStyle = RAIN;
       ctx.lineWidth = 1;
       ctx.lineCap = 'round';
       ctx.beginPath();
@@ -110,7 +110,9 @@ const startEffect = (host: HTMLElement, effect: Exclude<WeatherEffect, 'none'>) 
       }
       ctx.stroke();
     } else {
-      ctx.fillStyle = snowColor();
+      ctx.fillStyle = SNOW;
+      ctx.shadowColor = SNOW_EDGE;
+      ctx.shadowBlur = 3;
       ctx.beginPath();
       for (const p of particles) {
         p.y += p.speed * step;

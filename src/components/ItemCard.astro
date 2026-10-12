@@ -8,14 +8,14 @@ interface Props {
 const { item } = Astro.props;
 ---
 
-<article class="flex flex-col gap-3 rounded-xl border border-line bg-panel p-5">
+<article class="lux-card flex flex-col gap-3 p-6">
   <div>
-    <h3 class="text-base font-semibold leading-snug">{item.title}</h3>
-    {item.date && <p class="mt-1 font-mono text-xs text-muted">{item.date}</p>}
+    {item.date && <p class="font-mono text-xs text-muted">{item.date}</p>}
+    <h3 class="display mt-1 text-2xl">{item.title}</h3>
   </div>
   <p class="text-sm leading-relaxed">{item.summary}</p>
   <ul class="mt-auto flex flex-wrap gap-1.5" aria-label="Nhãn">
-    {item.tags.map((t) => <li class="rounded-full bg-paper px-2.5 py-0.5 text-xs text-muted ring-1 ring-line">{t}</li>)}
+    {item.tags.map((t) => <li class="lux-chip px-2.5 py-0.5 text-xs">{t}</li>)}
   </ul>
   {
     item.links && item.links.length > 0 && (

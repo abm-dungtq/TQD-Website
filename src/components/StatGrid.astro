@@ -14,9 +14,9 @@ const byGroupMax = Math.max(1, ...stats.byGroup.map((g) => g.count));
   <dl class="grid grid-cols-2 gap-3 sm:grid-cols-4">
     {
       stats.headline.map((s) => (
-        <div class="rounded-xl border border-line bg-panel p-4">
+        <div class="lux-card p-5">
           <dt class="text-sm text-muted">{s.label}</dt>
-          <dd class="mt-1 text-3xl font-bold tracking-tight">
+          <dd class="display mt-2 text-5xl">
             <span class="stat-value">{s.value}</span>
           </dd>
           {s.note && <dd class="text-xs text-muted">{s.note}</dd>}
@@ -25,14 +25,14 @@ const byGroupMax = Math.max(1, ...stats.byGroup.map((g) => g.count));
     }
   </dl>
   <div>
-    <h3 class="mb-3 text-base font-semibold">Bài về AI theo nhóm</h3>
+    <h3 class="display mb-4 text-2xl">Bài về AI theo nhóm</h3>
     <ul class="flex flex-col gap-2.5">
       {
         stats.byGroup.map((g) => (
           <li class="grid grid-cols-[minmax(0,12rem)_1fr_2.5rem] items-center gap-3 text-sm">
             <span class="truncate">{g.label}</span>
-            <span class="h-2.5 rounded-full bg-line" aria-hidden="true">
-              <span class="block h-full rounded-full bg-accent" style={`width:${(g.count / byGroupMax) * 100}%`} />
+            <span class="h-1.5 rounded-full bg-tint" aria-hidden="true">
+              <span class="block h-full rounded-full bg-gradient-to-r from-champagne to-accent" style={`width:${(g.count / byGroupMax) * 100}%`} />
             </span>
             <span class="text-right font-mono">{g.count}</span>
           </li>

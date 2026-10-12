@@ -5,12 +5,13 @@ import DesktopShell from '../components/DesktopShell.astro';
 import MobileShell from '../components/MobileShell.astro';
 import SectionBody from '../components/SectionBody.astro';
 import { loadSiteData } from '../lib/content';
+import { personNode } from '../lib/structured-data';
 
 const data = await loadSiteData(env.DB);
 const { person, sections } = data.site;
 ---
 
-<BaseLayout site={data.site} description={`${person.role}. ${person.intro}`} path="/">
+<BaseLayout site={data.site} description={`${person.role}. ${person.intro}`} path="/" jsonLd={[personNode(data.site)]}>
   <DesktopShell slot="before" data={data} />
   <h1 class="sr-only">{person.name} ({person.handle})</h1>
   {/* Phones get a home screen of apps; wide screens without JavaScript get the profile and section list. */}
@@ -19,7 +20,7 @@ const { person, sections } = data.site;
   </div>
   <div class="hidden lg:block">
     <SectionBody id="ho-so" data={data} eager />
-    <h2 class="mb-4 mt-12 text-lg font-semibold">Các mục</h2>
+    <h2 class="display mb-6 mt-16 text-3xl">Các mục</h2>
     <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {
         sections
@@ -28,10 +29,10 @@ const { person, sections } = data.site;
             <li>
               <a
                 href={`/${s.id}`}
-                class="block h-full rounded-xl border border-line bg-panel p-4 text-ink no-underline hover:border-accent"
+                class="lux-card block h-full p-6 text-ink no-underline"
               >
-                <span class="font-semibold">{s.title}</span>
-                <span class="mt-1 block text-sm text-muted">{s.short}</span>
+                <span class="display block text-2xl">{s.title}</span>
+                <span class="mt-2 block text-sm text-muted">{s.short}</span>
               </a>
             </li>
           ))

@@ -45,7 +45,7 @@
     height: 100%;
     object-fit: contain;
     opacity: 0;
-    filter: drop-shadow(0 10px 12px rgb(2 6 23 / 0.22));
+    filter: drop-shadow(0 10px 12px rgb(94 68 19 / 0.22));
     transition: opacity 200ms var(--os-ease);
   }
   .mascot img.is-front {
@@ -60,7 +60,7 @@
     transform-origin: 50% 100%;
   }
   .mascot[data-pose='sleep'] img {
-    filter: drop-shadow(0 10px 12px rgb(2 6 23 / 0.22)) brightness(0.85);
+    filter: drop-shadow(0 10px 12px rgb(94 68 19 / 0.22)) brightness(0.85);
   }
   .mascot-tip {
     position: absolute;
@@ -74,7 +74,7 @@
     background: var(--color-panel);
     color: var(--color-ink);
     font-size: 0.8125rem;
-    box-shadow: 0 12px 28px -12px rgb(2 6 23 / 0.35);
+    box-shadow: var(--shadow-lift);
     transform-origin: 100% 100%;
     animation: mascot-tip 240ms var(--os-spring);
   }
