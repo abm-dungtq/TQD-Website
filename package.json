@@ -11,10 +11,10 @@
     "preview": "astro preview",
     "astro": "astro",
     "check:privacy": "node scripts/check-no-post-text.mjs",
-    "deploy": "cf deploy",
+    "deploy": "npm run build && wrangler deploy",
+    "deploy:preview": "node scripts/deploy-preview.mjs",
     "cf-typegen": "wrangler types",
-    "test": "vitest run",
-    "generate-types": "wrangler types"
+    "test": "vitest run"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^14.3.4",

@@ -1,0 +1,22 @@
+---
+import { formatLinks, LIMITS } from '../../lib/admin-writes';
+import type { Link } from '../../lib/content';
+
+interface Props {
+  item?: { title?: string; date?: string | null; summary?: string; tags?: string[]; links?: Link[]; sort?: number; visible?: boolean };
+  submitLabel: string;
+}
+
+const { item = {}, submitLabel } = Astro.props;
+---
+
+<form method="post" class="admin-form">
+  <label>Tiêu đề <input name="title" value={item.title ?? ''} required maxlength={LIMITS.title} /></label>
+  <label>Ngày (tuỳ chọn, ví dụ 2026-10) <input name="date" value={item.date ?? ''} /></label>
+  <label>Tóm tắt <textarea name="summary" maxlength={LIMITS.summary}>{item.summary ?? ''}</textarea></label>
+  <label>Thẻ (phân cách dấu phẩy) <input name="tags" value={(item.tags ?? []).join(', ')} /></label>
+  <label>Liên kết (mỗi dòng: Nhãn | https://...) <textarea name="links" class="mono">{formatLinks(item.links)}</textarea></label>
+  <label>Thứ tự <input name="sort" type="number" step="1" value={item.sort ?? 0} /></label>
+  <label class="flex! items-center gap-2"><input name="visible" type="checkbox" checked={item.visible ?? true} /> Hiện trên site</label>
+  <button type="submit" class="admin-btn">{submitLabel}</button>
+</form>

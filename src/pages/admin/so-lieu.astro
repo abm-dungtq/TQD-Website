@@ -1,0 +1,68 @@
+---
+import { env } from 'cloudflare:workers';
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { InputError, saveSetting } from '../../lib/admin-writes';
+import { getSite } from '../../lib/content';
+
+const site = await getSite(env.DB);
+let statsText = JSON.stringify(site.stats, null, 2);
+let topicsText = JSON.stringify(site.topics, null, 2);
+let error = '';
+
+const parse = (label: string, text: string): Record<string, unknown> => {
+  try {
+    const value = JSON.parse(text);
+    if (value && typeof value === 'object' && !Array.isArray(value)) return value;
+  } catch {
+    // fall through to the shared message
+  }
+  throw new InputError(`${label}: JSON không hợp lệ.`);
+};
+const isStringList = (v: unknown) => Array.isArray(v) && v.every((s) => typeof s === 'string');
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const target = String(form.get('target'));
+  const text = String(form.get('json') ?? '');
+  try {
+    if (target === 'stats') {
+      statsText = text;
+      const stats = parse('Số liệu', text);
+      if (!Array.isArray(stats.headline) || !Array.isArray(stats.byGroup)) {
+        throw new InputError('Số liệu cần mảng "headline" và "byGroup".');
+      }
+      await saveSetting(env.DB, 'stats', stats);
+    } else if (target === 'topics') {
+      topicsText = text;
+      const topics = parse('Chủ đề', text);
+      if (!isStringList(topics.howTo) || !isStringList(topics.marketWatch)) {
+        throw new InputError('Chủ đề cần "howTo" và "marketWatch" là mảng chuỗi.');
+      }
+      await saveSetting(env.DB, 'topics', topics);
+    } else {
+      throw new InputError('Không rõ mục cần lưu.');
+    }
+    return Astro.redirect('/admin/so-lieu?ok=1', 303);
+  } catch (e) {
+    if (!(e instanceof InputError)) throw e;
+    Astro.response.status = 400;
+    error = e.message;
+  }
+}
+const saved = Astro.url.searchParams.has('ok');
+---
+
+<AdminLayout title="Số liệu và chủ đề">
+  {saved && <p class="admin-ok">Đã lưu.</p>}
+  {error && <p class="admin-error" role="alert">{error}</p>}
+  <form method="post" class="admin-form mb-10">
+    <input type="hidden" name="target" value="stats" />
+    <label>Số liệu (JSON) <textarea name="json" class="mono" rows="18">{statsText}</textarea></label>
+    <button type="submit" class="admin-btn">Lưu số liệu</button>
+  </form>
+  <form method="post" class="admin-form">
+    <input type="hidden" name="target" value="topics" />
+    <label>Chủ đề (JSON) <textarea name="json" class="mono" rows="12">{topicsText}</textarea></label>
+    <button type="submit" class="admin-btn">Lưu chủ đề</button>
+  </form>
+</AdminLayout>

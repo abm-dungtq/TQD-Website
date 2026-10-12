@@ -1,0 +1,35 @@
+---
+import { env } from 'cloudflare:workers';
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { BACKUP_PREFIX, runBackup } from '../../lib/backup';
+
+let written = '';
+if (Astro.request.method === 'POST') written = await runBackup(env);
+
+const { objects } = await env.MEDIA.list({ prefix: BACKUP_PREFIX });
+const backups = objects.sort((a, b) => b.key.localeCompare(a.key));
+const kb = (bytes: number) => `${(bytes / 1024).toFixed(1)} KB`;
+const time = (d: Date) => d.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
+---
+
+<AdminLayout title="Sao lưu">
+  {written && <p class="admin-ok">Đã sao lưu: <code data-backup-key>{written}</code></p>}
+  <p class="mb-4 text-sm text-muted">Tự động sao lưu lúc 02:00 giờ Việt Nam mỗi ngày, giữ 30 bản mới nhất.</p>
+  <form method="post" class="mb-8">
+    <button type="submit" class="admin-btn">Sao lưu ngay</button>
+  </form>
+  <table class="admin-table">
+    <thead><tr><th>Tệp</th><th>Dung lượng</th><th>Thời gian</th></tr></thead>
+    <tbody>
+      {
+        backups.map((o) => (
+          <tr>
+            <td><code>{o.key}</code></td>
+            <td>{kb(o.size)}</td>
+            <td>{time(o.uploaded)}</td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+</AdminLayout>

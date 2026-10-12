@@ -1,0 +1,50 @@
+---
+import { env } from 'cloudflare:workers';
+import ItemForm from '../../../components/admin/ItemForm.astro';
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { InputError, itemFromForm, KIND_BY_SLUG, KIND_LABEL, saveItem, type ItemInput } from '../../../lib/admin-writes';
+import { listItems } from '../../../lib/content';
+
+const slug = Astro.params.kind ?? '';
+const kind = KIND_BY_SLUG[slug];
+if (!kind) return new Response('Not found', { status: 404 });
+
+let error = '';
+let draft: ItemInput | undefined;
+if (Astro.request.method === 'POST') {
+  try {
+    draft = itemFromForm(await Astro.request.formData(), kind);
+    await saveItem(env.DB, draft);
+    return Astro.redirect(`/admin/muc/${slug}?ok=1`, 303);
+  } catch (e) {
+    if (!(e instanceof InputError)) throw e;
+    Astro.response.status = 400;
+    error = e.message;
+  }
+}
+const items = await listItems(env.DB, kind, { includeHidden: true });
+const saved = Astro.url.searchParams.has('ok');
+---
+
+<AdminLayout title={KIND_LABEL[kind]}>
+  {saved && <p class="admin-ok">Đã lưu.</p>}
+  <table class="admin-table mb-10">
+    <thead><tr><th>Tiêu đề</th><th>Ngày</th><th>Thứ tự</th><th>Hiển thị</th><th></th></tr></thead>
+    <tbody>
+      {
+        items.map((it) => (
+          <tr>
+            <td>{it.title}</td>
+            <td>{it.date ?? ''}</td>
+            <td>{it.sort}</td>
+            <td>{it.visible ? 'Hiện' : 'Ẩn'}</td>
+            <td><a href={`/admin/muc/${slug}/${it.id}`}>Sửa</a></td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+  <h2 class="mb-4 text-lg font-bold">Thêm mới</h2>
+  {error && <p class="admin-error" role="alert">{error}</p>}
+  <ItemForm item={draft} submitLabel="Thêm" />
+</AdminLayout>

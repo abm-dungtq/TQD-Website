@@ -1,0 +1,60 @@
+---
+import { env } from 'cloudflare:workers';
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { checkLength, InputError, LIMITS, saveSetting } from '../../lib/admin-writes';
+import { getSite, type Person } from '../../lib/content';
+
+const site = await getSite(env.DB);
+let person: Person = site.person;
+let error = '';
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const text = (name: string) => String(form.get(name) ?? '').trim();
+  const next: Person = {
+    ...site.person,
+    name: text('name'),
+    handle: text('handle'),
+    initials: text('initials'),
+    role: text('role'),
+    intro: text('intro'),
+    focus: text('focus')
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean),
+    email: text('email'),
+    zalo: text('zalo'),
+    portraitAlt: text('portraitAlt'),
+  };
+  try {
+    if (!next.name) throw new InputError('Cần tên.');
+    checkLength('Vai trò', next.role, LIMITS.title);
+    checkLength('Giới thiệu', next.intro, LIMITS.intro);
+    await saveSetting(env.DB, 'person', next);
+    return Astro.redirect('/admin/ho-so?ok=1', 303);
+  } catch (e) {
+    if (!(e instanceof InputError)) throw e;
+    Astro.response.status = 400;
+    error = e.message;
+    person = next;
+  }
+}
+const saved = Astro.url.searchParams.has('ok');
+---
+
+<AdminLayout title="Hồ sơ">
+  {saved && <p class="admin-ok">Đã lưu.</p>}
+  {error && <p class="admin-error" role="alert">{error}</p>}
+  <form method="post" class="admin-form">
+    <label>Tên <input name="name" value={person.name} required /></label>
+    <label>Tên gọi <input name="handle" value={person.handle} /></label>
+    <label>Chữ viết tắt <input name="initials" value={person.initials} /></label>
+    <label>Vai trò <input name="role" value={person.role} maxlength={LIMITS.title} /></label>
+    <label>Giới thiệu <textarea name="intro" maxlength={LIMITS.intro}>{person.intro}</textarea></label>
+    <label>Trọng tâm (mỗi dòng một ý) <textarea name="focus">{person.focus.join('\n')}</textarea></label>
+    <label>Email <input name="email" type="email" value={person.email} /></label>
+    <label>Zalo <input name="zalo" value={person.zalo} /></label>
+    <label>Mô tả ảnh chân dung <input name="portraitAlt" value={person.portraitAlt} /></label>
+    <button type="submit" class="admin-btn">Lưu</button>
+  </form>
+</AdminLayout>

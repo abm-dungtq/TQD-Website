@@ -1,0 +1,42 @@
+---
+import { env } from 'cloudflare:workers';
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { cookieHeader, createSession } from '../../lib/auth';
+import { verifyPassword } from '../../lib/password';
+import { hit, reset } from '../../lib/rate-limit';
+
+let error = '';
+let email = '';
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  email = String(form.get('email') ?? '').trim();
+  const password = String(form.get('password') ?? '');
+  const bucket = 'login:' + (Astro.request.headers.get('cf-connecting-ip') ?? 'local');
+  const limit = await hit(env.DB, bucket, 5, 900);
+  if (!limit.allowed) {
+    Astro.response.status = 429;
+    error = `Sai quá nhiều lần. Thử lại sau ${Math.max(1, Math.ceil(limit.retryAfter / 60))} phút.`;
+  } else if (!env.ADMIN_PASSWORD_HASH) {
+    Astro.response.status = 503;
+    error = 'Chưa đặt mật khẩu admin.';
+  } else {
+    const passwordOk = await verifyPassword(password, env.ADMIN_PASSWORD_HASH);
+    if (passwordOk && email.toLowerCase() === env.ADMIN_EMAIL.toLowerCase()) {
+      await reset(env.DB, bucket);
+      const token = await createSession(env.DB);
+      return new Response(null, { status: 303, headers: { Location: '/admin', 'Set-Cookie': cookieHeader(token) } });
+    }
+    Astro.response.status = 401;
+    error = 'Sai email hoặc mật khẩu.';
+  }
+}
+---
+
+<AdminLayout title="Đăng nhập" bare>
+  {error && <p class="admin-error" role="alert">{error}</p>}
+  <form method="post" class="admin-form max-w-sm">
+    <label>Email <input name="email" type="email" autocomplete="username" required value={email} /></label>
+    <label>Mật khẩu <input name="password" type="password" autocomplete="current-password" required /></label>
+    <button type="submit" class="admin-btn">Đăng nhập</button>
+  </form>
+</AdminLayout>

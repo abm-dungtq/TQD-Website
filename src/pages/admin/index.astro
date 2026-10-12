@@ -1,0 +1,36 @@
+---
+import { env } from 'cloudflare:workers';
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { getVersion } from '../../lib/content';
+
+const [counts, version] = await Promise.all([
+  env.DB.prepare('SELECT kind, COUNT(*) AS n FROM items GROUP BY kind').all<{ kind: string; n: number }>(),
+  getVersion(env.DB),
+]);
+const count = (kind: string) => counts.results.find((r) => r.kind === kind)?.n ?? 0;
+const cards = [
+  { href: '/admin/muc/san-pham', label: 'Sản phẩm', value: count('product') },
+  { href: '/admin/muc/dao-tao', label: 'Đào tạo', value: count('training') },
+  { href: '/admin/muc/video', label: 'Video', value: count('video') },
+];
+---
+
+<AdminLayout title="Tổng quan">
+  <div class="grid gap-4 sm:grid-cols-3">
+    {
+      cards.map((c) => (
+        <a href={c.href} class="rounded-lg border border-line bg-panel p-4 text-ink no-underline">
+          <span class="block text-sm text-muted">{c.label}</span>
+          <span class="text-3xl font-bold">{c.value}</span>
+        </a>
+      ))
+    }
+  </div>
+  <p class="mt-6 text-sm text-muted">Phiên bản nội dung: <code>{version}</code></p>
+  <ul class="mt-4 list-disc pl-5">
+    <li><a href="/admin/ho-so">Sửa hồ sơ</a></li>
+    <li><a href="/admin/so-lieu">Sửa số liệu và chủ đề</a></li>
+    <li><a href="/admin/lien-he">Sửa liên hệ</a></li>
+    <li><a href="/admin/sao-luu">Sao lưu</a></li>
+  </ul>
+</AdminLayout>

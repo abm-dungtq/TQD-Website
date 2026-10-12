@@ -1,0 +1,44 @@
+---
+import { env } from 'cloudflare:workers';
+import ItemForm from '../../../../components/admin/ItemForm.astro';
+import AdminLayout from '../../../../layouts/AdminLayout.astro';
+import { deleteItem, InputError, itemFromForm, KIND_BY_SLUG, KIND_LABEL, saveItem, type ItemInput } from '../../../../lib/admin-writes';
+import { getItem } from '../../../../lib/content';
+
+const slug = Astro.params.kind ?? '';
+const kind = KIND_BY_SLUG[slug];
+const id = Number(Astro.params.id);
+const item = kind && Number.isInteger(id) ? await getItem(env.DB, id) : null;
+if (!kind || !item || item.kind !== kind) return new Response('Not found', { status: 404 });
+
+let error = '';
+let draft: ItemInput | undefined;
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  if (form.get('_action') === 'delete') {
+    await deleteItem(env.DB, id);
+    return Astro.redirect(`/admin/muc/${slug}?ok=1`, 303);
+  }
+  try {
+    draft = { ...itemFromForm(form, kind), id };
+    await saveItem(env.DB, draft);
+    return Astro.redirect(`/admin/muc/${slug}/${id}?ok=1`, 303);
+  } catch (e) {
+    if (!(e instanceof InputError)) throw e;
+    Astro.response.status = 400;
+    error = e.message;
+  }
+}
+const saved = Astro.url.searchParams.has('ok');
+---
+
+<AdminLayout title={`Sửa ${KIND_LABEL[kind].toLowerCase()}`}>
+  <p class="mb-4"><a href={`/admin/muc/${slug}`}>← {KIND_LABEL[kind]}</a></p>
+  {saved && <p class="admin-ok">Đã lưu.</p>}
+  {error && <p class="admin-error" role="alert">{error}</p>}
+  <ItemForm item={draft ?? item} submitLabel="Lưu" />
+  <form method="post" class="mt-10" onsubmit="return confirm('Xoá mục này?')">
+    <input type="hidden" name="_action" value="delete" />
+    <button type="submit" class="admin-btn-danger">Xoá</button>
+  </form>
+</AdminLayout>
