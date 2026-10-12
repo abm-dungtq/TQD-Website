@@ -10,7 +10,7 @@ export interface ApiKey {
   scopes: Scope[];
 }
 
-const BEARER = /^Bearer (tqd_[A-Za-z0-9_-]{43})$/;
+const BEARER = /^Bearer (tqd_[A-Za-z0-9_-]{43})$/i;
 
 export async function generateApiKey(): Promise<{ key: string; prefix: string; hash: string }> {
   const key = `tqd_${randomToken()}`;

@@ -20,7 +20,7 @@ describe('api key', () => {
 
   it('rejects malformed headers without touching the database', async () => {
     const db = {} as D1Database;
-    for (const header of [null, '', 'Bearer tqd_sai', 'Basic abc', `bearer tqd_${'a'.repeat(43)}`]) {
+    for (const header of [null, '', 'Bearer tqd_sai', 'Basic abc', `Bearer tqd_${'a'.repeat(42)}`]) {
       expect(await authenticate(db, header)).toBeNull();
     }
   });

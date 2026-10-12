@@ -31,6 +31,8 @@ node scripts/tqd-publish.mjs delete <slug>
 node scripts/tqd-publish.mjs delete-media <key>
 ```
 
+Đường dẫn `scripts/...` tính từ thư mục skill. Khi gọi từ thư mục khác, dùng đường dẫn đầy đủ, ví dụ `node ~/.claude/skills/tqd-publish/scripts/tqd-publish.mjs whoami`.
+
 Mỗi lệnh in một dòng JSON ra stdout. Khi lỗi, script in JSON lỗi ra stderr và thoát với mã 1.
 
 ## Quy trình đăng bài

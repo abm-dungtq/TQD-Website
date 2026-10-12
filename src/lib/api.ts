@@ -26,7 +26,7 @@ export async function requireKey(context: APIContext, scope?: Scope): Promise<Ap
   }
   if (scope && !key.scopes.includes(scope)) return apiError(403, 'forbidden', `Key thiếu quyền ${scope}.`);
   context.locals.cfContext.waitUntil(
-    env.DB.prepare("UPDATE api_keys SET last_used_at = datetime('now') WHERE id = ?1").bind(key.id).run(),
+    env.DB.prepare("UPDATE api_keys SET last_used_at = datetime('now') WHERE id = ?1 AND (last_used_at IS NULL OR last_used_at < datetime('now', '-60 seconds'))").bind(key.id).run(),
   );
   return key;
 }

@@ -19,7 +19,7 @@ Xác thực bằng header `Authorization: Bearer tqd_<43 ký tự base64url>`; A
 Quy tắc của `PUT`:
 
 - **Bài chưa có.** Không được gửi `If-Match` (gửi thì 412). Nếu `publish: true` và key có quyền `publish`, bài được đăng. Nếu key thiếu quyền đó, bài thành nháp và kết quả có `warning`.
-- **Bài đã có.** Bắt buộc gửi `If-Match: "v{version}"`: thiếu thì 428, sai thì 412. Bài đang đăng mà key thiếu `publish` thì 403. Không gửi `publish` thì bài giữ trạng thái cũ; `publish: false` chuyển bài về nháp.
+- **Bài đã có.** Bắt buộc gửi `If-Match: "v{version}"`: thiếu thì 428, sai thì 412. Chỉ nhận dạng `"v{n}"`; `If-Match: *` bị coi là sai. Bài đang đăng mà key thiếu `publish` thì 403. Không gửi `publish` thì bài giữ trạng thái cũ; `publish: false` chuyển bài về nháp.
 - **Trường không gửi.** Khi sửa bài, `summary`, `tags` và `coverKey` không gửi thì giữ giá trị cũ.
 - **Slug và nguồn.** Slug chỉ lấy từ đường dẫn. Nguồn bài được ghi là `agent:<tên key>`.
 

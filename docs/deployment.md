@@ -56,6 +56,10 @@ TQD_ADMIN_PASSWORD=... node scripts/verify/admin.mjs https://tqd-next.ngulongyqu
 
 HTML công khai được lưu trong Cache API với khoá `<đường dẫn>?v=<content_version>&b=<build id>`. Mỗi lần ghi nội dung tăng `content_version`; mỗi lần build có build id mới, nên không cần xoá cache tay. Header `X-Cache: HIT|MISS` và `X-Content-Version` cho biết trạng thái. Cache API không hoạt động trên `workers.dev`, chỉ trên `tqd.io.vn`.
 
+## Giới hạn CPU gói Free
+
+Lưu bài là đường duy nhất dễ chạm giới hạn 10 ms CPU của gói Workers Free, vì lúc đó Worker render Markdown và dò đoạn trùng Facebook. Bài tối đa 100 000 ký tự. Năm 2026-10 đã thử lưu bài 10k, 50k và 100k ký tự trên preview, cả ba đều thành công. Lượt xem bài thì chỉ đọc HTML đã render sẵn. Nếu log xuất hiện lỗi 1102 (`exceededCpu`) khi lưu bài, cân nhắc gói Workers Paid hoặc hạ giới hạn độ dài bài.
+
 ## Vì sao dùng Wrangler thay vì `cf` CLI
 
 Ngày 2026-10-12 đã thử `cf` 1.0.0-beta.14: `cf build` / `cf deploy` dừng với lỗi `Build Output Specification: no root config found at .cloudflare/output/v0/config.json.` Vì vậy deploy bằng Wrangler; `wrangler.jsonc` là cấu hình duy nhất.
