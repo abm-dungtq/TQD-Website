@@ -1,22 +1,16 @@
 ---
-export const prerender = true;
+import { env } from 'cloudflare:workers';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import SectionBody from '../components/SectionBody.astro';
-import { sections, type Section } from '../data/profile';
+import { loadSiteData } from '../lib/content';
 
-export function getStaticPaths() {
-  return sections.map((s) => ({ params: { section: s.id }, props: { s } }));
-}
-
-interface Props {
-  s: Section;
-}
-
-const { s } = Astro.props;
+const data = await loadSiteData(env.DB);
+const s = data.site.sections.find((x) => x.id === Astro.params.section);
+if (!s) return Astro.rewrite('/404');
 ---
 
-<BaseLayout title={s.title} description={s.short} path={`/${s.id}`}>
+<BaseLayout site={data.site} title={s.title} description={s.short} path={`/${s.id}`} markdownPath={`/${s.id}.md`}>
   <h1 class="mb-2 text-3xl font-bold tracking-tight">{s.title}</h1>
   <p class="mb-8 text-muted">{s.short}</p>
-  <SectionBody id={s.id} eager />
+  <SectionBody id={s.id} data={data} eager />
 </BaseLayout>

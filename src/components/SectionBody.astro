@@ -1,30 +1,35 @@
 ---
-import { Image } from 'astro:assets';
 import ItemCard from './ItemCard.astro';
 import StatGrid from './StatGrid.astro';
-import { expertise, links, person, products, stats, trainings, videos, type SectionId } from '../data/profile';
+import type { SectionId, SiteData } from '../lib/content';
 
 interface Props {
   id: SectionId;
+  data: SiteData;
   /** Loads the portrait eagerly when it is above the fold. */
   eager?: boolean;
 }
 
-const { id, eager = false } = Astro.props;
-const groupCount = (label: string) => stats.byGroup.find((g) => g.label === label)?.count ?? 0;
+const { id, data, eager = false } = Astro.props;
+const { person, links, topics, stats } = data.site;
+const { products, trainings, videos, articles } = data;
 const gridClass = 'grid gap-4 sm:grid-cols-2';
+const formatDate = (iso?: string) => (iso ? iso.slice(0, 10).split('-').reverse().join('/') : '');
 ---
 
 {
   id === 'ho-so' && (
     <div class="grid items-start gap-8 sm:grid-cols-[13rem_1fr]">
-      <Image
+      <img
         src={person.portrait}
-        alt={person.portraitAlt}
-        widths={[240, 480]}
+        srcset={`${person.portraitSmall} 240w, ${person.portrait} 480w`}
         sizes="(min-width: 640px) 208px, 60vw"
+        width="240"
+        height="320"
+        alt={person.portraitAlt}
         loading={eager ? 'eager' : 'lazy'}
         fetchpriority={eager ? 'high' : undefined}
+        decoding="async"
         class="aspect-[3/4] w-3/5 max-w-[13rem] rounded-2xl object-cover ring-1 ring-line sm:w-full"
       />
       <div class="flex flex-col gap-4">
@@ -74,17 +79,31 @@ const gridClass = 'grid gap-4 sm:grid-cols-2';
 }
 
 {
-  id === 'chuyen-mon' && (
+  id === 'bai-viet' && articles.length > 0 && (
+    <ul class="flex flex-col gap-4">
+      {articles.map((a) => (
+        <li class="rounded-xl border border-line bg-panel p-5">
+          <h3 class="text-base font-semibold leading-snug">
+            <a href={`/bai-viet/${a.slug}`}>{a.title}</a>
+          </h3>
+          <p class="mt-1 font-mono text-xs text-muted">{formatDate(a.publishedAt)}</p>
+          {a.summary && <p class="mt-2 text-sm leading-relaxed">{a.summary}</p>}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+{
+  id === 'bai-viet' && articles.length === 0 && (
     <div class="flex flex-col gap-6">
-      <p class="text-muted">
-        {groupCount('Hướng dẫn, quy trình & mẹo')} bài hướng dẫn · {groupCount('Bình luận tin tức AI')} bài bình luận tin
-        tức
-      </p>
+      <p class="text-muted">Chưa có bài viết.</p>
+      <h2 class="text-lg font-semibold">Chủ đề thường viết</h2>
       <div class="grid gap-6 sm:grid-cols-2">
         <div class="rounded-xl border border-line bg-panel p-5">
           <h2 class="mb-3 text-base font-semibold">Hướng dẫn &amp; quy trình</h2>
           <ul class="list-disc space-y-1.5 pl-5 text-sm">
-            {expertise.howTo.map((t) => (
+            {topics.howTo.map((t) => (
               <li>{t}</li>
             ))}
           </ul>
@@ -92,7 +111,7 @@ const gridClass = 'grid gap-4 sm:grid-cols-2';
         <div class="rounded-xl border border-line bg-panel p-5">
           <h2 class="mb-3 text-base font-semibold">Theo dõi thị trường</h2>
           <ul class="list-disc space-y-1.5 pl-5 text-sm">
-            {expertise.marketWatch.map((t) => (
+            {topics.marketWatch.map((t) => (
               <li>{t}</li>
             ))}
           </ul>
@@ -102,7 +121,7 @@ const gridClass = 'grid gap-4 sm:grid-cols-2';
   )
 }
 
-{id === 'so-lieu' && <StatGrid />}
+{id === 'so-lieu' && <StatGrid stats={stats} />}
 
 {
   id === 'lien-he' && (

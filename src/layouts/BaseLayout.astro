@@ -1,14 +1,18 @@
 ---
 import '../styles/global.css';
-import { links, person, sections, stats } from '../data/profile';
+import type { Site } from '../lib/content';
 
 interface Props {
+  site: Site;
   title?: string;
   description: string;
   path: string;
+  ogType?: 'website' | 'article';
+  markdownPath?: string;
 }
 
-const { title, description, path } = Astro.props;
+const { site, title, description, path, ogType = 'website', markdownPath = '/index.md' } = Astro.props;
+const { links, person, sections, stats } = site;
 const fullTitle = title ? `${title} · ${person.handle}` : `${person.name} (${person.handle})`;
 const canonical = new URL(path, Astro.site).href;
 const ogImage = new URL('/og.png', Astro.site).href;
@@ -24,8 +28,8 @@ const current = path.replace(/^\//, '');
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="alternate" type="text/markdown" href="/index.md" />
-    <meta property="og:type" content="website" />
+    <link rel="alternate" type="text/markdown" href={markdownPath} />
+    <meta property="og:type" content={ogType} />
     <meta property="og:locale" content="vi_VN" />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />

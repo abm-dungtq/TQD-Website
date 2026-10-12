@@ -2,17 +2,23 @@
 // Home-page "desktop": a menu bar, launcher icons, a dock and one window per section.
 // It stays hidden until src/scripts/desktop.ts enables it on wide screens; without
 // JavaScript or on phones the plain page in [data-fallback] is shown instead.
-import { Image } from 'astro:assets';
 import Icon from './Icon.astro';
 import SectionBody from './SectionBody.astro';
-import { person, sections } from '../data/profile';
+import type { SiteData } from '../lib/content';
+
+interface Props {
+  data: SiteData;
+}
+
+const { data } = Astro.props;
+const { person, sections } = data.site;
 ---
 
 <div id="desktop" class="desktop hidden" data-desktop tabindex="-1">
   <h1 class="sr-only">{person.name} ({person.handle})</h1>
   <div class="desktop-menubar">
     <a href="/" class="flex items-center gap-2 font-semibold text-ink no-underline">
-      <Image src={person.portrait} alt="" width={40} height={40} class="size-5 rounded-full object-cover" />
+      <img src={person.portraitSmall} alt="" width="40" height="40" class="size-5 rounded-full object-cover" />
       {person.handle}
     </a>
     <span class="text-muted">{person.role}</span>
@@ -58,7 +64,7 @@ import { person, sections } from '../data/profile';
           </button>
         </header>
         <div class="desktop-body">
-          <SectionBody id={s.id} />
+          <SectionBody id={s.id} data={data} />
         </div>
       </section>
     ))

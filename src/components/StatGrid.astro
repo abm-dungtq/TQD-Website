@@ -1,5 +1,13 @@
 ---
-import { byGroupMax, byGroupTotal, stats } from '../data/profile';
+import type { Stats } from '../lib/content';
+
+interface Props {
+  stats: Stats;
+}
+
+const { stats } = Astro.props;
+const byGroupTotal = stats.byGroup.reduce((sum, g) => sum + g.count, 0);
+const byGroupMax = Math.max(1, ...stats.byGroup.map((g) => g.count));
 ---
 
 <div class="flex flex-col gap-8">

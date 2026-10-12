@@ -1,5 +1,5 @@
 ---
-import type { Item } from '../data/profile';
+import type { Item } from '../lib/content';
 
 interface Props {
   item: Item;
@@ -18,7 +18,7 @@ const { item } = Astro.props;
     {item.tags.map((t) => <li class="rounded-full bg-paper px-2.5 py-0.5 text-xs text-muted ring-1 ring-line">{t}</li>)}
   </ul>
   {
-    item.links && (
+    item.links && item.links.length > 0 && (
       <p class="flex flex-wrap gap-3 text-sm font-semibold">
         {item.links.map((l) => (
           <a href={l.href} target="_blank" rel="noopener">

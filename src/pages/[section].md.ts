@@ -1,10 +1,9 @@
-export const prerender = true;
 import type { APIRoute } from 'astro';
-import { sections, type SectionId } from '../data/profile';
+import { env } from 'cloudflare:workers';
+import { loadSiteData, type SectionId } from '../lib/content';
 import { markdownResponse, sectionMarkdown } from '../lib/profile-markdown';
 
-export function getStaticPaths() {
-  return sections.map((s) => ({ params: { section: s.id }, props: { id: s.id } }));
-}
-
-export const GET: APIRoute<{ id: SectionId }> = ({ props }) => markdownResponse(sectionMarkdown(props.id));
+export const GET: APIRoute = async ({ params }) => {
+  const body = sectionMarkdown(params.section as SectionId, await loadSiteData(env.DB));
+  return body ? markdownResponse(body) : new Response('Not found', { status: 404 });
+};
