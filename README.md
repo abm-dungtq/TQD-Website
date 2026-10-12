@@ -1,43 +1,26 @@
-# Astro Starter Kit: Minimal
+# tqd.io.vn — website cá nhân của Trịnh Quang Dũng (DũngTQ)
 
-```sh
-npm create astro@latest -- --template minimal
-```
+Website tĩnh giới thiệu hồ sơ, sản phẩm AI tự xây, đào tạo và sự kiện, video AI, chuyên môn, số liệu và liên hệ của DũngTQ. Trang chủ có giao diện kiểu màn hình máy tính (dock, cửa sổ) trên màn hình rộng; trên điện thoại hoặc khi tắt JavaScript, mỗi mục là một trang thường tại `/{mục}`.
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+Giao diện lấy cảm hứng từ zuey.me; mã nguồn viết mới, không sao chép từ repo đó.
 
-## 🚀 Project Structure
+## Nội dung
 
-Inside of your Astro project, you'll see the following folders and files:
+- Toàn bộ nội dung nằm trong `src/data/profile.ts` (số liệu tổng hợp ở `src/data/stats.ts`). Sửa hai file này để cập nhật site.
+- Nội dung được tổng hợp từ hoạt động AI trên Facebook 10/07–10/10/2026. Site **không** chứa văn bản bài Facebook nào; `npm run check:privacy` chặn việc này bằng cách so bản build với dữ liệu nguồn.
+- Ảnh chân dung: `src/assets/portrait.jpg`. Ảnh chia sẻ `public/og.png` được tạo từ `public/og.svg` bằng `node scripts/make-og.mjs`.
+- Bản cho máy đọc: `/llms.txt`, `/index.md`, `/{mục}.md`, `/sitemap.xml`.
 
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
-```
+## Lệnh
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+| Lệnh | Việc |
+|---|---|
+| `npm install` | Cài phụ thuộc (Node ≥ 22.12) |
+| `npm run dev` | Chạy thử tại `http://localhost:4321` |
+| `npm run build` | Kiểm tra type và build ra thư mục output tĩnh |
+| `npm run check:privacy` | Xác nhận bản build không chứa văn bản bài Facebook |
+| `npm run deploy` | Build, kiểm tra quyền riêng tư rồi deploy lên Cloudflare bằng Wrangler |
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+Các kiểm tra bổ sung nằm trong `scripts/verify/` (chạy bằng `node scripts/verify/<tên>.mjs` sau khi build).
 
-Any static assets, like images, can be placed in the `public/` directory.
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+Cách deploy, tài khoản Cloudflare đích và cách gắn tên miền: [docs/deployment.md](docs/deployment.md).

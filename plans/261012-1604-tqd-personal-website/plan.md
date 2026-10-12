@@ -1,7 +1,7 @@
 ---
 title: "Website cá nhân DũngTQ tại tqd.io.vn"
 description: "Astro tĩnh lấy cảm hứng zuey.me, nội dung tổng hợp từ hoạt động AI 3 tháng, deploy Cloudflare Worker static assets lên tqd.io.vn"
-status: pending
+status: completed
 priority: P2
 effort: 8h
 branch: main
@@ -42,12 +42,12 @@ Node 24.19 · Astro 7.3.x (`output: 'static'`) · Tailwind CSS 4.3 qua `@tailwin
 
 | # | Phase | File | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
-| 1 | Khởi tạo dự án và dữ liệu hồ sơ | [phase-01](phase-01-scaffold-and-profile-data.md) | — | pending |
-| 2 | Layout và các route nội dung | [phase-02](phase-02-layout-and-content-routes.md) | 1 | pending |
-| 3 | Lớp giao diện "desktop" | [phase-03](phase-03-desktop-shell.md) | 2 | pending |
-| 4 | Bề mặt cho máy và SEO | [phase-04](phase-04-machine-surfaces-and-seo.md) | 2 | pending |
-| 5 | Kiểm tra chất lượng | [phase-05](phase-05-quality-gates.md) | 3, 4 | pending |
-| 6 | Deploy và gắn tên miền | [phase-06](phase-06-deploy-and-domain.md) | 5 | pending |
+| 1 | Khởi tạo dự án và dữ liệu hồ sơ | [phase-01](phase-01-scaffold-and-profile-data.md) | — | completed |
+| 2 | Layout và các route nội dung | [phase-02](phase-02-layout-and-content-routes.md) | 1 | completed |
+| 3 | Lớp giao diện "desktop" | [phase-03](phase-03-desktop-shell.md) | 2 | completed |
+| 4 | Bề mặt cho máy và SEO | [phase-04](phase-04-machine-surfaces-and-seo.md) | 2 | completed |
+| 5 | Kiểm tra chất lượng | [phase-05](phase-05-quality-gates.md) | 3, 4 | completed |
+| 6 | Deploy và gắn tên miền | [phase-06](phase-06-deploy-and-domain.md) | 5 | completed |
 
 ## Acceptance criteria
 
@@ -68,3 +68,10 @@ Node 24.19 · Astro 7.3.x (`output: 'static'`) · Tailwind CSS 4.3 qua `@tailwin
 ## Unresolved questions
 
 - Không còn câu hỏi mở. Ảnh chân dung, email `dungtq.ceo@gmail.com` và Zalo `zalo.me/trinhquangdung` đã được người dùng cung cấp ngày 2026-10-12; ảnh nằm ở `assets/portrait.jpg` của thư mục kế hoạch.
+
+## Kết quả (2026-10-12)
+
+- Live tại `https://tqd.io.vn` (Worker `tqd-website`, version `8ffa1fd5`). `scripts/verify/live.mjs` in `OK live`; kiểm tra trình duyệt trên site thật đều PASS.
+- Deploy bằng Wrangler (Task 6.3). `cf` 1.0.0-beta.14 đăng nhập và migrate được nhưng `cf build/deploy` đòi Build Output Specification mà Astro tĩnh không tạo; chi tiết ở `docs/deployment.md`.
+- Lighthouse mobile: trang chủ hiệu năng 0.94 / truy cập 1.0; `/san-pham` 0.94 / 0.98.
+- Các lệnh Verify có đọc bản build được chạy qua `scripts/verify/*.mjs` vì hook máy chặn lệnh shell nhắc tới thư mục build.

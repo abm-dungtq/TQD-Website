@@ -1,7 +1,7 @@
 ---
 phase: 3
 title: "Lớp giao diện desktop"
-status: pending
+status: completed
 dependsOn: [2]
 ---
 

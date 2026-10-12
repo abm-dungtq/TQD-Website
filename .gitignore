@@ -22,6 +22,7 @@ pnpm-debug.log*
 .wrangler/
 .cache/
 .lighthouse-*.json
+paseo.json
 
 # macOS-specific files
 .DS_Store

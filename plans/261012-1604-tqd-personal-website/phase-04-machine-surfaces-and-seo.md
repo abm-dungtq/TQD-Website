@@ -1,7 +1,7 @@
 ---
 phase: 4
 title: "Bề mặt cho máy và SEO"
-status: pending
+status: completed
 dependsOn: [2]
 ---
 

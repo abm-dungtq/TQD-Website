@@ -1,7 +1,7 @@
 ---
 phase: 1
 title: "Khởi tạo dự án và dữ liệu hồ sơ"
-status: pending
+status: completed
 dependsOn: []
 ---
 

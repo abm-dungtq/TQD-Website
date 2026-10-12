@@ -1,7 +1,7 @@
 ---
 phase: 2
 title: "Layout và các route nội dung"
-status: pending
+status: completed
 dependsOn: [1]
 ---
 

@@ -1,7 +1,7 @@
 ---
 phase: 5
 title: "Kiểm tra chất lượng"
-status: pending
+status: completed
 dependsOn: [3, 4]
 ---
 

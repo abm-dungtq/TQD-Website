@@ -1,7 +1,7 @@
 ---
 phase: 6
 title: "Deploy và gắn tên miền"
-status: pending
+status: completed
 dependsOn: [5]
 ---
 
