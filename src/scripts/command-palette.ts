@@ -1,5 +1,6 @@
 // ⌘K / Ctrl+K / "/" quick search. Loads /search.json on first open and filters it locally.
 import { matches } from '../lib/search-text';
+import { typing } from './typing';
 
 interface Entry {
   title: string;
@@ -49,7 +50,8 @@ if (dialog && input && list && empty && status) {
       el.setAttribute('aria-selected', String(i === index));
       if (i === index) el.scrollIntoView({ block: 'nearest' });
     });
-    input.setAttribute('aria-activedescendant', results.length ? `cmdk-opt-${index}` : '');
+    if (results.length) input.setAttribute('aria-activedescendant', `cmdk-opt-${index}`);
+    else input.removeAttribute('aria-activedescendant');
   };
 
   const render = () => {
@@ -132,9 +134,6 @@ if (dialog && input && list && empty && status) {
       go(results[active]);
     }
   });
-
-  const typing = (el: Element | null) =>
-    el instanceof HTMLElement && (el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName));
 
   document.addEventListener('keydown', (e) => {
     if ((e.key === 'k' || e.key === 'K') && (e.metaKey || e.ctrlKey)) {

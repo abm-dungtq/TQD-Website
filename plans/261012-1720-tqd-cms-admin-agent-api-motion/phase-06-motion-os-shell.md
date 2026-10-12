@@ -17,7 +17,8 @@ dependencies: [4]
 - Lần đo đầu chỉ đạt 0.87/0.86 vì Google Fonts chặn render. Đã chuyển sang font tự host bằng Astro Fonts API, inline CSS và thêm `fetchpriority` cho ảnh bìa.
 - Kiểm tra hiệu ứng: `C:/Users/ABM/.cache/tqd-verify/motion-check.mjs <base-url>` (nằm ngoài repo) in ALL PASS trên local, preview và production.
 - Khác plan: màu nhấn sáng emerald `#047857`, amber `#b45309` để chữ link đạt tương phản 4.5:1.
-- Việc sau: chuyển hiệu ứng aurora từ `background-position` sang `transform`.
+- Sau go/no-go (GO, không có must-fix): đã sửa skip link khi sheet mở, chặn phím tắt desktop khi đang gõ, ARIA của ⌘K, đóng sheet khi màn hình rộng ra. Production 07c65e3f.
+- Việc sau: aurora dùng `transform` thay `background-position`; Exposé chọn được bằng bàn phím; `theme-color` theo giao diện đã chọn; whitelist accent trong script đầu trang; chỉ mục tìm kiếm đang giới hạn 50 bài mới nhất.
 
 ## Goal
 

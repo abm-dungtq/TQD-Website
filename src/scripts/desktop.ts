@@ -2,6 +2,7 @@
 // The desktop only runs on wide screens; elsewhere the plain page stays visible.
 import { enableDockMagnify } from './dock';
 import { createExpose } from './expose';
+import { typing } from './typing';
 
 const WIDE_QUERY = '(min-width: 1024px)';
 const DEFAULT_WINDOW = 'ho-so';
@@ -231,7 +232,7 @@ if (desktop && fallback) {
     });
 
     document.addEventListener('keydown', (event) => {
-      if (desktop.classList.contains('hidden') || document.querySelector('dialog[open]')) return;
+      if (desktop.classList.contains('hidden') || document.querySelector('dialog[open]') || typing(document.activeElement)) return;
       if (event.key === 'F3' || (event.key === 'ArrowUp' && event.ctrlKey)) {
         event.preventDefault();
         toggleExpose();

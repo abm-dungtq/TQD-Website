@@ -13,6 +13,7 @@ const title = document.querySelector<HTMLElement>('[data-m-title]');
 const body = document.querySelector<HTMLElement>('[data-m-body]');
 const pageLink = document.querySelector<HTMLAnchorElement>('[data-m-link]');
 const fallback = document.querySelector<HTMLElement>('[data-fallback]');
+const skipLink = document.querySelector<HTMLElement>('[data-skip]');
 
 if (home && sheet && scrim && title && body && pageLink && fallback) {
   // Outside [data-fallback] so the rest of the page can be made inert while the sheet is open.
@@ -65,6 +66,7 @@ if (home && sheet && scrim && title && body && pageLink && fallback) {
     sheet.hidden = false;
     scrim.hidden = false;
     fallback.inert = true;
+    if (skipLink) skipLink.inert = true;
     document.documentElement.style.overflow = 'hidden';
     home.classList.add('is-behind');
     sheet.querySelector<HTMLElement>('[data-m-close]')?.focus({ preventScroll: true });
@@ -90,6 +92,7 @@ if (home && sheet && scrim && title && body && pageLink && fallback) {
     scrim.hidden = true;
     sheet.style.transform = '';
     fallback.inert = false;
+    if (skipLink) skipLink.inert = false;
     document.documentElement.style.overflow = '';
     apps.get(id)?.focus({ preventScroll: true });
   };
@@ -159,6 +162,11 @@ if (home && sheet && scrim && title && body && pageLink && fallback) {
     drag.addEventListener('pointermove', move);
     drag.addEventListener('pointerup', end);
     drag.addEventListener('pointercancel', end);
+  });
+
+  // Widening to the desktop layout closes the sheet so the page underneath is usable again.
+  NARROW.addEventListener('change', (e) => {
+    if (!e.matches && current) requestClose();
   });
 
   // A shared link such as /#san-pham opens that sheet directly.
