@@ -8,7 +8,7 @@
   "workers_dev": false,
   "routes": [{ "pattern": "tqd.io.vn", "custom_domain": true }],
   "observability": { "enabled": true },
-  "vars": { "ADMIN_EMAIL": "dungtq.ceo@gmail.com" },
+  "vars": { "ADMIN_EMAIL": "dungtq.ceo@gmail.com", "GOCLAW_BASE_URL": "https://goclaw.tqd.io.vn", "GOCLAW_AGENT": "dungtq-web", "CHAT_DAILY_CAP": "300" },
   "d1_databases": [
     { "binding": "DB", "database_name": "tqd_db", "database_id": "b11ff76d-6626-4d05-ab23-34cc124d9163", "migrations_dir": "migrations" }
   ],
@@ -21,7 +21,7 @@
       "workers_dev": true,
       "routes": [],
       "triggers": { "crons": [] },
-      "vars": { "ADMIN_EMAIL": "dungtq.ceo@gmail.com" },
+      "vars": { "ADMIN_EMAIL": "dungtq.ceo@gmail.com", "GOCLAW_BASE_URL": "https://goclaw.tqd.io.vn", "GOCLAW_AGENT": "dungtq-web", "CHAT_DAILY_CAP": "300" },
       "d1_databases": [
         { "binding": "DB", "database_name": "tqd_db", "database_id": "b11ff76d-6626-4d05-ab23-34cc124d9163", "migrations_dir": "migrations" }
       ],
