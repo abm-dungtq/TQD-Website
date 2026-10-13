@@ -1,11 +1,27 @@
 ---
 // Desktop mascot: two stacked images cross-fade between poses. Hidden until src/scripts/mascot.ts
-// starts it, so phones, print and no-JavaScript visitors never see or download it.
+// starts it, so phones, print and no-JavaScript visitors never see or download it. It is the way into
+// the chat with the website agent; the speech bubble introduces it.
 ---
 
 <div class="mascot-wrap" data-mascot-wrap hidden>
-  <p class="mascot-tip" role="status" data-mascot-tip></p>
-  <button type="button" class="mascot" data-mascot data-pose="idle" aria-label="Linh vật DũngTQ – bấm để xem mẹo">
+  <div class="mascot-tip" data-mascot-tip hidden>
+    <p class="mascot-say" data-mascot-say></p>
+    <button type="button" class="mascot-tip-close" data-mascot-dismiss aria-label="Ẩn lời chào">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" aria-hidden="true">
+        <path d="M6 6l12 12M18 6 6 18"></path>
+      </svg>
+    </button>
+  </div>
+  <button
+    type="button"
+    class="mascot"
+    data-mascot
+    data-pose="idle"
+    aria-label="Trò chuyện với Agent DũngTQ"
+    aria-controls="chat-panel"
+    aria-expanded="false"
+  >
     <img alt="" width="128" height="128" class="is-front" data-mascot-img />
     <img alt="" width="128" height="128" data-mascot-img />
   </button>
@@ -66,26 +82,52 @@
     position: absolute;
     right: 8px;
     bottom: calc(100% + 6px);
+    display: flex;
+    align-items: flex-start;
+    gap: 0.25rem;
     width: max-content;
-    max-width: 15rem;
-    padding: 0.5rem 0.75rem;
+    max-width: 17rem;
+    padding: 0.625rem 0.375rem 0.625rem 0.875rem;
     border: 1px solid var(--color-line);
     border-radius: 14px 14px 4px 14px;
     background: var(--color-panel);
     color: var(--color-ink);
     font-size: 0.8125rem;
+    line-height: 1.45;
     box-shadow: var(--shadow-lift);
+    pointer-events: auto;
     transform-origin: 100% 100%;
     animation: mascot-tip 240ms var(--os-spring);
+  }
+  .mascot-tip[hidden] {
+    display: none;
+  }
+  .mascot-say {
+    cursor: pointer;
+  }
+  .mascot-tip-close {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    margin-top: -2px;
+    border-radius: 999px;
+    color: var(--color-muted);
+  }
+  .mascot-tip-close:hover {
+    background: var(--color-tint);
+    color: var(--color-ink);
+  }
+  .mascot-tip-close:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
   }
   .mascot-wrap[data-tip='right'] .mascot-tip {
     right: auto;
     left: 8px;
     border-radius: 14px 14px 14px 4px;
     transform-origin: 0 100%;
-  }
-  .mascot-tip:empty {
-    display: none;
   }
   @keyframes mascot-breathe {
     50% {

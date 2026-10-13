@@ -3,6 +3,7 @@ import { env } from 'cloudflare:workers';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import DesktopShell from '../components/DesktopShell.astro';
 import MobileShell from '../components/MobileShell.astro';
+import ChatPanel from '../components/ChatPanel.astro';
 import SectionBody from '../components/SectionBody.astro';
 import { loadSiteData } from '../lib/content';
 import { personNode } from '../lib/structured-data';
@@ -13,6 +14,7 @@ const { person, sections } = data.site;
 
 <BaseLayout site={data.site} description={`${person.role}. ${person.intro}`} path="/" jsonLd={[personNode(data.site)]}>
   <DesktopShell slot="before" data={data} />
+  <ChatPanel slot="before" zalo={person.zalo} />
   <h1 class="sr-only">{person.name} ({person.handle})</h1>
   {/* Phones get a home screen of apps; wide screens without JavaScript get the profile and section list. */}
   <div class="lg:hidden">

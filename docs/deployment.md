@@ -18,6 +18,7 @@ Production và preview dùng **chung dữ liệu**: binding `DB` → D1 `tqd_db`
 |---|---|---|
 | `ADMIN_EMAIL` | `vars` trong `wrangler.jsonc` | Email đăng nhập `/admin` (khai báo ở cả gốc và `env.preview`) |
 | `ADMIN_PASSWORD_HASH` | secret | Chuỗi `pbkdf2-sha256$<vòng>$<salt>$<hash>`; không bao giờ lưu mật khẩu gốc |
+| `GOCLAW_BASE_URL`, `GOCLAW_AGENT`, `CHAT_DAILY_CAP`, `GOCLAW_API_KEY` | `vars` + secret | Chatbot; xem [chatbot.md](chatbot.md) |
 
 Đặt hoặc đổi mật khẩu admin (chỉ hash đi qua pipe, không in ra màn hình):
 

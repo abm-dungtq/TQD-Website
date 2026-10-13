@@ -29,6 +29,19 @@ await contains('/so-lieu', ['>71<']);
 await contains('/san-pham', ['Viết Pro']);
 await contains('/robots.txt', ['Disallow: /admin']);
 
+// Chat: status answers either way (the agent runs on a home server); a cross-site post is refused.
+// No real message is sent, so this never uses the daily chat allowance.
+const status = await get('/api/chat/status');
+const statusBody = await status.json().catch(() => ({}));
+if (status.status !== 200 || typeof statusBody.online !== 'boolean') fails.push(`/api/chat/status ${status.status}`);
+else console.log(`info chat agent ${statusBody.online ? 'online' : 'offline'}`);
+const crossSite = await fetch(base + '/api/chat', {
+  method: 'POST',
+  headers: { Origin: 'https://evil.example', 'Content-Type': 'application/json' },
+  body: JSON.stringify({ message: 'hi', visitorId: '00000000-0000-4000-8000-000000000000' }),
+});
+if (crossSite.status !== 403) fails.push(`/api/chat cross-site ${crossSite.status}`);
+
 const csp = (await get('/')).headers.get('content-security-policy') ?? '';
 if (!csp.includes('frame-src https://www.tiktok.com')) fails.push(`csp ${csp}`);
 

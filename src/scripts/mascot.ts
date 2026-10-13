@@ -1,6 +1,9 @@
 // Desktop mascot: changes pose with what the visitor is doing and now and then strolls along the
 // bottom of the screen. Poses: wave on arrival, think while ⌘K is open, type while dragging a window,
 // point while over the dock, sleep after a minute without input. Each pose image loads the first time it is shown.
+// It is also the way into the chat with the website agent: a speech bubble introduces it, a click opens
+// the panel (src/scripts/chat-panel.ts, loaded then), and it thinks and types while the agent answers.
+import type { ChatSignal } from './chat-panel';
 import { EASE, play, reducedMotion } from './motion';
 import { onPref, prefOn } from './prefs';
 
@@ -8,15 +11,29 @@ type Pose = 'idle' | 'wave' | 'think' | 'type' | 'point' | 'sleep';
 
 const SLEEP_AFTER = 60_000;
 const WAVE_FOR = 2000;
-const TIP_FOR = 4000;
+const NUDGE_FOR = 4000;
 const WALK_MS = 2400;
+const HOME_MS = 600;
 const MARGIN = 24;
-const TIPS = [
-  'Bấm Ctrl K (⌘K trên Mac) để tìm nhanh.',
-  'Kéo thanh tiêu đề để di chuyển cửa sổ.',
-  'Bấm Tất cả cửa sổ để xem Exposé.',
-  'Đọc bài mới ở mục Bài viết.',
-];
+const INTRO_KEY = 'tqd-chat-intro';
+const INTRO = 'Tôi là phiên bản Agent của DũngTQ, bạn có thể tìm hiểu các kiến thức về AI từ tôi.';
+const NUDGE = 'Hỏi tôi về AI nhé.';
+const OFFLINE = 'Agent đang nghỉ, bạn có thể nhắn Zalo.';
+
+const introDismissed = () => {
+  try {
+    return sessionStorage.getItem(INTRO_KEY) === 'off';
+  } catch {
+    return false;
+  }
+};
+const dismissIntro = () => {
+  try {
+    sessionStorage.setItem(INTRO_KEY, 'off');
+  } catch {
+    /* storage blocked: the bubble just returns on the next visit */
+  }
+};
 
 const poseUrl = (pose: Pose) => `/mascot/${pose}.webp`;
 
@@ -24,23 +41,36 @@ export const startMascot = (desktop: HTMLElement) => {
   const wrap = desktop.querySelector<HTMLElement>('[data-mascot-wrap]');
   const button = wrap?.querySelector<HTMLButtonElement>('[data-mascot]');
   const tip = wrap?.querySelector<HTMLElement>('[data-mascot-tip]');
+  const say = wrap?.querySelector<HTMLElement>('[data-mascot-say]');
+  const dismiss = wrap?.querySelector<HTMLButtonElement>('[data-mascot-dismiss]');
   const images = wrap ? [...wrap.querySelectorAll<HTMLImageElement>('[data-mascot-img]')] : [];
-  if (!wrap || !button || !tip || images.length !== 2) return;
+  if (!wrap || !button || !tip || !say || !dismiss || images.length !== 2) return;
 
-  const state = { palette: false, dragging: false, dock: false, asleep: false, waving: true };
+  const state = { palette: false, dragging: false, dock: false, asleep: false, waving: true, chat: 'close' as ChatSignal };
   let shown: Pose | null = null;
   let front = 0;
   let offset = 0;
   let lastInput = Date.now();
-  let tipIndex = 0;
   let running = false;
+  let offline = false;
   let waveTimer = 0;
   let tipTimer = 0;
   let walkTimer = 0;
   let sleepTimer = 0;
 
+  const chatOpen = () => state.chat !== 'close';
   const wanted = (): Pose =>
-    state.palette ? 'think' : state.dragging ? 'type' : state.dock ? 'point' : state.asleep ? 'sleep' : state.waving ? 'wave' : 'idle';
+    state.palette || state.chat === 'wait'
+      ? 'think'
+      : state.chat === 'stream' || state.dragging
+        ? 'type'
+        : state.dock
+          ? 'point'
+          : state.asleep
+            ? 'sleep'
+            : state.waving
+              ? 'wave'
+              : 'idle';
 
   /** Loads the next pose into the hidden image, then cross-fades to it (instantly under reduced motion). */
   const show = async (pose: Pose) => {
@@ -61,11 +91,27 @@ export const startMascot = (desktop: HTMLElement) => {
   };
   const update = () => void show(wanted());
 
+  /** Shows the bubble: the introduction stays until dismissed, a nudge fades after a few seconds. */
+  const showTip = (text: string, hold: boolean) => {
+    clearTimeout(tipTimer);
+    say.textContent = text;
+    tip.hidden = false;
+    if (!hold) tipTimer = window.setTimeout(() => (tip.hidden = true), NUDGE_FOR);
+  };
+  const hideTip = () => {
+    clearTimeout(tipTimer);
+    tip.hidden = true;
+  };
+  const showIntro = () => {
+    if (!chatOpen() && !introDismissed()) showTip(offline ? OFFLINE : INTRO, true);
+  };
+
   const touch = () => {
     lastInput = Date.now();
     if (state.asleep) {
       state.asleep = false;
       update();
+      if (!chatOpen() && tip.hidden) showTip(offline ? OFFLINE : NUDGE, false);
     }
   };
 
@@ -79,7 +125,7 @@ export const startMascot = (desktop: HTMLElement) => {
   const place = () => moveTo(offset);
 
   const walk = async () => {
-    if (!running || reducedMotion() || state.asleep || state.dragging || document.hidden) return;
+    if (!running || reducedMotion() || state.asleep || state.dragging || chatOpen() || document.hidden) return;
     const from = offset;
     const to = -Math.round(Math.random() * range());
     if (Math.abs(to - from) < 40) return;
@@ -112,17 +158,28 @@ export const startMascot = (desktop: HTMLElement) => {
     }, Math.max(1000, SLEEP_AFTER - (Date.now() - lastInput)));
   };
 
-  const showTip = () => {
-    tip.textContent = TIPS[tipIndex % TIPS.length];
-    tipIndex += 1;
-    clearTimeout(tipTimer);
-    tipTimer = window.setTimeout(() => (tip.textContent = ''), TIP_FOR);
+  /** The chat panel sits beside the mascot's home corner, so it walks back there first. */
+  const goHome = async () => {
+    if (offset === 0) return;
+    const from = offset;
+    wrap.dataset.dir = 'right';
+    moveTo(0);
+    await play(wrap, [{ transform: `translateX(${from}px)` }, { transform: 'translateX(0)' }], { duration: HOME_MS, easing: EASE });
+  };
+
+  const openChat = () => {
+    touch();
+    dismissIntro();
+    hideTip();
+    void goHome();
+    import('./chat-panel').then((m) => m.toggleChat(button)).catch(() => {});
   };
 
   const stop = () => {
     running = false;
     wrap.hidden = true;
-    tip.textContent = '';
+    document.documentElement.dataset.mascot = 'off';
+    hideTip();
     [waveTimer, tipTimer, walkTimer, sleepTimer].forEach(clearTimeout);
   };
 
@@ -130,6 +187,8 @@ export const startMascot = (desktop: HTMLElement) => {
     if (running) return;
     running = true;
     wrap.hidden = false;
+    document.documentElement.dataset.mascot = 'on';
+    showIntro();
     lastInput = Date.now();
     state.asleep = false;
     state.waving = true;
@@ -164,9 +223,25 @@ export const startMascot = (desktop: HTMLElement) => {
   for (const type of ['pointermove', 'pointerdown', 'keydown', 'wheel'] as const) {
     window.addEventListener(type, touch, { passive: true });
   }
-  button.addEventListener('click', () => {
+  button.addEventListener('click', openChat);
+  say.addEventListener('click', openChat);
+  dismiss.addEventListener('click', () => {
+    dismissIntro();
+    hideTip();
+    button.focus({ preventScroll: true });
+  });
+  window.addEventListener('tqd:chat', (e) => {
+    const signal = (e as CustomEvent<ChatSignal>).detail;
+    if (signal === 'offline' || signal === 'online') {
+      offline = signal === 'offline';
+      return;
+    }
+    // 'idle' means an answer finished; the panel is still open.
+    state.chat = signal === 'idle' ? 'open' : signal;
+    if (signal === 'open') hideTip();
+    if (signal === 'close') scheduleWalk();
     touch();
-    showTip();
+    update();
   });
   document.addEventListener('visibilitychange', () => {
     if (!running) return;
@@ -180,4 +255,5 @@ export const startMascot = (desktop: HTMLElement) => {
 
   onPref('tqd-mascot', (on) => (on ? start() : stop()));
   if (prefOn('tqd-mascot')) start();
+  else document.documentElement.dataset.mascot = 'off';
 };

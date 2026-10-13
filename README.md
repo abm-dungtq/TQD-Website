@@ -6,9 +6,13 @@ Giao diện lấy cảm hứng từ zuey.me; mã nguồn viết mới, không sa
 
 ## Hiệu ứng
 
-Trên màn hình rộng: tìm nhanh bằng `Ctrl K` / `⌘K`; cửa sổ mở, thu nhỏ, phóng to, ghép nửa màn hình; nút **Tất cả cửa sổ** (hoặc `F3`) bày mọi cửa sổ kiểu Exposé; dock phóng to icon khi rê chuột; nền aurora; linh vật DũngTQ đổi tư thế theo thao tác và thỉnh thoảng đi dạo; thời tiết Hà Nội ở thanh menu kèm mưa/tuyết trên nền khi trời mưa/tuyết (trình duyệt lấy trực tiếp từ [Open-Meteo](https://open-meteo.com/), giấy phép CC BY 4.0). Trên điện thoại mỗi mục mở thành một tấm trượt lên, kéo xuống để đóng.
+Trên màn hình rộng: tìm nhanh bằng `Ctrl K` / `⌘K`; cửa sổ mở, thu nhỏ, phóng to, ghép nửa màn hình; nút **Tất cả cửa sổ** (hoặc `F3`) bày mọi cửa sổ kiểu Exposé; dock phóng to icon khi rê chuột; nền aurora; linh vật DũngTQ đổi tư thế theo thao tác, thỉnh thoảng đi dạo và là lối vào chatbot; thời tiết Hà Nội ở thanh menu kèm mưa/tuyết trên nền khi trời mưa/tuyết (trình duyệt lấy trực tiếp từ [Open-Meteo](https://open-meteo.com/), giấy phép CC BY 4.0). Trên điện thoại mỗi mục mở thành một tấm trượt lên, kéo xuống để đóng.
 
 Giao diện chỉ có một bảng màu sáng: nền ngà `#faf7f1`, chữ mực `#1b2030`, màu chữ ký vàng champagne (`#8a6420` cho chữ và nút, `#b8935a` chỉ để trang trí); tiêu đề dùng Cormorant Garamond. Token màu nằm trong `src/styles/global.css`. Menu **Hiệu ứng** tắt/bật **Linh vật** và **Hiệu ứng thời tiết**. Khi hệ điều hành bật giảm chuyển động (`prefers-reduced-motion`), mọi hiệu ứng đứng yên. Ảnh linh vật tạo lại bằng `node scripts/make-mascot.mjs` (hoặc `--fallback` để dùng ảnh chân dung tròn).
+
+## Chatbot
+
+Bấm linh vật (desktop) hoặc nút tròn mặt linh vật (điện thoại) để trò chuyện với **Agent DũngTQ**, một agent chạy trên GoClaw tự host, trả lời dựa trên nội dung website. Khi máy chủ nhà tắt, khung chat mời khách nhắn Zalo. Giới hạn, cấu hình, cách đồng bộ kiến thức sau khi đăng bài và cách thu hồi key: [docs/chatbot.md](docs/chatbot.md).
 
 ## Nội dung
 

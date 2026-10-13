@@ -14,6 +14,7 @@ const body = document.querySelector<HTMLElement>('[data-m-body]');
 const pageLink = document.querySelector<HTMLAnchorElement>('[data-m-link]');
 const fallback = document.querySelector<HTMLElement>('[data-fallback]');
 const skipLink = document.querySelector<HTMLElement>('[data-skip]');
+const chatButton = document.querySelector<HTMLElement>('[data-chat-fab]');
 
 if (home && sheet && scrim && title && body && pageLink && fallback) {
   // Outside [data-fallback] so the rest of the page can be made inert while the sheet is open.
@@ -67,6 +68,7 @@ if (home && sheet && scrim && title && body && pageLink && fallback) {
     scrim.hidden = false;
     fallback.inert = true;
     if (skipLink) skipLink.inert = true;
+    if (chatButton) chatButton.inert = true;
     document.documentElement.style.overflow = 'hidden';
     home.classList.add('is-behind');
     sheet.querySelector<HTMLElement>('[data-m-close]')?.focus({ preventScroll: true });
@@ -93,6 +95,7 @@ if (home && sheet && scrim && title && body && pageLink && fallback) {
     sheet.style.transform = '';
     fallback.inert = false;
     if (skipLink) skipLink.inert = false;
+    if (chatButton) chatButton.inert = false;
     document.documentElement.style.overflow = '';
     apps.get(id)?.focus({ preventScroll: true });
   };
