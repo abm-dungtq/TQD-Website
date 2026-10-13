@@ -36,6 +36,7 @@
     width: 128px;
     height: 128px;
     pointer-events: none;
+    will-change: transform;
   }
   .mascot-wrap[hidden] {
     display: none;
@@ -62,13 +63,31 @@
     object-fit: contain;
     opacity: 0;
     filter: drop-shadow(0 10px 12px rgb(94 68 19 / 0.22));
-    transition: opacity 200ms var(--os-ease);
+    /* Turning around flips over a moment instead of snapping. */
+    transition:
+      opacity 200ms var(--os-ease),
+      transform 180ms var(--os-ease);
   }
   .mascot img.is-front {
     opacity: 1;
   }
   .mascot-wrap[data-dir='left'] .mascot img {
     transform: scaleX(-1);
+  }
+  /* Small steps while walking: a bob and a sway from the feet, replacing the idle breath. */
+  .mascot-wrap[data-walking] .mascot img {
+    animation: mascot-step 0.42s ease-in-out infinite alternate;
+    transform-origin: 50% 100%;
+  }
+  @keyframes mascot-step {
+    from {
+      translate: 0 0;
+      rotate: -2deg;
+    }
+    to {
+      translate: 0 -4px;
+      rotate: 2deg;
+    }
   }
   /* A slow breath while idle, on the images only so the button itself stays put under the pointer. */
   .mascot[data-pose='idle'] img {

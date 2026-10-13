@@ -4,7 +4,7 @@
 // It is also the way into the chat with the website agent: a speech bubble introduces it, a click opens
 // the panel (src/scripts/chat-panel.ts, loaded then), and it thinks and types while the agent answers.
 import type { ChatSignal } from './chat-panel';
-import { EASE, play, reducedMotion } from './motion';
+import { play, reducedMotion } from './motion';
 import { onPref, prefOn } from './prefs';
 
 type Pose = 'idle' | 'wave' | 'think' | 'type' | 'point' | 'sleep';
@@ -12,8 +12,11 @@ type Pose = 'idle' | 'wave' | 'think' | 'type' | 'point' | 'sleep';
 const SLEEP_AFTER = 60_000;
 const WAVE_FOR = 2000;
 const NUDGE_FOR = 4000;
-const WALK_MS = 2400;
-const HOME_MS = 600;
+const WALK_SPEED = 90; // px per second: an unhurried stroll
+const HOME_SPEED = 900; // hurrying back when the chat opens
+const STROLL_MIN = 160;
+const STROLL_MAX = 420;
+const STRIDE = 'cubic-bezier(.45,0,.55,1)'; // eases in and out without a burst at the start
 const MARGIN = 24;
 const INTRO_KEY = 'tqd-chat-intro';
 const INTRO = 'Tôi là phiên bản Agent của DũngTQ, bạn có thể tìm hiểu các kiến thức về AI từ tôi.';
@@ -124,17 +127,30 @@ export const startMascot = (desktop: HTMLElement) => {
   };
   const place = () => moveTo(offset);
 
+  /** Where the mascot is drawn right now, including partway through a walk. */
+  const drawnX = () => new DOMMatrixReadOnly(getComputedStyle(wrap).transform).m41;
+
+  /** Walks to `x` at a steady pace from wherever it is drawn, so an interrupted walk never jumps. */
+  const glide = async (x: number, speed: number, minMs: number, maxMs: number) => {
+    const from = drawnX();
+    wrap.getAnimations().forEach((a) => a.cancel());
+    moveTo(x);
+    const distance = Math.abs(offset - from);
+    if (distance < 1) return;
+    wrap.dataset.dir = offset < from ? 'left' : 'right';
+    wrap.dataset.walking = '';
+    const duration = Math.min(maxMs, Math.max(minMs, (distance / speed) * 1000));
+    await play(wrap, [{ transform: `translateX(${from}px)` }, { transform: `translateX(${offset}px)` }], { duration, easing: STRIDE });
+    // A newer walk may have taken over; only the last one ends the stepping.
+    if (!wrap.getAnimations().length) delete wrap.dataset.walking;
+  };
+
   const walk = async () => {
     if (!running || reducedMotion() || state.asleep || state.dragging || chatOpen() || document.hidden) return;
-    const from = offset;
-    const to = -Math.round(Math.random() * range());
-    if (Math.abs(to - from) < 40) return;
-    wrap.dataset.dir = to < from ? 'left' : 'right';
-    moveTo(to);
-    await play(wrap, [{ transform: `translateX(${from}px)` }, { transform: `translateX(${offset}px)` }], {
-      duration: WALK_MS,
-      easing: EASE,
-    });
+    const stroll = STROLL_MIN + Math.random() * (STROLL_MAX - STROLL_MIN);
+    // Turn back near either edge so short strolls stay on screen.
+    const dir = offset - stroll < -range() ? 1 : offset + stroll > 0 ? -1 : Math.random() < 0.5 ? -1 : 1;
+    await glide(offset + dir * stroll, WALK_SPEED, 1200, 6000);
   };
 
   const scheduleWalk = () => {
@@ -159,13 +175,7 @@ export const startMascot = (desktop: HTMLElement) => {
   };
 
   /** The chat panel sits beside the mascot's home corner, so it walks back there first. */
-  const goHome = async () => {
-    if (offset === 0) return;
-    const from = offset;
-    wrap.dataset.dir = 'right';
-    moveTo(0);
-    await play(wrap, [{ transform: `translateX(${from}px)` }, { transform: 'translateX(0)' }], { duration: HOME_MS, easing: EASE });
-  };
+  const goHome = () => glide(0, HOME_SPEED, 250, 900);
 
   const openChat = () => {
     touch();
