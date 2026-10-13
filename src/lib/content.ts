@@ -21,7 +21,7 @@ export interface Item {
   visible: boolean;
 }
 
-export type SectionId = 'ho-so' | 'san-pham' | 'dao-tao' | 'video-ai' | 'bai-viet' | 'so-lieu' | 'lien-he';
+export type SectionId = 'ho-so' | 'san-pham' | 'dao-tao' | 'video-ai' | 'bai-viet' | 'lien-he';
 
 export type IconName = 'user' | 'box' | 'presentation' | 'film' | 'book' | 'chart' | 'mail';
 

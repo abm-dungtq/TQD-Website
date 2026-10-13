@@ -1,6 +1,5 @@
 ---
 import ItemCard from './ItemCard.astro';
-import StatGrid from './StatGrid.astro';
 import TikTokPlayer from './TikTokPlayer.astro';
 import { mediaUrl, type SectionId, type SiteData } from '../lib/content';
 
@@ -12,7 +11,7 @@ interface Props {
 }
 
 const { id, data, eager = false } = Astro.props;
-const { person, links, topics, stats } = data.site;
+const { person, links, topics } = data.site;
 const { products, trainings, videos, articles } = data;
 const gridClass = 'grid gap-4 sm:grid-cols-2';
 const formatDate = (iso?: string) => (iso ? iso.slice(0, 10).split('-').reverse().join('/') : '');
@@ -131,8 +130,6 @@ const formatDate = (iso?: string) => (iso ? iso.slice(0, 10).split('-').reverse(
     </div>
   )
 }
-
-{id === 'so-lieu' && <StatGrid stats={stats} />}
 
 {
   id === 'lien-he' && (

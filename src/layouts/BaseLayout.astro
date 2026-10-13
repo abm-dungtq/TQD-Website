@@ -16,7 +16,7 @@ interface Props {
 }
 
 const { site, title, description, path, ogType = 'website', markdownPath = '/index.md', jsonLd = [] } = Astro.props;
-const { links, person, sections, stats } = site;
+const { links, person, sections } = site;
 const fullTitle = title ? `${title} · ${person.handle}` : `${person.name} (${person.handle})`;
 const canonical = new URL(path, Astro.site).href;
 const origin = new URL('/', Astro.site).href;
@@ -111,7 +111,7 @@ const structuredJson = JSON.stringify(structured).replace(/</g, '\\u003c');
           <div>
             <p class="display text-2xl">{person.name}</p>
             <p class="mt-1 text-sm text-muted">{person.role}</p>
-            <p class="mt-4 text-xs text-muted">© 2026 {person.name}. {stats.source}</p>
+            <p class="mt-4 text-xs text-muted">© 2026 {person.name}.</p>
           </div>
           <ul class="flex flex-wrap gap-x-5 text-sm font-semibold">
             {

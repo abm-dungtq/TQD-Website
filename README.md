@@ -1,6 +1,6 @@
 # tqd.io.vn — website cá nhân của Trịnh Quang Dũng (DũngTQ)
 
-Website giới thiệu hồ sơ, sản phẩm AI tự xây, đào tạo, video AI, bài viết, số liệu và liên hệ của DũngTQ. Trang chủ có giao diện kiểu màn hình máy tính (dock, cửa sổ) trên màn hình rộng; trên điện thoại hoặc khi tắt JavaScript, mỗi mục là một trang thường tại `/{mục}`.
+Website giới thiệu hồ sơ, sản phẩm AI tự xây, đào tạo, video AI, bài viết và liên hệ của DũngTQ. Trang chủ có giao diện kiểu màn hình máy tính (dock, cửa sổ) trên màn hình rộng; trên điện thoại hoặc khi tắt JavaScript, mỗi mục là một trang thường tại `/{mục}`.
 
 Giao diện lấy cảm hứng từ zuey.me; mã nguồn viết mới, không sao chép từ repo đó.
 

@@ -15,7 +15,7 @@ const itemMarkdown = (item: Item): string => {
 const list = (items: string[]) => items.map((i) => `- ${i}`).join('\n');
 
 function sectionBody(id: SectionId, data: SiteData): string {
-  const { person, stats, links, topics } = data.site;
+  const { person, links, topics } = data.site;
   switch (id) {
     case 'ho-so':
       return [`**${person.name}** (${person.handle}) — ${person.role}`, '', person.intro, '', 'Trọng tâm:', '', list(person.focus)].join('\n');
@@ -29,23 +29,6 @@ function sectionBody(id: SectionId, data: SiteData): string {
       return data.articles.length
         ? list(data.articles.map((a) => `[${a.title}](${SITE}/bai-viet/${a.slug})${a.summary ? `: ${a.summary}` : ''}`))
         : ['Chưa có bài viết.', '', '### Chủ đề thường viết', '', list([...topics.howTo, ...topics.marketWatch])].join('\n');
-    case 'so-lieu': {
-      const total = stats.byGroup.reduce((sum, g) => sum + g.count, 0);
-      return [
-        `Giai đoạn ${stats.period}.`,
-        '',
-        '| Chỉ số | Giá trị |',
-        '|---|---|',
-        ...stats.headline.map((s) => `| ${s.label} | ${s.value}${s.note ? ` (${s.note})` : ''} |`),
-        '',
-        '| Nhóm | Số bài |',
-        '|---|---|',
-        ...stats.byGroup.map((g) => `| ${g.label} | ${g.count} |`),
-        `| Tổng | ${total} |`,
-        '',
-        stats.source,
-      ].join('\n');
-    }
     case 'lien-he':
       return list(links.map((l) => `${l.label}: [${l.href.replace(/^mailto:/, '')}](${l.href})`));
   }

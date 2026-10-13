@@ -10,7 +10,7 @@ const MENU_HEIGHT = 32;
 const SNAP_EDGE = 24;
 const DRAG_THRESHOLD = 4;
 // First-load composition on wide screens, left to right; the first one ends up on top.
-const BOOT_WINDOWS = ['ho-so', 'san-pham', 'so-lieu'];
+const BOOT_WINDOWS = ['ho-so', 'san-pham', 'bai-viet'];
 // Usable canvas: right of the launcher column, below the menu bar, above the dock.
 const CANVAS_LEFT = 150;
 const CANVAS_TOP = MENU_HEIGHT + 24;
