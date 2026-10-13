@@ -1,6 +1,6 @@
 ---
-// "Hiệu ứng" menu in the desktop menu bar: switches for the mascot and the weather effect.
-// Hidden until src/scripts/effects-menu.ts runs, since both effects need JavaScript.
+// "Hiệu ứng" menu in the desktop menu bar: switches for the mascot, the weather effect and the moving wallpaper.
+// Hidden until src/scripts/effects-menu.ts runs, since every effect needs JavaScript.
 ---
 
 <div class="fx-menu" data-effects-menu hidden>
@@ -20,6 +20,10 @@
       <label class="fx-switch">
         <span>Hiệu ứng thời tiết</span>
         <input type="checkbox" role="switch" data-pref="tqd-weather-fx" />
+      </label>
+      <label class="fx-switch">
+        <span>Nền động</span>
+        <input type="checkbox" role="switch" data-pref="tqd-wallpaper" />
       </label>
     </fieldset>
   </div>

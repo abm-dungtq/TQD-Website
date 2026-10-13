@@ -1,4 +1,4 @@
-// "Hiệu ứng" menu in the desktop menu bar: on/off switches for the mascot and the weather effect.
+// "Hiệu ứng" menu in the desktop menu bar: on/off switches for the mascot, the weather effect and the moving wallpaper.
 import { prefOn, setPref, type PrefKey } from './prefs';
 
 // The site used to offer dark mode and accent colours; drop their saved choices.

@@ -1,7 +1,7 @@
-// On/off switches for optional desktop effects (mascot, weather), saved in localStorage and on by default.
-// Changes are announced with a `tqd:pref` window event so the effect modules can react without a reload.
+// On/off switches for optional desktop effects (mascot, weather, moving wallpaper), saved in localStorage and
+// on by default. Changes are announced with a `tqd:pref` window event so the effect modules can react without a reload.
 
-export type PrefKey = 'tqd-mascot' | 'tqd-weather-fx';
+export type PrefKey = 'tqd-mascot' | 'tqd-weather-fx' | 'tqd-wallpaper';
 
 export const prefOn = (key: PrefKey) => {
   try {

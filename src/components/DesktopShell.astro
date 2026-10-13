@@ -140,6 +140,21 @@ const { person, sections } = data.site;
       0% 100%;
     will-change: background-position;
     animation: aurora 28s ease-in-out infinite alternate;
+    transition: opacity 1.2s var(--os-ease);
+  }
+  /* Moving wallpaper (src/scripts/wallpaper.ts): below every other layer; the aurora fades once it plays. */
+  .desktop-wallpaper {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+  }
+  .desktop[data-wallpaper='video']::before {
+    opacity: 0;
+    animation-play-state: paused;
   }
   @keyframes aurora {
     to {

@@ -243,6 +243,7 @@ if (desktop && fallback) {
     import('./window-motion').then((m) => (motion = m)).catch(() => {});
     // Extras wait until the page has loaded and the browser is idle, so they never delay first paint.
     whenIdle(() => {
+      import('./wallpaper').then((m) => m.startWallpaper(desktop)).catch(() => {});
       import('./weather').then((m) => m.startWeather(desktop)).catch(() => {});
       import('./mascot').then((m) => m.startMascot(desktop)).catch(() => {});
     });
