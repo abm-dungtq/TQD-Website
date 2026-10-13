@@ -9,6 +9,12 @@ const DEFAULT_WINDOW = 'ho-so';
 const MENU_HEIGHT = 32;
 const SNAP_EDGE = 24;
 const DRAG_THRESHOLD = 4;
+// First-load composition on wide screens, left to right; the first one ends up on top.
+const BOOT_WINDOWS = ['ho-so', 'san-pham', 'so-lieu'];
+// Usable canvas: right of the launcher column, below the menu bar, above the dock.
+const CANVAS_LEFT = 150;
+const CANVAS_TOP = MENU_HEIGHT + 24;
+const GUTTER = 24;
 
 type WindowMotion = typeof import('./window-motion');
 
@@ -77,6 +83,17 @@ if (desktop && fallback) {
     const maxTop = window.innerHeight - 60;
     win.style.left = `${Math.min(Math.max(win.offsetLeft, 80 - win.offsetWidth), maxLeft)}px`;
     win.style.top = `${Math.min(Math.max(win.offsetTop, MENU_HEIGHT), maxTop)}px`;
+  };
+
+  /** Sizes windows from the viewport and returns how many fit side by side (1 to 3). */
+  const layoutWindows = () => {
+    const width = window.innerWidth - CANVAS_LEFT - GUTTER;
+    const height = window.innerHeight - CANVAS_TOP - 92;
+    const count = width < 1264 ? 1 : width < 2268 ? 2 : 3;
+    const winWidth = Math.min(980, Math.floor((width - GUTTER * (count - 1)) / count));
+    desktop.style.setProperty('--win-w', `${winWidth}px`);
+    desktop.style.setProperty('--win-h', `${Math.min(880, Math.max(560, height))}px`);
+    return { count, winWidth };
   };
 
   const placeWindow = (win: HTMLElement) => {
@@ -277,10 +294,28 @@ if (desktop && fallback) {
       window.setInterval(tick, 30_000);
     }
 
-    window.addEventListener('resize', () => windows.forEach(clampWindow));
+    const { count, winWidth } = layoutWindows();
+    window.addEventListener('resize', () => {
+      layoutWindows();
+      windows.forEach(clampWindow);
+    });
 
+    // A shared link to one section opens just that window; otherwise fill the screen with a few.
     const fromHash = location.hash.slice(1);
-    open(windows.has(fromHash) ? fromHash : DEFAULT_WINDOW);
+    if (windows.has(fromHash)) {
+      open(fromHash);
+      return;
+    }
+    const slots = BOOT_WINDOWS.filter((id) => windows.has(id)).slice(0, count);
+    if (!slots.length) slots.push(DEFAULT_WINDOW);
+    for (let i = slots.length - 1; i >= 0; i -= 1) {
+      const win = windows.get(slots[i]);
+      if (!win) continue;
+      win.style.left = `${CANVAS_LEFT + i * (winWidth + GUTTER)}px`;
+      win.style.top = `${CANVAS_TOP}px`;
+      open(slots[i]);
+    }
+    opened = slots.length;
   };
 
   const apply = () => {

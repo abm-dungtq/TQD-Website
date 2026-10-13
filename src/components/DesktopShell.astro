@@ -18,6 +18,7 @@ const { person, sections } = data.site;
 
 <div id="desktop" class="desktop hidden" data-desktop tabindex="-1">
   <h1 class="sr-only">{person.name} ({person.handle})</h1>
+  <p class="desktop-wordmark" aria-hidden="true">{person.handle}</p>
   <div class="desktop-menubar">
     <a href="/" class="flex items-center gap-2 font-semibold text-ink no-underline">
       <img src={person.portraitSmall} alt="" width="40" height="40" class="size-5 rounded-full object-cover" />
@@ -150,6 +151,26 @@ const { person, sections } = data.site;
         80% 20%;
     }
   }
+  /* A faint signature in the wallpaper; decorative, so champagne at low opacity is fine. */
+  .desktop-wordmark {
+    position: absolute;
+    right: 3vw;
+    bottom: 5vw;
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(160px, 16vw, 420px);
+    line-height: 0.8;
+    letter-spacing: -0.03em;
+    color: var(--color-champagne);
+    opacity: 0.12;
+    pointer-events: none;
+    user-select: none;
+    transition: opacity 300ms var(--os-ease);
+  }
+  .is-expose .desktop-wordmark {
+    opacity: 0;
+  }
   .desktop-menubar {
     position: absolute;
     inset: 0 0 auto 0;
@@ -239,8 +260,9 @@ const { person, sections } = data.site;
     position: absolute;
     display: flex;
     flex-direction: column;
-    width: min(860px, 90vw);
-    height: min(640px, 80vh);
+    /* desktop.ts sizes windows from the viewport through these variables. */
+    width: var(--win-w, min(860px, 90vw));
+    height: var(--win-h, min(640px, 80vh));
     background: var(--color-panel);
     border: 1px solid var(--color-line);
     border-radius: 14px;
