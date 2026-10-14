@@ -43,6 +43,22 @@ Có một việc skill không tự chấm: thanh điệu và độ tự nhiên c
 
 Khổ ngang xuất 1920×1080, khổ dọc 1080×1920. Bản dọc được dàn bố cục lại từ đầu và chừa khoảng trống phía trên, phía dưới cho thanh tên, nút bấm của TikTok hay Reels, thay vì cắt giữa bản ngang. Khi xuất cho từng nền tảng, `export.mjs` đưa âm lượng về mức -14 LUFS.
 
+## Video mẫu
+
+Opus Video đang được đưa vào quy trình làm video cho kênh TikTok [@abmdungtq](https://www.tiktok.com/@abmdungtq). Dưới đây là ba video mới nhất của kênh.
+
+**Agent dựng video bất động sản** (13/10/2026)
+
+https://www.tiktok.com/@abmdungtq/video/7696060254164880661
+
+**Claude Code làm thay ba việc của lập trình viên** (13/10/2026)
+
+https://www.tiktok.com/@abmdungtq/video/7696039362219314452
+
+**Viết Pro: AI viết tiếng Việt tự nhiên** (10/10/2026)
+
+https://www.tiktok.com/@abmdungtq/video/7695003607405579521
+
 ## Cần gì để chạy
 
 - Node.js 22 trở lên, git, ffmpeg.

@@ -40,7 +40,7 @@ Bạn không cần học cú pháp riêng. Trong Claude Code gõ `/viet-pro` kè
 
 Trong repo có một bài Facebook mẫu trước và sau khi biên tập. Bản trước mở bằng "Trong bối cảnh...", có câu "Không phải... mà là..." và kết bằng "Và đó mới là điều đáng suy ngẫm". Bản sau bỏ các cụm đó, nói thẳng vào ý chính, hạ chữ "bước ngoặt" xuống mức mà dữ liệu cho phép, nhưng giữ nguyên con số 18%, ngày 10/09/2026, đường link và trích dẫn "mẫu 120 khách hàng".
 
-Mình cũng chạy bộ 12 bài kiểm tra cho bản 5.3.0, gồm bài LinkedIn, humanize, tài liệu kỹ thuật, blog SEO, bản tin, tin Zalo, chuỗi bài X, kịch bản video, lỗi đảo nghĩa, claim chưa kiểm chứng, kiểm tra dấu hiệu văn máy và chuyển thể đa kênh. Bản 5.3.0 đạt cả 12 ca, bản 5.2.1 đạt 11. Mỗi bản mới chạy một lần, nên đây là tín hiệu tốt chứ chưa phải bằng chứng thống kê.
+Mình cũng chạy bộ 12 bài kiểm tra cho bản 5.3.0, gồm bài LinkedIn, humanize, tài liệu kỹ thuật, blog SEO, bản tin, tin Zalo, chuỗi bài X, kịch bản video, lỗi đảo nghĩa, claim chưa kiểm chứng, kiểm tra dấu hiệu văn máy và chuyển thể đa kênh. Kết quả của bản 5.2.1 được lưu làm mốc. So với mốc đó, bản 5.3.0 không làm ca nào tụt từ đạt xuống trượt và sửa được đúng ca nhắm tới: không tự đổi mốc thời gian tương đối như "năm trước" thành một năm cụ thể khi nguồn không ghi. Mỗi phiên bản mới chạy một lần với 12 ca, nên đây là tín hiệu để theo dõi, chưa phải bằng chứng thống kê.
 
 ## Cài đặt
 
@@ -52,7 +52,7 @@ curl -fsSL https://raw.githubusercontent.com/abm-dungtq/viet-pro-codex/v5.3.0/in
 
 Có thể chọn nơi cài bằng các cờ `--claude`, `--codex`, `--agy` hoặc `--all`. Bộ cài ghim đúng phiên bản và kiểm tra checksum. Nếu máy đã có bản cũ, bản cũ được chuyển vào `~/.viet-pro-backups/` chứ không bị xóa.
 
-Bộ cài cần `git` và `bash` và chưa được kiểm thử trên Windows.
+Bộ cài là một script chạy bằng `bash`.
 
 ## Những gì Viết Pro không làm
 
