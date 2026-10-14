@@ -24,26 +24,29 @@ if (Astro.request.method === 'POST') {
   const rows = Number(form.get('rows')) || 0;
   const featured = String(form.get('featured') ?? '');
   const field = (name: string, i: number) => String(form.get(`${name}-${i}`) ?? '').trim();
-  const entries: (GalleryEntry & { order: number })[] = [];
+  const entries: (GalleryEntry & { row: number; order: number })[] = [];
+  for (let i = 0; i < rows; i += 1) {
+    const key = field('key', i);
+    if (!key || form.has(`remove-${i}`)) continue;
+    const video = isVideoKey(key);
+    const poster = field('poster', i);
+    entries.push({
+      key,
+      caption: field('caption', i),
+      ...(video && poster ? { poster } : {}),
+      ...(video && featured === String(i) ? { featured: true } : {}),
+      row: i + 1,
+      order: Number(field('order', i)) || i + 1,
+    });
+  }
+  // Re-shown as submitted when a row is rejected, so the admin keeps their edits.
+  gallery = entries.sort((a, b) => a.order - b.order).map(({ row: _, order: __, ...g }) => g);
   try {
-    for (let i = 0; i < rows; i += 1) {
-      const key = field('key', i);
-      if (!key || form.has(`remove-${i}`)) continue;
-      const caption = field('caption', i);
-      const poster = field('poster', i);
-      if (!known.has(key)) throw new InputError(`Dòng ${i + 1}: tệp không có trong thư viện media.`);
-      if (!caption || caption.length > MAX_CAPTION) throw new InputError(`Dòng ${i + 1}: chú thích cần từ 1 đến ${MAX_CAPTION} ký tự.`);
-      if (poster && !known.get(poster)?.startsWith('image/')) throw new InputError(`Dòng ${i + 1}: ảnh bìa phải là ảnh trong thư viện media.`);
-      const video = isVideoKey(key);
-      entries.push({
-        key,
-        caption,
-        ...(video && poster ? { poster } : {}),
-        ...(video && featured === String(i) ? { featured: true } : {}),
-        order: Number(field('order', i)) || i + 1,
-      });
+    for (const { row, key, caption, poster } of entries) {
+      if (!known.has(key)) throw new InputError(`Dòng ${row}: tệp không có trong thư viện media.`);
+      if (!caption || caption.length > MAX_CAPTION) throw new InputError(`Dòng ${row}: chú thích cần từ 1 đến ${MAX_CAPTION} ký tự.`);
+      if (poster && !known.get(poster)?.startsWith('image/')) throw new InputError(`Dòng ${row}: ảnh bìa phải là ảnh trong thư viện media.`);
     }
-    gallery = entries.sort((a, b) => a.order - b.order).map(({ order: _, ...g }) => g);
     await saveSetting(env.DB, 'gallery', gallery);
     return Astro.redirect('/admin/thu-vien?ok=1', 303);
   } catch (e) {
@@ -116,6 +119,10 @@ const rows: GalleryEntry[] = [...gallery, { key: '', caption: '' }];
         }
       </tbody>
     </table>
+    <label class="mb-4 flex items-center gap-2 text-sm">
+      <input type="radio" name="featured" value="" checked={!gallery.some((g) => g.featured)} />
+      Không phát video nào ở trang chủ
+    </label>
     <button type="submit" class="admin-btn">Lưu thư viện</button>
   </form>
 </AdminLayout>

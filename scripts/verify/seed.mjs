@@ -1,4 +1,4 @@
-// Checks that D1 holds every piece of v1 content. Usage: node scripts/verify/seed.mjs [--remote]
+// Checks that D1 holds every piece of seeded content (migrations 0002 and 0003). Usage: node scripts/verify/seed.mjs [--remote]
 import { execFileSync } from 'node:child_process';
 
 const target = process.argv.includes('--remote') ? '--remote' : '--local';
@@ -16,14 +16,15 @@ function query(sql) {
 const fails = [];
 const items = query('SELECT kind, title FROM items');
 const count = (kind) => items.filter((i) => i.kind === kind).length;
-for (const [kind, want] of [['product', 6], ['training', 4], ['video', 5]]) {
-  if (count(kind) !== want) fails.push(`${kind} count ${count(kind)} != ${want}`);
+// Products and videos grow through the admin after seeding; the training section was removed.
+for (const [kind, min] of [['product', 6], ['video', 5]]) {
+  if (count(kind) < min) fails.push(`${kind} count ${count(kind)} < ${min}`);
 }
+if (count('training') !== 0) fails.push(`training count ${count('training')} != 0`);
 
 const titles = [
   'Viết Pro', 'Điều phối nhiều model', '3 nhân sự số', 'Agent tự dựng video', 'Thư viện prompt tạo ảnh',
-  'App dọn dẹp và tối ưu macOS', 'Đào tạo AI cho EVN Miền Bắc', 'Xây dựng doanh nghiệp AI tự hành',
-  'ABM đồng hành cùng doanh nghiệp', 'Cộng đồng chọn chủ đề', 'Short drama với FLUX 3', 'Video 20 giây từ một prompt',
+  'App dọn dẹp và tối ưu macOS', 'Short drama với FLUX 3', 'Video 20 giây từ một prompt',
   'Chuỗi video làm 100% bằng AI', 'Thử Omni 1.1', 'Video AI kiểm soát ổn định',
 ];
 const have = new Set(items.map((i) => i.title));
@@ -48,7 +49,7 @@ try {
 }
 try {
   const ids = JSON.parse(settings.sections).map((s) => s.id);
-  if (!ids.includes('bai-viet') || ids.includes('chuyen-mon')) fails.push(`sections ${ids.join(',')}`);
+  if (!ids.includes('bai-viet') || !ids.includes('thu-vien') || ids.includes('chuyen-mon') || ids.includes('dao-tao')) fails.push(`sections ${ids.join(',')}`);
 } catch {
   fails.push('sections not parseable');
 }

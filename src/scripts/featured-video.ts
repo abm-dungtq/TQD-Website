@@ -43,7 +43,8 @@ export const startFeaturedVideo = (desktop: HTMLElement) => {
     withSound = on;
     video.muted = !on;
     video.loop = !on;
-    sound.setAttribute('aria-pressed', String(on));
+    // The label names the action, so the button carries no aria-pressed state.
+    sound.dataset.sound = on ? 'on' : 'off';
     label.textContent = on ? 'Tắt tiếng' : 'Bật tiếng';
     if (on) video.currentTime = 0;
     sync();

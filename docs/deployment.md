@@ -39,7 +39,7 @@ npm run deploy              # build rồi deploy tqd-website lên tqd.io.vn
 
 Môi trường được chọn **lúc build** (plugin Vite của Cloudflare ghi cấu hình Wrangler vào bản build), nên deploy preview phải qua `npm run deploy:preview`, không chạy `wrangler deploy --env preview` trên bản build production. Nếu máy đăng nhập nhiều tài khoản, đặt `CLOUDFLARE_ACCOUNT_ID=b243f38bff984ce1741c379547e97a75`.
 
-Migration D1: `npx wrangler d1 migrations apply tqd_db --remote` (sao lưu trước, xem [backup-restore.md](backup-restore.md)).
+Migration D1: `npx wrangler d1 migrations apply tqd_db --remote` (sao lưu trước, xem [backup-restore.md](backup-restore.md)). Khi migration và code mới đi cùng nhau, deploy code trước hoặc tăng `content_version` thêm một lần sau deploy: cache trang được khoá theo `content_version`, nên nếu migration tăng phiên bản trước khi code mới lên, HTML cũ (trỏ tới JS cũ) có thể bị lưu vào cache dưới phiên bản mới.
 
 ## Kiểm tra sau deploy
 
