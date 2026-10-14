@@ -265,6 +265,13 @@ export const bumpVersion = (db: D1Database): D1PreparedStatement =>
 
 export const mediaUrl = (key: string): string => `/media/${key}`;
 
+/** The profile intro is plain text; a blank line starts a new paragraph. */
+export const introParagraphs = (intro: string): string[] =>
+  intro
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+
 /** Most recent update date (YYYY-MM-DD) across content, for sitemaps. */
 export async function lastModified(db: D1Database): Promise<string> {
   const row = await db

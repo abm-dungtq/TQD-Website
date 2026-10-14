@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { featuredVideo, isVideoKey, listItems } from './content';
+import { featuredVideo, introParagraphs, isVideoKey, listItems } from './content';
 
 const row = {
   id: 1,
@@ -39,5 +39,11 @@ describe('featuredVideo', () => {
     expect(featuredVideo(gallery.slice(0, 2))).toBeUndefined();
     expect(isVideoKey('2026/10/b.webm')).toBe(true);
     expect(isVideoKey('2026/10/a.webp')).toBe(false);
+  });
+});
+describe('introParagraphs', () => {
+  it('splits on blank lines and drops empty paragraphs', () => {
+    expect(introParagraphs('Một.\n\nHai\ndòng.\n \n\nBa.\n')).toEqual(['Một.', 'Hai\ndòng.', 'Ba.']);
+    expect(introParagraphs('Chỉ một đoạn.')).toEqual(['Chỉ một đoạn.']);
   });
 });

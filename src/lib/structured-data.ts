@@ -1,5 +1,5 @@
 // schema.org nodes for the pages' JSON-LD. BaseLayout adds WebSite and WebPage; pages add these.
-import type { Article, Site } from './content';
+import { introParagraphs, type Article, type Site } from './content';
 
 const ORIGIN = 'https://tqd.io.vn/';
 export const PERSON_ID = `${ORIGIN}#person`;
@@ -10,7 +10,7 @@ export const personNode = ({ person, links }: Site) => ({
   name: person.name,
   alternateName: person.handle,
   jobTitle: person.role,
-  description: person.intro,
+  description: introParagraphs(person.intro).join(' '),
   url: ORIGIN,
   image: new URL(person.portrait, ORIGIN).href,
   email: `mailto:${person.email}`,

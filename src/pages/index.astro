@@ -5,14 +5,14 @@ import DesktopShell from '../components/DesktopShell.astro';
 import MobileShell from '../components/MobileShell.astro';
 import ChatPanel from '../components/ChatPanel.astro';
 import SectionBody from '../components/SectionBody.astro';
-import { loadSiteData } from '../lib/content';
+import { introParagraphs, loadSiteData } from '../lib/content';
 import { personNode } from '../lib/structured-data';
 
 const data = await loadSiteData(env.DB);
 const { person, sections } = data.site;
 ---
 
-<BaseLayout site={data.site} description={`${person.role}. ${person.intro}`} path="/" jsonLd={[personNode(data.site)]}>
+<BaseLayout site={data.site} description={`${person.role}. ${introParagraphs(person.intro)[0] ?? ''}`} path="/" jsonLd={[personNode(data.site)]}>
   <DesktopShell slot="before" data={data} />
   <ChatPanel slot="before" zalo={person.zalo} />
   <h1 class="sr-only">{person.name} ({person.handle})</h1>

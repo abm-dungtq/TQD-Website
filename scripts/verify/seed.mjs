@@ -24,7 +24,7 @@ if (count('training') !== 0) fails.push(`training count ${count('training')} != 
 
 const titles = [
   'Viết Pro', 'Điều phối nhiều model', '3 nhân sự số', 'Agent tự dựng video', 'Thư viện prompt tạo ảnh',
-  'App dọn dẹp và tối ưu macOS', 'Short drama với FLUX 3', 'Video 20 giây từ một prompt',
+  'TQD-Clean Your Mac', 'Short drama với FLUX 3', 'Video 20 giây từ một prompt',
   'Chuỗi video làm 100% bằng AI', 'Thử Omni 1.1', 'Video AI kiểm soát ổn định',
 ];
 const have = new Set(items.map((i) => i.title));

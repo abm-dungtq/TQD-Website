@@ -8,7 +8,8 @@ const itemMarkdown = (item: Item): string => {
   if (item.date) lines.push(`_${item.date}_`, '');
   lines.push(item.summary, '', `Nhãn: ${item.tags.join(', ')}`);
   if (item.tiktokId) lines.push('', `Video: https://www.tiktok.com/player/v1/${item.tiktokId}`);
-  if (item.links?.length) lines.push('', item.links.map((l) => `[${l.label}](${l.href})`).join(' · '));
+  // Links to the site's own pages are stored relative; markdown readers need them absolute.
+  if (item.links?.length) lines.push('', item.links.map((l) => `[${l.label}](${l.href.startsWith('/') ? SITE + l.href : l.href})`).join(' · '));
   return lines.join('\n');
 };
 
@@ -27,7 +28,7 @@ function sectionBody(id: SectionId, data: SiteData): string {
       return data.videos.map(itemMarkdown).join('\n\n');
     case 'bai-viet':
       return data.articles.length
-        ? list(data.articles.map((a) => `[${a.title}](${SITE}/bai-viet/${a.slug})${a.summary ? `: ${a.summary}` : ''}`))
+        ? list(data.articles.map((a) => `[${a.title}](${SITE}/bai-viet/${a.slug}.md)${a.summary ? `: ${a.summary}` : ''}`))
         : ['Chưa có bài viết.', '', '### Chủ đề thường viết', '', list([...topics.howTo, ...topics.marketWatch])].join('\n');
     case 'lien-he':
       return list(links.map((l) => `${l.label}: [${l.href.replace(/^mailto:/, '')}](${l.href})`));

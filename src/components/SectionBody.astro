@@ -1,7 +1,7 @@
 ---
 import ItemCard from './ItemCard.astro';
 import TikTokPlayer from './TikTokPlayer.astro';
-import { isVideoKey, mediaUrl, type SectionId, type SiteData } from '../lib/content';
+import { introParagraphs, isVideoKey, mediaUrl, type SectionId, type SiteData } from '../lib/content';
 
 interface Props {
   id: SectionId;
@@ -37,7 +37,9 @@ const formatDate = (iso?: string) => (iso ? iso.slice(0, 10).split('-').reverse(
           <h2 class="display text-4xl sm:text-5xl">{person.name}</h2>
           <p class="mt-3 text-muted">{person.role}</p>
         </div>
-        <p class="max-w-prose text-[1.0625rem] leading-relaxed">{person.intro}</p>
+        {introParagraphs(person.intro).map((p) => (
+          <p class="max-w-prose text-[1.0625rem] leading-relaxed">{p}</p>
+        ))}
         <ul class="flex flex-wrap gap-2">
           {person.focus.map((f) => (
             <li class="lux-chip px-3.5 py-1.5 text-sm">{f}</li>
