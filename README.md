@@ -25,7 +25,7 @@ Bấm linh vật (desktop) hoặc nút tròn mặt linh vật (điện thoại) 
 
 ## Đăng bài từ agent
 
-Agent (Claude Code, Codex) đăng bài, ảnh và video qua API `/api/v1` bằng API key tạo tại `/admin/api-keys`. Skill đóng gói sẵn nằm ở `skills/tqd-publish`. Hợp đồng API, ví dụ và cách cài skill: [docs/agent-publishing.md](docs/agent-publishing.md).
+Agent (Claude Code, Codex) đăng bài, ảnh và video qua API `/api/v1` bằng API key tạo tại `/admin/api-keys`. Skill đóng gói sẵn nằm ở `skills/tqd-publish`. Hợp đồng API, ví dụ và cách cài skill: [docs/agent-publishing.md](docs/agent-publishing.md). Agent làm các việc còn lại của `/admin` (hồ sơ, số liệu, liên hệ, sản phẩm, video, thư viện, sao lưu, API key, thống kê chat) theo [docs/admin-agent-operations.md](docs/admin-agent-operations.md).
 
 ## Lệnh
 

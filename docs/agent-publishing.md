@@ -1,6 +1,6 @@
 # Đăng bài từ agent
 
-Agent (Claude Code, Codex hoặc script bất kỳ) đăng bài lên tqd.io.vn qua API `/api/v1` bằng API key. Code: `src/lib/api.ts`, `src/lib/api-key.ts`, `src/pages/api/v1/`. Kiểm tra đầu-cuối: `scripts/verify/api.mjs`.
+Agent (Claude Code, Codex hoặc script bất kỳ) đăng bài lên tqd.io.vn qua API `/api/v1` bằng API key. Code: `src/lib/api.ts`, `src/lib/api-key.ts`, `src/pages/api/v1/`. Kiểm tra đầu-cuối: `scripts/verify/api.mjs`. Các việc admin khác mà API chưa có: [admin-agent-operations.md](admin-agent-operations.md).
 
 ## Hợp đồng API
 

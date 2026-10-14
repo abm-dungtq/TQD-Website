@@ -39,7 +39,7 @@ Mỗi lệnh in một dòng JSON ra stdout. Khi lỗi, script in JSON lỗi ra s
 
 1. Viết bài bằng Markdown vào một file `.md`. Tự viết; không chép nguyên văn bài Facebook.
 2. Nếu cần ảnh hoặc video, tạo bằng công cụ sẵn có rồi `upload`. Kết quả có `key` và `markdown`.
-3. Chèn ảnh vào bài bằng `![alt](/media/<key>)`, hoặc dùng `--cover <key>` để làm ảnh bìa. Ảnh bìa phải là ảnh, không nhận video.
+3. Chèn ảnh vào bài bằng `![alt](/media/<key>)`, hoặc dùng `--cover <key>` để làm ảnh bìa. Ảnh bìa phải là ảnh, không nhận video. Trang bài viết tự hiện ảnh bìa ở đầu bài, nên không chèn lại ảnh bìa vào nội dung; ảnh trong nội dung nên là ảnh khác, đặt cạnh phần nó minh hoạ.
 4. Gọi `put`. Script tự đọc bài trước và gửi `If-Match` nếu bài đã có.
 
 ## Quy tắc nội dung
