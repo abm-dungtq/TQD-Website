@@ -6,7 +6,9 @@ export default {
   async scheduled(_controller, env, ctx) {
     const { runBackup } = await import('./lib/backup');
     const { cleanupChatLimits } = await import('./lib/chat');
+    const { pruneChatVisitors } = await import('./lib/chat-stats');
     ctx.waitUntil(runBackup(env));
     ctx.waitUntil(cleanupChatLimits(env.DB));
+    ctx.waitUntil(pruneChatVisitors(env.DB));
   },
 } satisfies ExportedHandler<Env>;

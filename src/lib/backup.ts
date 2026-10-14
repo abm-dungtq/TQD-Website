@@ -1,5 +1,6 @@
-// Nightly D1 → R2 snapshot of content tables. Sessions and rate limits are left out on purpose.
-export const BACKUP_TABLES = ['settings', 'items', 'articles', 'media', 'api_keys'] as const;
+// Nightly D1 → R2 snapshot of content tables and daily chat counts. Sessions, rate limits and the per-visitor
+// chat rows are left out on purpose.
+export const BACKUP_TABLES = ['settings', 'items', 'articles', 'media', 'api_keys', 'chat_daily'] as const;
 export const BACKUP_PREFIX = 'backups/';
 const KEEP = 30;
 

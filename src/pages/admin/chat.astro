@@ -1,0 +1,94 @@
+---
+import { env } from 'cloudflare:workers';
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { DEFAULT_DAILY_CAP } from '../../lib/chat';
+import { chatTotals, listChatDays, VISITOR_DAYS } from '../../lib/chat-stats';
+
+// Second line of defence; the middleware sets this only for a valid session.
+if (!Astro.locals.admin) return new Response('Unauthorized', { status: 401 });
+
+const TABLE_DAYS = 90;
+const [today, week, month, all, days] = await Promise.all([
+  chatTotals(env.DB, 1),
+  chatTotals(env.DB, 7),
+  chatTotals(env.DB, 30),
+  chatTotals(env.DB, null),
+  listChatDays(env.DB, TABLE_DAYS),
+]);
+const cap = Number(env.CHAT_DAILY_CAP) || DEFAULT_DAILY_CAP;
+const periods = [
+  { label: 'Hôm nay', t: today },
+  { label: '7 ngày', t: week },
+  { label: '30 ngày', t: month },
+  { label: 'Từ đầu', t: all },
+];
+const fmt = (n: number) => n.toLocaleString('vi-VN');
+const dayLabel = (day: string) => day.split('-').reverse().join('/');
+---
+
+<AdminLayout title="Chat">
+  <p class="mb-6 text-sm text-muted">
+    Số lượt chat với agent trên website, theo ngày giờ Việt Nam. Website chỉ đếm, không lưu nội dung tin nhắn.
+  </p>
+  <div class="grid gap-4 sm:grid-cols-4">
+    {
+      periods.map(({ label, t }) => (
+        <div class="rounded-lg border border-line bg-panel p-4">
+          <span class="block text-sm text-muted">{label}</span>
+          <span class="text-3xl font-bold">{fmt(t.answered)}</span>
+          <span class="block text-sm text-muted">lượt trả lời · {fmt(t.visitors)} người</span>
+        </div>
+      ))
+    }
+  </div>
+  <p class="mt-4 text-sm text-muted">
+    Hôm nay agent đã trả lời {fmt(today.answered)} lượt; giới hạn chung là {fmt(cap)} lượt trong 24 giờ. Số người được đếm
+    theo trình duyệt và chỉ giữ {VISITOR_DAYS} ngày, nên cột "Từ đầu" chỉ tính người trong {VISITOR_DAYS} ngày gần nhất.
+  </p>
+
+  <h2 class="mb-3 mt-8 text-lg font-bold">Tổng hợp</h2>
+  <table class="admin-table">
+    <thead>
+      <tr><th>Khoảng</th><th>Trả lời</th><th>Người</th><th>Bị giới hạn</th><th>Agent nghỉ</th><th>Lỗi</th></tr>
+    </thead>
+    <tbody>
+      {
+        periods.map(({ label, t }) => (
+          <tr>
+            <td>{label}</td>
+            <td>{fmt(t.answered)}</td>
+            <td>{fmt(t.visitors)}</td>
+            <td>{fmt(t.limited)}</td>
+            <td>{fmt(t.offline)}</td>
+            <td>{fmt(t.failed)}</td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+
+  <h2 class="mb-3 mt-8 text-lg font-bold">Theo ngày ({TABLE_DAYS} ngày gần nhất)</h2>
+  {
+    days.length === 0 ? (
+      <p class="text-muted">Chưa có lượt chat nào.</p>
+    ) : (
+      <table class="admin-table">
+        <thead>
+          <tr><th>Ngày</th><th>Trả lời</th><th>Người</th><th>Bị giới hạn</th><th>Agent nghỉ</th><th>Lỗi</th></tr>
+        </thead>
+        <tbody>
+          {days.map((d) => (
+            <tr>
+              <td>{dayLabel(d.day)}</td>
+              <td>{fmt(d.answered)}</td>
+              <td>{fmt(d.visitors)}</td>
+              <td>{fmt(d.limited)}</td>
+              <td>{fmt(d.offline)}</td>
+              <td>{fmt(d.failed)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    )
+  }
+</AdminLayout>

@@ -1,15 +1,17 @@
 ---
 import { env } from 'cloudflare:workers';
 import AdminLayout from '../../layouts/AdminLayout.astro';
+import { chatTotals } from '../../lib/chat-stats';
 import { getSite, getVersion } from '../../lib/content';
 
 // Second line of defence; the middleware sets this only for a valid session.
 if (!Astro.locals.admin) return new Response('Unauthorized', { status: 401 });
 
-const [counts, version, site] = await Promise.all([
+const [counts, version, site, chatToday] = await Promise.all([
   env.DB.prepare('SELECT kind, COUNT(*) AS n FROM items GROUP BY kind').all<{ kind: string; n: number }>(),
   getVersion(env.DB),
   getSite(env.DB),
+  chatTotals(env.DB, 1),
 ]);
 const gallery = site.gallery.length;
 const count = (kind: string) => counts.results.find((r) => r.kind === kind)?.n ?? 0;
@@ -17,11 +19,12 @@ const cards = [
   { href: '/admin/muc/san-pham', label: 'Sản phẩm', value: count('product') },
   { href: '/admin/thu-vien', label: 'Thư viện', value: gallery },
   { href: '/admin/muc/video', label: 'Video', value: count('video') },
+  { href: '/admin/chat', label: 'Chat hôm nay', value: chatToday.answered },
 ];
 ---
 
 <AdminLayout title="Tổng quan">
-  <div class="grid gap-4 sm:grid-cols-3">
+  <div class="grid gap-4 sm:grid-cols-4">
     {
       cards.map((c) => (
         <a href={c.href} class="rounded-lg border border-line bg-panel p-4 text-ink no-underline">
