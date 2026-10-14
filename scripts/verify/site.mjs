@@ -4,7 +4,7 @@ const fails = [];
 const get = (p) => fetch(base + p, { redirect: 'manual' });
 
 const ok = [
-  '/', '/ho-so', '/san-pham', '/dao-tao', '/video-ai', '/bai-viet', '/lien-he',
+  '/', '/ho-so', '/san-pham', '/thu-vien', '/video-ai', '/bai-viet', '/lien-he',
   '/index.md', '/bai-viet.md', '/llms.txt', '/sitemap.xml', '/robots.txt', '/og.png', '/img/portrait-480.webp',
 ];
 for (const p of ok) {
@@ -15,7 +15,7 @@ for (const p of ok) {
 const missing = await get('/khong-co-trang-nay');
 if (missing.status !== 404) fails.push(`/khong-co-trang-nay ${missing.status}`);
 
-const redirects = { '/chuyen-mon': '/bai-viet', '/so-lieu': '/' };
+const redirects = { '/chuyen-mon': '/bai-viet', '/so-lieu': '/', '/dao-tao': '/thu-vien', '/dao-tao.md': '/thu-vien.md' };
 for (const [from, to] of Object.entries(redirects)) {
   const moved = await get(from);
   const location = moved.headers.get('location') ?? '';

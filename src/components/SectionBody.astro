@@ -1,7 +1,7 @@
 ---
 import ItemCard from './ItemCard.astro';
 import TikTokPlayer from './TikTokPlayer.astro';
-import { mediaUrl, type SectionId, type SiteData } from '../lib/content';
+import { isVideoKey, mediaUrl, type SectionId, type SiteData } from '../lib/content';
 
 interface Props {
   id: SectionId;
@@ -11,8 +11,8 @@ interface Props {
 }
 
 const { id, data, eager = false } = Astro.props;
-const { person, links, topics } = data.site;
-const { products, trainings, videos, articles } = data;
+const { person, links, topics, gallery } = data.site;
+const { products, videos, articles } = data;
 const gridClass = 'grid gap-4 sm:grid-cols-2';
 const formatDate = (iso?: string) => (iso ? iso.slice(0, 10).split('-').reverse().join('/') : '');
 ---
@@ -59,10 +59,28 @@ const formatDate = (iso?: string) => (iso ? iso.slice(0, 10).split('-').reverse(
 }
 
 {
-  id === 'dao-tao' && (
+  id === 'thu-vien' && (
     <div class={gridClass}>
-      {trainings.map((item) => (
-        <ItemCard item={item} />
+      {gallery.map((g) => (
+        <figure class="lux-card gallery-item">
+          {isVideoKey(g.key) ? (
+            <video
+              src={mediaUrl(g.key)}
+              poster={g.poster ? mediaUrl(g.poster) : undefined}
+              controls
+              playsinline
+              preload="none"
+              width="1280"
+              height="720"
+              aria-label={g.caption}
+            />
+          ) : (
+            <a href={mediaUrl(g.key)} target="_blank" rel="noopener" aria-label={`Xem ảnh lớn: ${g.caption}`}>
+              <img src={mediaUrl(g.key)} alt={g.caption} width="1280" height="720" loading="lazy" decoding="async" />
+            </a>
+          )}
+          <figcaption class="p-4 text-sm leading-relaxed">{g.caption}</figcaption>
+        </figure>
       ))}
     </div>
   )

@@ -3,15 +3,15 @@ import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
 import { type ItemKind, loadSiteData, type SectionId } from '../lib/content';
 
-const SECTION_OF: Record<ItemKind, SectionId> = { product: 'san-pham', training: 'dao-tao', video: 'video-ai' };
+const SECTION_OF: Record<ItemKind, SectionId> = { product: 'san-pham', video: 'video-ai' };
 
 export const GET: APIRoute = async () => {
-  const { site, products, trainings, videos, articles } = await loadSiteData(env.DB);
+  const { site, products, videos, articles } = await loadSiteData(env.DB);
   const sectionTitle = (id: SectionId) => site.sections.find((s) => s.id === id)?.title ?? '';
   const entries = [
     ...site.sections.map((s) => ({ title: s.title, url: `/${s.id}`, kind: 'section', hint: s.short, id: s.id })),
     ...articles.map((a) => ({ title: a.title, url: `/bai-viet/${a.slug}`, kind: 'article', hint: a.summary })),
-    ...[...products, ...trainings, ...videos].map((i) => ({
+    ...[...products, ...videos].map((i) => ({
       title: i.title,
       url: `/${SECTION_OF[i.kind]}`,
       kind: i.kind,

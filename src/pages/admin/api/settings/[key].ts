@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
 
-const KEYS = new Set(['person', 'stats', 'links', 'topics', 'sections']);
+const KEYS = new Set(['person', 'stats', 'links', 'topics', 'sections', 'gallery']);
 
 export const GET: APIRoute = async ({ params, locals }) => {
   if (!locals.admin) return new Response('Unauthorized', { status: 401 });

@@ -6,7 +6,8 @@ import Icon from './Icon.astro';
 import EffectsMenu from './EffectsMenu.astro';
 import SectionBody from './SectionBody.astro';
 import Mascot from './Mascot.astro';
-import type { SiteData } from '../lib/content';
+import FeaturedVideo from './FeaturedVideo.astro';
+import { featuredVideo, type SiteData } from '../lib/content';
 
 interface Props {
   data: SiteData;
@@ -14,6 +15,7 @@ interface Props {
 
 const { data } = Astro.props;
 const { person, sections } = data.site;
+const featured = featuredVideo(data.site.gallery);
 ---
 
 <div id="desktop" class="desktop hidden" data-desktop tabindex="-1">
@@ -87,6 +89,8 @@ const { person, sections } = data.site;
       </section>
     ))
   }
+
+  {featured && <FeaturedVideo video={featured} />}
 
   <div class="desktop-snap" data-snap-preview hidden></div>
 

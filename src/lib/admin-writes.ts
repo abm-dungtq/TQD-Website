@@ -5,8 +5,8 @@ import { resolveTikTokId } from './tiktok';
 /** Bad form input; the message is shown to the admin as is. */
 export class InputError extends Error {}
 
-export const KIND_BY_SLUG: Record<string, ItemKind> = { 'san-pham': 'product', 'dao-tao': 'training', video: 'video' };
-export const KIND_LABEL: Record<ItemKind, string> = { product: 'Sản phẩm', training: 'Đào tạo', video: 'Video' };
+export const KIND_BY_SLUG: Record<string, ItemKind> = { 'san-pham': 'product', video: 'video' };
+export const KIND_LABEL: Record<ItemKind, string> = { product: 'Sản phẩm', video: 'Video' };
 
 export const LIMITS = { title: 200, summary: 1000, intro: 2000 } as const;
 

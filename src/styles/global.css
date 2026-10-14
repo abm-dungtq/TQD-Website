@@ -226,6 +226,20 @@
   box-shadow: var(--shadow-soft);
 }
 
+/* Gallery: 16:9 photos and videos with a caption under each. */
+.gallery-item {
+  overflow: hidden;
+}
+.gallery-item img,
+.gallery-item video {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: var(--color-tint);
+}
+
 /* TikTok: click-to-play facade, then the official player at 9:16. */
 .tiktok-facade,
 .tiktok-frame {

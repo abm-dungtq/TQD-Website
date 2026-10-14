@@ -1,0 +1,116 @@
+---
+// The gallery's featured video, beside the profile window on the home-page desktop. src/scripts/desktop.ts
+// places it in the slot right of the profile and shows it when there is room; src/scripts/featured-video.ts
+// plays it muted on a loop and lets the visitor turn the sound on.
+import { mediaUrl, type GalleryEntry } from '../lib/content';
+
+interface Props {
+  video: GalleryEntry;
+}
+
+const { video } = Astro.props;
+---
+
+<figure class="desktop-feature" data-feature hidden>
+  <div class="desktop-feature-media">
+    <video
+      muted
+      loop
+      playsinline
+      preload="none"
+      disablepictureinpicture
+      width="1280"
+      height="720"
+      poster={video.poster ? mediaUrl(video.poster) : undefined}
+      data-src={mediaUrl(video.key)}
+      aria-label={video.caption}
+    ></video>
+    <button type="button" class="desktop-feature-sound" data-feature-sound aria-pressed="false">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"></path>
+        <path class="is-off" d="m16 9.5 5 5m0-5-5 5"></path>
+        <path class="is-on" d="M15.5 9a4 4 0 0 1 0 6m2.5-8.5a7.5 7.5 0 0 1 0 11"></path>
+      </svg>
+      <span data-feature-label>Bật tiếng</span>
+    </button>
+  </div>
+  <figcaption class="desktop-feature-caption">
+    <span>{video.caption}</span>
+    <button type="button" class="desktop-feature-more" data-open="thu-vien">Xem thư viện</button>
+  </figcaption>
+</figure>
+
+<style is:global>
+  .desktop-feature {
+    position: absolute;
+    z-index: 2;
+    margin: 0;
+    overflow: hidden;
+    border: 1px solid var(--color-line);
+    border-radius: 18px;
+    background: var(--color-panel);
+    box-shadow: var(--shadow-lift);
+  }
+  .desktop-feature[hidden] {
+    display: none;
+  }
+  .desktop-feature-media {
+    position: relative;
+  }
+  .desktop-feature video {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    background: var(--color-tint);
+  }
+  .desktop-feature-sound {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 36px;
+    padding: 0 0.875rem;
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.88);
+    color: var(--color-ink);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: blur(8px);
+    cursor: pointer;
+  }
+  .desktop-feature-sound:hover {
+    background: #fff;
+  }
+  .desktop-feature-sound:focus-visible,
+  .desktop-feature-more:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+  .desktop-feature-sound .is-on,
+  .desktop-feature-sound[aria-pressed='true'] .is-off {
+    display: none;
+  }
+  .desktop-feature-sound[aria-pressed='true'] .is-on {
+    display: inline;
+  }
+  .desktop-feature-caption {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.875rem 1.125rem;
+    font-size: 0.875rem;
+    line-height: 1.45;
+  }
+  .desktop-feature-more {
+    flex: none;
+    margin-left: auto;
+    font-weight: 600;
+    color: var(--color-accent-ink);
+    cursor: pointer;
+  }
+</style>

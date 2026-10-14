@@ -1,0 +1,121 @@
+---
+import { env } from 'cloudflare:workers';
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { InputError, saveSetting } from '../../lib/admin-writes';
+import { getSite, isVideoKey, type GalleryEntry } from '../../lib/content';
+
+// Second line of defence; the middleware sets this only for a valid session.
+if (!Astro.locals.admin) return new Response('Unauthorized', { status: 401 });
+
+const MAX_CAPTION = 200;
+
+const { results: media } = await env.DB.prepare('SELECT key, content_type, alt FROM media ORDER BY created_at DESC').all<{
+  key: string;
+  content_type: string;
+  alt: string;
+}>();
+const known = new Map(media.map((m) => [m.key, m.content_type]));
+const images = media.filter((m) => m.content_type.startsWith('image/'));
+let gallery: GalleryEntry[] = (await getSite(env.DB)).gallery;
+let error = '';
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const rows = Number(form.get('rows')) || 0;
+  const featured = String(form.get('featured') ?? '');
+  const field = (name: string, i: number) => String(form.get(`${name}-${i}`) ?? '').trim();
+  const entries: (GalleryEntry & { order: number })[] = [];
+  try {
+    for (let i = 0; i < rows; i += 1) {
+      const key = field('key', i);
+      if (!key || form.has(`remove-${i}`)) continue;
+      const caption = field('caption', i);
+      const poster = field('poster', i);
+      if (!known.has(key)) throw new InputError(`Dòng ${i + 1}: tệp không có trong thư viện media.`);
+      if (!caption || caption.length > MAX_CAPTION) throw new InputError(`Dòng ${i + 1}: chú thích cần từ 1 đến ${MAX_CAPTION} ký tự.`);
+      if (poster && !known.get(poster)?.startsWith('image/')) throw new InputError(`Dòng ${i + 1}: ảnh bìa phải là ảnh trong thư viện media.`);
+      const video = isVideoKey(key);
+      entries.push({
+        key,
+        caption,
+        ...(video && poster ? { poster } : {}),
+        ...(video && featured === String(i) ? { featured: true } : {}),
+        order: Number(field('order', i)) || i + 1,
+      });
+    }
+    gallery = entries.sort((a, b) => a.order - b.order).map(({ order: _, ...g }) => g);
+    await saveSetting(env.DB, 'gallery', gallery);
+    return Astro.redirect('/admin/thu-vien?ok=1', 303);
+  } catch (e) {
+    if (!(e instanceof InputError)) throw e;
+    Astro.response.status = 400;
+    error = e.message;
+  }
+}
+const saved = Astro.url.searchParams.has('ok');
+// One blank row for adding a file.
+const rows: GalleryEntry[] = [...gallery, { key: '', caption: '' }];
+---
+
+<AdminLayout title="Thư viện ảnh và video">
+  {saved && <p class="admin-ok">Đã lưu.</p>}
+  {error && <p class="admin-error" role="alert">{error}</p>}
+  <p class="mb-6 max-w-prose text-sm text-muted">
+    Tải ảnh hoặc video lên ở <a href="/admin/media">Media</a> trước, rồi chọn ở đây. Video có thể có ảnh bìa; video được đánh dấu
+    "Phát ở trang chủ" sẽ tự phát không tiếng bên cạnh cửa sổ Hồ sơ.
+  </p>
+  <form method="post" class="admin-form" style="max-width: none">
+    <input type="hidden" name="rows" value={rows.length} />
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Thứ tự</th>
+          <th>Tệp</th>
+          <th>Chú thích</th>
+          <th>Ảnh bìa (video)</th>
+          <th>Phát ở trang chủ</th>
+          <th>Xoá</th>
+        </tr>
+      </thead>
+      <tbody>
+        {
+          rows.map((g, i) => (
+            <tr>
+              <td>
+                <input type="number" name={`order-${i}`} value={i + 1} min="1" style="width: 4.5rem" aria-label={`Thứ tự dòng ${i + 1}`} />
+              </td>
+              <td>
+                <select name={`key-${i}`} aria-label={`Tệp dòng ${i + 1}`}>
+                  <option value="">{g.key ? '' : '— Thêm tệp —'}</option>
+                  {media.map((m) => (
+                    <option value={m.key} selected={m.key === g.key}>
+                      {m.key} ({m.content_type.split('/')[0] === 'video' ? 'video' : 'ảnh'})
+                    </option>
+                  ))}
+                </select>
+              </td>
+              <td>
+                <input type="text" name={`caption-${i}`} value={g.caption} maxlength={MAX_CAPTION} aria-label={`Chú thích dòng ${i + 1}`} />
+              </td>
+              <td>
+                <select name={`poster-${i}`} aria-label={`Ảnh bìa dòng ${i + 1}`}>
+                  <option value="">Không</option>
+                  {images.map((m) => (
+                    <option value={m.key} selected={m.key === g.poster}>
+                      {m.key}
+                    </option>
+                  ))}
+                </select>
+              </td>
+              <td>
+                <input type="radio" name="featured" value={i} checked={g.featured} aria-label={`Phát dòng ${i + 1} ở trang chủ`} />
+              </td>
+              <td>{g.key && <input type="checkbox" name={`remove-${i}`} aria-label={`Xoá dòng ${i + 1}`} />}</td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+    <button type="submit" class="admin-btn">Lưu thư viện</button>
+  </form>
+</AdminLayout>

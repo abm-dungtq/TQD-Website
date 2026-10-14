@@ -9,8 +9,10 @@ const DEFAULT_WINDOW = 'ho-so';
 const MENU_HEIGHT = 32;
 const SNAP_EDGE = 24;
 const DRAG_THRESHOLD = 4;
-// First-load composition on wide screens, left to right; the first one ends up on top.
+// First-load composition on wide screens, left to right; the first one ends up on top. When the featured
+// video is shown it takes the second slot, so the profile sits beside it.
 const BOOT_WINDOWS = ['ho-so', 'san-pham', 'bai-viet'];
+const FEATURE_MIN_WIDTH = 1280;
 // Usable canvas: right of the launcher column, below the menu bar, above the dock.
 const CANVAS_LEFT = 150;
 const CANVAS_TOP = MENU_HEIGHT + 24;
@@ -33,6 +35,7 @@ if (desktop && fallback) {
   const windows = new Map<string, HTMLElement>();
   const openers = new Map<string, HTMLElement>();
   const snapPreview = desktop.querySelector<HTMLElement>('[data-snap-preview]');
+  const feature = desktop.querySelector<HTMLElement>('[data-feature]');
   const exposeButton = desktop.querySelector<HTMLElement>('[data-expose-toggle]');
   let motion: WindowMotion | null = null;
   let zTop = 10;
@@ -85,15 +88,29 @@ if (desktop && fallback) {
     win.style.top = `${Math.min(Math.max(win.offsetTop, MENU_HEIGHT), maxTop)}px`;
   };
 
-  /** Sizes windows from the viewport and returns how many fit side by side (1 to 3). */
+  /**
+   * Sizes windows from the viewport and returns how many fit side by side (1 to 3). The featured video takes
+   * the slot right of the first window; where only one window fits (from FEATURE_MIN_WIDTH), windows narrow to
+   * 60% of the canvas to leave it room, and below that the video is hidden.
+   */
   const layoutWindows = () => {
     const width = window.innerWidth - CANVAS_LEFT - GUTTER;
     const height = window.innerHeight - CANVAS_TOP - 92;
     const count = width < 1264 ? 1 : width < 2268 ? 2 : 3;
-    const winWidth = Math.min(980, Math.floor((width - GUTTER * (count - 1)) / count));
+    const withFeature = Boolean(feature) && window.innerWidth >= FEATURE_MIN_WIDTH;
+    const shared = count === 1 && withFeature;
+    const winWidth = shared
+      ? Math.floor((width - GUTTER) * 0.6)
+      : Math.min(980, Math.floor((width - GUTTER * (count - 1)) / count));
     desktop.style.setProperty('--win-w', `${winWidth}px`);
     desktop.style.setProperty('--win-h', `${Math.min(880, Math.max(560, height))}px`);
-    return { count, winWidth };
+    if (feature) {
+      feature.hidden = !withFeature;
+      feature.style.left = `${CANVAS_LEFT + winWidth + GUTTER}px`;
+      feature.style.top = `${CANVAS_TOP}px`;
+      feature.style.width = `${shared ? width - GUTTER - winWidth : winWidth}px`;
+    }
+    return { count, winWidth, withFeature };
   };
 
   const placeWindow = (win: HTMLElement) => {
@@ -244,6 +261,7 @@ if (desktop && fallback) {
     // Extras wait until the page has loaded and the browser is idle, so they never delay first paint.
     whenIdle(() => {
       import('./wallpaper').then((m) => m.startWallpaper(desktop)).catch(() => {});
+      if (feature) import('./featured-video').then((m) => m.startFeaturedVideo(desktop)).catch(() => {});
       import('./weather').then((m) => m.startWeather(desktop)).catch(() => {});
       import('./mascot').then((m) => m.startMascot(desktop)).catch(() => {});
     });
@@ -295,7 +313,7 @@ if (desktop && fallback) {
       window.setInterval(tick, 30_000);
     }
 
-    const { count, winWidth } = layoutWindows();
+    const { count, winWidth, withFeature } = layoutWindows();
     window.addEventListener('resize', () => {
       layoutWindows();
       windows.forEach(clampWindow);
@@ -307,12 +325,13 @@ if (desktop && fallback) {
       open(fromHash);
       return;
     }
-    const slots = BOOT_WINDOWS.filter((id) => windows.has(id)).slice(0, count);
+    const slots = BOOT_WINDOWS.filter((id) => windows.has(id)).slice(0, withFeature ? Math.max(1, count - 1) : count);
     if (!slots.length) slots.push(DEFAULT_WINDOW);
     for (let i = slots.length - 1; i >= 0; i -= 1) {
       const win = windows.get(slots[i]);
       if (!win) continue;
-      win.style.left = `${CANVAS_LEFT + i * (winWidth + GUTTER)}px`;
+      const slot = withFeature && i > 0 ? i + 1 : i;
+      win.style.left = `${CANVAS_LEFT + slot * (winWidth + GUTTER)}px`;
       win.style.top = `${CANVAS_TOP}px`;
       open(slots[i]);
     }

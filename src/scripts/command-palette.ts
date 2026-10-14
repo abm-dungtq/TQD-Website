@@ -5,7 +5,7 @@ import { typing } from './typing';
 interface Entry {
   title: string;
   url: string;
-  kind: 'section' | 'article' | 'product' | 'training' | 'video';
+  kind: 'section' | 'article' | 'product' | 'video';
   hint: string;
   /** Section window that shows this entry on the home-page desktop. */
   id?: string;
@@ -15,7 +15,6 @@ const GROUPS: Record<Entry['kind'], string> = {
   section: 'Mục',
   article: 'Bài viết',
   product: 'Sản phẩm',
-  training: 'Đào tạo',
   video: 'Video AI',
 };
 const MAX_RESULTS = 8;

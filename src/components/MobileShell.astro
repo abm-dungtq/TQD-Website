@@ -2,13 +2,14 @@
 // Phone home screen: clock, profile and an icon grid. Each icon is a plain link, so it works
 // without JavaScript; src/scripts/mobile-shell.ts turns taps into a draggable sheet.
 import Icon from './Icon.astro';
-import type { Site } from '../lib/content';
+import { featuredVideo, mediaUrl, type Site } from '../lib/content';
 
 interface Props {
   site: Site;
 }
 
-const { person, sections } = Astro.props.site;
+const { person, sections, gallery } = Astro.props.site;
+const featured = featuredVideo(gallery);
 ---
 
 <div class="m-home" data-m-home>
@@ -16,6 +17,24 @@ const { person, sections } = Astro.props.site;
     <time class="m-clock" data-m-clock>--:--</time>
     <span class="m-date" data-m-date></span>
   </div>
+  {
+    featured && (
+      <figure class="m-feature">
+        {/* Plays only when tapped, so phones never download it unasked. */}
+        <video
+          src={mediaUrl(featured.key)}
+          poster={featured.poster ? mediaUrl(featured.poster) : undefined}
+          controls
+          playsinline
+          preload="none"
+          width="1280"
+          height="720"
+          aria-label={featured.caption}
+        />
+        <figcaption class="m-feature-caption">{featured.caption}</figcaption>
+      </figure>
+    )
+  }
   <div class="m-profile">
     <img src={person.portraitSmall} alt="" width="56" height="56" class="m-avatar" />
     <div>
@@ -91,6 +110,27 @@ const { person, sections } = Astro.props.site;
     margin-top: 0.4rem;
     font-size: 0.875rem;
     color: var(--color-muted);
+  }
+  .m-feature {
+    margin: 0 0 1.25rem;
+    overflow: hidden;
+    border: 1px solid var(--color-line);
+    border-radius: 20px;
+    background: var(--color-panel);
+    box-shadow: var(--shadow-soft);
+  }
+  .m-feature video {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    background: var(--color-tint);
+  }
+  .m-feature-caption {
+    padding: 0.75rem 1rem;
+    font-size: 0.8125rem;
+    line-height: 1.45;
   }
   .m-profile {
     display: flex;

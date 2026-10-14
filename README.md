@@ -1,6 +1,8 @@
 # tqd.io.vn — website cá nhân của Trịnh Quang Dũng (DũngTQ)
 
-Website giới thiệu hồ sơ, sản phẩm AI tự xây, đào tạo, video AI, bài viết và liên hệ của DũngTQ. Trang chủ có giao diện kiểu màn hình máy tính (dock, cửa sổ) trên màn hình rộng; trên điện thoại hoặc khi tắt JavaScript, mỗi mục là một trang thường tại `/{mục}`.
+Website giới thiệu hồ sơ, sản phẩm AI tự xây, thư viện ảnh và video, video AI, bài viết và liên hệ của DũngTQ. Trang chủ có giao diện kiểu màn hình máy tính (dock, cửa sổ) trên màn hình rộng; trên điện thoại hoặc khi tắt JavaScript, mỗi mục là một trang thường tại `/{mục}`. Địa chỉ cũ `/dao-tao` chuyển hướng 301 sang `/thu-vien`.
+
+Video được đánh dấu "Phát ở trang chủ" trong **`/admin/thu-vien`** tự phát không tiếng bên phải cửa sổ Hồ sơ trên màn hình từ 1280px (dưới 1440px cửa sổ Hồ sơ thu hẹp còn khoảng 60% để chừa chỗ); nút **Bật tiếng** phát lại từ đầu có tiếng một lần rồi trở về vòng lặp không tiếng. Video dừng khi bị cửa sổ khác che hoặc khi tab ẩn, và không tự phát khi bật giảm chuyển động hay tiết kiệm dữ liệu. Trên điện thoại video là một thẻ ngay dưới đồng hồ, chỉ tải khi chạm. Tệp ảnh và video tải lên ở `/admin/media` trước rồi chọn trong `/admin/thu-vien`.
 
 Giao diện lấy cảm hứng từ zuey.me; mã nguồn viết mới, không sao chép từ repo đó.
 

@@ -1,5 +1,5 @@
 // Markdown versions of the site content, for /index.md, /{section}.md and llms.txt readers.
-import type { Item, SectionId, SiteData } from './content';
+import { isVideoKey, mediaUrl, type Item, type SectionId, type SiteData } from './content';
 
 const SITE = 'https://tqd.io.vn';
 
@@ -21,8 +21,8 @@ function sectionBody(id: SectionId, data: SiteData): string {
       return [`**${person.name}** (${person.handle}) — ${person.role}`, '', person.intro, '', 'Trọng tâm:', '', list(person.focus)].join('\n');
     case 'san-pham':
       return data.products.map(itemMarkdown).join('\n\n');
-    case 'dao-tao':
-      return data.trainings.map(itemMarkdown).join('\n\n');
+    case 'thu-vien':
+      return list(data.site.gallery.map((g) => `${isVideoKey(g.key) ? 'Video' : 'Ảnh'}: [${g.caption}](${SITE}${mediaUrl(g.key)})`));
     case 'video-ai':
       return data.videos.map(itemMarkdown).join('\n\n');
     case 'bai-viet':

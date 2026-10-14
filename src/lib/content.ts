@@ -5,7 +5,8 @@ export interface Link {
   href: string;
 }
 
-export type ItemKind = 'product' | 'training' | 'video';
+// The items table still allows kind 'training' (CHECK constraint); that section was replaced by the gallery and has no rows.
+export type ItemKind = 'product' | 'video';
 
 export interface Item {
   id: number;
@@ -21,9 +22,24 @@ export interface Item {
   visible: boolean;
 }
 
-export type SectionId = 'ho-so' | 'san-pham' | 'dao-tao' | 'video-ai' | 'bai-viet' | 'lien-he';
+export type SectionId = 'ho-so' | 'san-pham' | 'thu-vien' | 'video-ai' | 'bai-viet' | 'lien-he';
 
-export type IconName = 'user' | 'box' | 'presentation' | 'film' | 'book' | 'chart' | 'mail';
+export type IconName = 'user' | 'box' | 'image' | 'film' | 'book' | 'chart' | 'mail';
+
+/** A photo or video in the gallery, stored in the media library. A video carries a poster image. */
+export interface GalleryEntry {
+  key: string;
+  caption: string;
+  poster?: string;
+  /** The video that plays beside the profile on the home page. */
+  featured?: boolean;
+}
+
+export const isVideoKey = (key: string): boolean => /\.(mp4|webm)$/.test(key);
+
+/** The gallery video shown on the home page, if one is marked. */
+export const featuredVideo = (gallery: GalleryEntry[]): GalleryEntry | undefined =>
+  gallery.find((g) => g.featured && isVideoKey(g.key));
 
 export interface Section {
   id: SectionId;
@@ -75,6 +91,7 @@ export interface Site {
   links: Link[];
   topics: Topics;
   sections: Section[];
+  gallery: GalleryEntry[];
 }
 
 export type ArticleStatus = 'draft' | 'published';
@@ -100,12 +117,11 @@ export interface Article {
 export interface SiteData {
   site: Site;
   products: Item[];
-  trainings: Item[];
   videos: Item[];
   articles: Article[];
 }
 
-const SITE_KEYS = ['person', 'stats', 'links', 'topics', 'sections'] as const;
+const SITE_KEYS = ['person', 'stats', 'links', 'topics', 'sections', 'gallery'] as const;
 
 const parseList = <T>(text: unknown): T[] => {
   try {
@@ -127,8 +143,9 @@ export async function getSite(db: D1Database): Promise<Site> {
     .prepare(`SELECT key, value FROM settings WHERE key IN (${placeholders})`)
     .bind(...SITE_KEYS)
     .all<{ key: string; value: string }>();
-  const map = Object.fromEntries(results.map((r) => [r.key, JSON.parse(r.value)]));
-  return map as Site;
+  const map: Record<string, unknown> = Object.fromEntries(results.map((r) => [r.key, JSON.parse(r.value)]));
+  // The gallery setting may not exist yet; every other key is seeded by the migrations.
+  return { gallery: [], ...map } as unknown as Site;
 }
 
 interface ItemRow {
@@ -233,14 +250,13 @@ export async function getArticleById(db: D1Database, id: number): Promise<Articl
 }
 
 export async function loadSiteData(db: D1Database): Promise<SiteData> {
-  const [site, products, trainings, videos, articles] = await Promise.all([
+  const [site, products, videos, articles] = await Promise.all([
     getSite(db),
     listItems(db, 'product'),
-    listItems(db, 'training'),
     listItems(db, 'video'),
     listArticles(db, { limit: 50 }),
   ]);
-  return { site, products, trainings, videos, articles };
+  return { site, products, videos, articles };
 }
 
 /** Statement that bumps the cache version; run it in the same db.batch() as the write it covers. */
