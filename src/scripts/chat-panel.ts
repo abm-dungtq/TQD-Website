@@ -166,7 +166,7 @@ const setOnline = (value: boolean) => {
   const hadFocus = panel.contains(document.activeElement) || document.activeElement === document.body;
   syncControls();
   // A disabled textarea drops focus; keep it in the panel so Escape and Tab still work here.
-  if (isOpen && hadFocus) (value ? input : q<HTMLElement>('[data-chat-retry]')).focus({ preventScroll: true });
+  if (isOpen && hadFocus) (value && !NARROW.matches ? input : panel).focus({ preventScroll: true });
 };
 
 const checkStatus = async (force = false) => {
@@ -359,7 +359,7 @@ const show = async () => {
     if (skipLink) skipLink.inert = true;
     if (fab) fab.inert = true;
     document.documentElement.style.overflow = 'hidden';
-    q<HTMLElement>('[data-chat-close]').focus({ preventScroll: true });
+    panel.focus({ preventScroll: true });
     await Promise.all([
       play(panel, [{ transform: 'translateY(100%)' }, { transform: 'translateY(0)' }], { duration: 380, easing: SPRING }),
       play(scrim, [{ opacity: 0 }, { opacity: 1 }], { duration: 380, easing: EASE }),

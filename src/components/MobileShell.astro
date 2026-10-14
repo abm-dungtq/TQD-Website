@@ -61,7 +61,7 @@ const featured = featuredVideo(gallery);
 </div>
 
 <div class="m-scrim" data-m-scrim hidden></div>
-<section class="m-sheet" role="dialog" aria-modal="true" aria-labelledby="m-sheet-title" data-m-sheet hidden>
+<section class="m-sheet" role="dialog" aria-modal="true" aria-labelledby="m-sheet-title" data-m-sheet tabindex="-1" hidden>
   <header class="m-sheet-head" data-m-drag>
     <span class="m-handle" aria-hidden="true"></span>
     <h2 id="m-sheet-title" class="m-sheet-title" data-m-title></h2>
@@ -81,6 +81,10 @@ const featured = featuredVideo(gallery);
 
 <style is:global>
   .m-home {
+    max-width: 34rem;
+    margin-inline: auto;
+    margin-top: -1.5rem;
+    padding-bottom: 3.5rem;
     transform-origin: 50% 0;
     transition:
       transform 380ms var(--os-spring),
@@ -96,23 +100,23 @@ const featured = featuredVideo(gallery);
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 0.5rem 0 1.75rem;
+    padding: 0 0 1rem;
   }
   .m-clock {
     font-family: var(--font-display);
-    font-size: 4.25rem;
+    font-size: 3.75rem;
     font-weight: 600;
     line-height: 1;
     letter-spacing: -0.02em;
     font-variant-numeric: lining-nums tabular-nums;
   }
   .m-date {
-    margin-top: 0.4rem;
+    margin-top: 0.35rem;
     font-size: 0.875rem;
     color: var(--color-muted);
   }
   .m-feature {
-    margin: 0 0 1.25rem;
+    margin: 0 0 1rem;
     overflow: hidden;
     border: 1px solid var(--color-line);
     border-radius: 20px;
@@ -136,7 +140,7 @@ const featured = featuredVideo(gallery);
     display: flex;
     align-items: center;
     gap: 0.875rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1.25rem;
     padding: 0.875rem 1rem;
     border: 1px solid var(--color-line);
     border-radius: 20px;
@@ -153,7 +157,7 @@ const featured = featuredVideo(gallery);
   .m-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 1.5rem 0.5rem;
+    gap: 1.25rem 0.5rem;
   }
   .m-app {
     display: flex;
@@ -213,6 +217,7 @@ const featured = featuredVideo(gallery);
     border-radius: 18px 18px 0 0;
     background: var(--color-panel);
     box-shadow: 0 -20px 50px -24px rgb(94 68 19 / 0.4);
+    outline: none;
   }
   .m-sheet-head {
     position: relative;

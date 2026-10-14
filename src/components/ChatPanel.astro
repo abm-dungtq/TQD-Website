@@ -13,7 +13,7 @@ const { zalo } = Astro.props;
 </button>
 
 <div class="chat-scrim" data-chat-scrim hidden></div>
-<section id="chat-panel" class="chat-panel" role="dialog" aria-labelledby="chat-title" data-chat data-zalo={zalo} hidden>
+<section id="chat-panel" class="chat-panel" role="dialog" aria-labelledby="chat-title" data-chat data-zalo={zalo} tabindex="-1" hidden>
   <header class="chat-head" data-chat-drag>
     <span class="chat-handle" aria-hidden="true"></span>
     <img class="chat-avatar" alt="" width="40" height="40" data-chat-avatar />
@@ -138,6 +138,7 @@ const { zalo } = Astro.props;
     background: var(--color-panel);
     color: var(--color-ink);
     box-shadow: var(--shadow-lift);
+    outline: none;
     transform-origin: 100% 100%;
   }
   html[data-mascot='off'] .chat-panel {
@@ -182,8 +183,8 @@ const { zalo } = Astro.props;
     display: grid;
     flex: none;
     place-items: center;
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     border-radius: 999px;
     color: var(--color-muted);
     transition:
@@ -306,7 +307,7 @@ const { zalo } = Astro.props;
   .chat-retry {
     display: inline-flex;
     align-items: center;
-    min-height: 40px;
+    min-height: 44px;
     padding: 0 1rem;
     border-radius: 999px;
     font-size: 0.8125rem;

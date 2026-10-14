@@ -21,7 +21,7 @@ const { item } = Astro.props;
     item.links && item.links.length > 0 && (
       <p class="flex flex-wrap gap-3 text-sm font-semibold">
         {item.links.map((l) => (
-          <a href={l.href} {...(l.href.startsWith('/') ? {} : { target: '_blank', rel: 'noopener' })}>
+          <a href={l.href} class="inline-flex min-h-11 -my-2 items-center" {...(l.href.startsWith('/') ? {} : { target: '_blank', rel: 'noopener' })}>
             {l.label} →
           </a>
         ))}

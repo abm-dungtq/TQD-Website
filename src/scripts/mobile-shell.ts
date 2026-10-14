@@ -49,7 +49,8 @@ if (home && sheet && scrim && title && body && pageLink && fallback) {
       if (!main) throw new Error('no main');
       if (token !== loadToken) return;
       // Same-origin HTML rendered by this site; the page's own heading is shown in the sheet header.
-      main.querySelector('h1')?.remove();
+      const h1 = main.querySelector('h1');
+      (h1?.closest('header') ?? h1)?.remove();
       body.replaceChildren();
       while (main.firstChild) body.appendChild(main.firstChild);
       body.scrollTop = 0;
@@ -71,7 +72,7 @@ if (home && sheet && scrim && title && body && pageLink && fallback) {
     if (chatButton) chatButton.inert = true;
     document.documentElement.style.overflow = 'hidden';
     home.classList.add('is-behind');
-    sheet.querySelector<HTMLElement>('[data-m-close]')?.focus({ preventScroll: true });
+    sheet.focus({ preventScroll: true });
     const loading = load(id);
     await Promise.all([
       play(sheet, [{ transform: 'translateY(100%)' }, { transform: 'translateY(0)' }], { duration: 380, easing: SPRING }),

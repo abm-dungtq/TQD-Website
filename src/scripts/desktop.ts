@@ -74,7 +74,7 @@ if (desktop && fallback) {
     visibleWindows,
     (win) => {
       focusWindow(win);
-      win.querySelector<HTMLElement>('[data-close]')?.focus({ preventScroll: true });
+      win.focus({ preventScroll: true });
       syncHash();
     },
     (active) => exposeButton?.setAttribute('aria-pressed', String(active)),
@@ -133,7 +133,7 @@ if (desktop && fallback) {
     setActiveDock();
     syncHash();
     if (motion && item) await motion.animateRestore(win, item.getBoundingClientRect());
-    win.querySelector<HTMLElement>('[data-close]')?.focus({ preventScroll: true });
+    win.focus({ preventScroll: true });
   };
 
   const open = (id: string, opener?: HTMLElement) => {
@@ -151,7 +151,7 @@ if (desktop && fallback) {
       if (!win.style.left) placeWindow(win);
     }
     focusWindow(win);
-    win.querySelector<HTMLElement>('[data-close]')?.focus({ preventScroll: true });
+    win.focus({ preventScroll: true });
     history.replaceState(null, '', `#${id}`);
     setActiveDock();
     if (wasHidden && opener && motion) void motion.animateOpen(win, opener.getBoundingClientRect());
@@ -269,6 +269,7 @@ if (desktop && fallback) {
     windows.forEach((win, id) => {
       enableDrag(win);
       win.addEventListener('pointerdown', () => focusWindow(win));
+      win.addEventListener('focusin', () => !expose.active && focusWindow(win));
       win.querySelector<HTMLElement>('[data-close]')?.addEventListener('click', () => void close(id));
       win.querySelector<HTMLElement>('[data-minimize]')?.addEventListener('click', () => void minimize(id));
       win.querySelector<HTMLElement>('[data-maximize]')?.addEventListener('click', () => void toggleMaximize(win));

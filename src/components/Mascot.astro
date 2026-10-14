@@ -125,6 +125,7 @@
     cursor: pointer;
   }
   .mascot-tip-close {
+    position: relative;
     display: grid;
     flex: none;
     place-items: center;
@@ -133,6 +134,11 @@
     margin-top: -2px;
     border-radius: 999px;
     color: var(--color-muted);
+  }
+  .mascot-tip-close::after {
+    content: '';
+    position: absolute;
+    inset: -10px;
   }
   .mascot-tip-close:hover {
     background: var(--color-tint);

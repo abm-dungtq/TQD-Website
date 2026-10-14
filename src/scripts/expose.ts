@@ -37,6 +37,11 @@ export function createExpose(
     pick(win);
   };
 
+  const onKey = (event: KeyboardEvent) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    onPick(event);
+  };
+
   const enter = () => {
     const wins = visibleWindows();
     if (active || wins.length === 0) return;
@@ -58,7 +63,10 @@ export function createExpose(
       const tx = cx - (r.left + r.width / 2);
       const ty = cy - (r.top + r.height / 2);
       win.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+      win.tabIndex = 0;
+      for (const child of win.children) (child as HTMLElement).inert = true;
       win.addEventListener('click', onPick, { capture: true });
+      win.addEventListener('keydown', onKey, { capture: true });
       const label = document.createElement('span');
       label.className = 'expose-label';
       label.textContent = titleOf(win);
@@ -75,7 +83,10 @@ export function createExpose(
     active = false;
     laidOut.forEach((win) => {
       win.style.transform = '';
+      win.tabIndex = -1;
+      for (const child of win.children) (child as HTMLElement).inert = false;
       win.removeEventListener('click', onPick, { capture: true });
+      win.removeEventListener('keydown', onKey, { capture: true });
     });
     laidOut = [];
     layer.hidden = true;

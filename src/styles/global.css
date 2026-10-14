@@ -58,6 +58,7 @@
     letter-spacing: 0;
     /* Cormorant defaults to old-style figures, which drop below the baseline in stats and dates. */
     font-variant-numeric: lining-nums;
+    text-wrap: balance;
     color: var(--color-ink);
   }
 
@@ -93,7 +94,9 @@
       box-shadow 200ms var(--os-ease),
       transform 200ms var(--os-ease);
   }
-  a.lux-card:hover {
+  a.lux-card:hover,
+  .lux-card:has(> h3 > a:hover),
+  .lux-card:has(> dd > a:hover) {
     border-color: color-mix(in srgb, var(--color-champagne) 60%, var(--color-line));
     box-shadow: var(--shadow-lift);
     transform: translateY(-2px);
@@ -142,6 +145,7 @@
 .prose-article {
   font-size: 1.0625rem;
   line-height: 1.8;
+  text-wrap: pretty;
 }
 .prose-article a {
   text-decoration: underline;
@@ -161,11 +165,13 @@
   font-size: 2rem;
   font-weight: 600;
   line-height: 1.15;
+  text-wrap: balance;
 }
 .prose-article h3 {
   margin-top: 1.5rem;
   font-size: 1.2rem;
   font-weight: 600;
+  text-wrap: balance;
 }
 .prose-article ul {
   list-style: disc;
@@ -278,6 +284,7 @@
   inset: auto 0 0;
   padding: 0.75rem;
   background: linear-gradient(transparent, rgb(27 32 48 / 0.72));
+  color: var(--color-paper);
   font-size: 0.875rem;
   font-weight: 600;
   text-align: left;
