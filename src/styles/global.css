@@ -131,14 +131,83 @@
     color: #fff;
     font-weight: 600;
     text-decoration: none;
-    transition: background-color 200ms var(--os-ease);
-  }
-  .btn-gold:hover {
-    background: var(--color-accent-ink);
   }
   .btn-gold:focus-visible {
     box-shadow: 0 0 0 2px #fff;
   }
+}
+
+/* Gradient hover shared by icon and action buttons: a gold gradient fades in behind the content and a
+   blurred copy glows underneath. Buttons pick a pair through --grad-from/--grad-to; every pair keeps
+   white text above 4.5:1. Unlayered so the hover colour beats each component's own base colour. */
+.gradient-hover,
+.btn-gold {
+  --grad-from: #8a6420;
+  --grad-to: #5e4413;
+  position: relative;
+  isolation: isolate;
+}
+.gradient-hover::before,
+.gradient-hover::after,
+.btn-gold::before,
+.btn-gold::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(45deg, var(--grad-from), var(--grad-to));
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 500ms var(--os-ease);
+}
+.gradient-hover::before,
+.btn-gold::before {
+  inset: 0;
+}
+.gradient-hover::after,
+.btn-gold::after {
+  z-index: -2;
+  inset: 10px 0 -10px;
+  filter: blur(15px);
+}
+.gradient-hover:focus-visible,
+.btn-gold:focus-visible {
+  color: #fff;
+}
+.gradient-hover:focus-visible::before,
+.btn-gold:focus-visible::before {
+  opacity: 1;
+}
+.gradient-hover:focus-visible::after,
+.btn-gold:focus-visible::after {
+  opacity: 0.5;
+}
+/* Touch screens would keep the hover state after a tap, so the hover half applies to mice only. */
+@media (hover: hover) {
+  .gradient-hover:hover,
+  .btn-gold:hover {
+    color: #fff;
+  }
+  .gradient-hover:hover::before,
+  .btn-gold:hover::before {
+    opacity: 1;
+  }
+  .gradient-hover:hover::after,
+  .btn-gold:hover::after {
+    opacity: 0.5;
+  }
+}
+.grad-2 {
+  --grad-from: #8a6420;
+  --grad-to: #1b2030;
+}
+.grad-3 {
+  --grad-from: #7a5a1c;
+  --grad-to: #3a2f1f;
+}
+.grad-4 {
+  --grad-from: #5e4413;
+  --grad-to: #8a6420;
 }
 
 /* Article body rendered from Markdown. */

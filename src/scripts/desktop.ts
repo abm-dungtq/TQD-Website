@@ -1,6 +1,5 @@
 // Window manager for the home-page desktop (src/components/DesktopShell.astro).
 // The desktop only runs on wide screens; elsewhere the plain page stays visible.
-import { enableDockMagnify } from './dock';
 import { createExpose } from './expose';
 import { typing } from './typing';
 
@@ -300,9 +299,6 @@ if (desktop && fallback) {
       const win = topWindow();
       if (win?.dataset.window) void close(win.dataset.window);
     });
-
-    const dock = desktop.querySelector<HTMLElement>('.desktop-dock');
-    if (dock) enableDockMagnify(dock);
 
     const clock = desktop.querySelector<HTMLElement>('[data-clock]');
     if (clock) {

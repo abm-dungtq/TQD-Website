@@ -28,7 +28,7 @@ const featured = featuredVideo(data.site.gallery);
     </a>
     <span class="text-muted">{person.role}</span>
     <div class="ml-auto flex items-center gap-1">
-      <button type="button" class="cmdk-trigger" data-cmdk-open hidden>Tìm <kbd>Ctrl K</kbd></button>
+      <button type="button" class="cmdk-trigger gradient-hover" data-cmdk-open hidden>Tìm <kbd>Ctrl K</kbd></button>
       <button type="button" class="desktop-menu-btn" data-expose-toggle aria-pressed="false">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
           <rect x="3.5" y="4.5" width="7.5" height="6.5" rx="1.5"></rect><rect x="13" y="4.5" width="7.5" height="6.5" rx="1.5"></rect>
@@ -44,9 +44,9 @@ const featured = featuredVideo(data.site.gallery);
 
   <nav class="desktop-launcher" aria-label="Ứng dụng">
     {
-      sections.map((s) => (
+      sections.map((s, i) => (
         <button type="button" class="desktop-launch" data-open={s.id}>
-          <span class="desktop-glyph">
+          <span class={`desktop-glyph gradient-hover grad-${(i % 4) + 1}`}>
             <Icon name={s.icon} size={26} />
           </span>
           <span class="text-xs font-semibold">{s.title}</span>
@@ -99,9 +99,13 @@ const featured = featuredVideo(data.site.gallery);
 
   <nav class="desktop-dock" aria-label="Dock">
     {
-      sections.map((s) => (
-        <button type="button" class="desktop-dock-item" data-open={s.id} aria-label={s.title} data-tip={s.title}>
-          <Icon name={s.icon} size={24} />
+      sections.map((s, i) => (
+        <button type="button" class={`desktop-dock-item gradient-hover grad-${(i % 4) + 1}`} data-open={s.id}>
+          <span class="desktop-dock-icon">
+            <Icon name={s.icon} size={24} />
+          </span>
+          <span class="desktop-dock-label">{s.title}</span>
+          <span class="desktop-dock-dot" aria-hidden="true"></span>
         </button>
       ))
     }
@@ -258,6 +262,27 @@ const featured = featuredVideo(data.site.gallery);
   .desktop-launch:hover {
     background: color-mix(in srgb, var(--color-champagne) 12%, transparent);
   }
+  /* The whole tile triggers the glyph's gradient, not just the glyph itself. */
+  .desktop-launch:focus-visible .desktop-glyph {
+    color: #fff;
+  }
+  .desktop-launch:focus-visible .desktop-glyph::before {
+    opacity: 1;
+  }
+  .desktop-launch:focus-visible .desktop-glyph::after {
+    opacity: 0.5;
+  }
+  @media (hover: hover) {
+    .desktop-launch:hover .desktop-glyph {
+      color: #fff;
+    }
+    .desktop-launch:hover .desktop-glyph::before {
+      opacity: 1;
+    }
+    .desktop-launch:hover .desktop-glyph::after {
+      opacity: 0.5;
+    }
+  }
   .desktop-launch:active .desktop-glyph {
     transform: scale(0.94);
   }
@@ -274,7 +299,9 @@ const featured = featuredVideo(data.site.gallery);
       inset 0 0 0 3px var(--color-panel),
       inset 0 0 0 4px color-mix(in srgb, var(--color-champagne) 35%, transparent),
       var(--shadow-soft);
-    transition: transform 150ms var(--os-ease);
+    transition:
+      transform 150ms var(--os-ease),
+      color 300ms var(--os-ease);
   }
   .desktop-window {
     position: absolute;
@@ -445,7 +472,6 @@ const featured = featuredVideo(data.site.gallery);
   }
   /* Dock */
   .desktop-dock {
-    --dock-grow: 0px;
     position: absolute;
     left: 50%;
     bottom: 14px;
@@ -459,71 +485,79 @@ const featured = featuredVideo(data.site.gallery);
   .desktop-dock::before {
     content: '';
     position: absolute;
-    inset: 0 calc(-1 * var(--dock-grow));
+    inset: 0;
     z-index: -1;
     border-radius: 20px;
     background: color-mix(in srgb, var(--color-panel) 66%, transparent);
     backdrop-filter: blur(18px) saturate(1.2);
     border: 1px solid var(--color-line);
     box-shadow: var(--shadow-lift);
-    transition: inset 200ms var(--os-ease);
   }
-  .desktop-dock.is-magnify::before {
-    transition: none;
-  }
+  /* Round icon that stretches into a gradient pill on hover: the icon shrinks away and the title grows in. */
   .desktop-dock-item {
-    position: relative;
     display: grid;
     place-items: center;
     width: 46px;
     height: 46px;
-    border-radius: 12px;
+    border-radius: 999px;
     color: var(--color-accent);
     background: linear-gradient(160deg, var(--color-panel), var(--color-tint));
     border: 1px solid var(--color-line);
     cursor: pointer;
-    transform-origin: 50% 100%;
-    transition: transform 200ms var(--os-ease);
+    transition:
+      width 500ms var(--os-ease),
+      border-color 500ms var(--os-ease),
+      color 300ms var(--os-ease);
   }
-  .desktop-dock.is-magnify .desktop-dock-item {
-    transition: none;
+  .desktop-dock-icon,
+  .desktop-dock-label {
+    grid-area: 1 / 1;
+    transition: transform 500ms var(--os-ease);
   }
-  .desktop-dock:not(.is-magnify) .desktop-dock-item:hover,
-  .desktop-dock-item:focus-visible {
-    transform: translateY(-4px);
-  }
-  .desktop-dock-item::after {
-    content: attr(data-tip);
-    position: absolute;
-    bottom: calc(100% + 10px);
-    left: 50%;
-    padding: 0.2rem 0.5rem;
-    border-radius: 8px;
-    border: 1px solid var(--color-line);
-    background: var(--color-panel);
-    color: var(--color-ink);
-    box-shadow: var(--shadow-soft);
-    font-size: 0.75rem;
+  .desktop-dock-label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
     white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-    /* Keeps the label at its normal size while the icon is magnified. */
-    transform: translateX(-50%) scale(calc(1 / var(--s, 1)));
-    transform-origin: 50% 100%;
-    transition: opacity 150ms var(--os-ease);
+    transform: scale(0);
   }
-  .desktop-dock-item:hover::after,
-  .desktop-dock-item:focus-visible::after {
-    opacity: 1;
+  .desktop-dock-item:focus-visible {
+    width: 128px;
+    border-color: transparent;
   }
-  .desktop-dock-item.is-open::before {
-    content: '';
+  .desktop-dock-item:focus-visible .desktop-dock-icon {
+    transform: scale(0);
+  }
+  .desktop-dock-item:focus-visible .desktop-dock-label {
+    transform: scale(1);
+    transition-delay: 150ms;
+  }
+  @media (hover: hover) {
+    .desktop-dock-item:hover {
+      width: 128px;
+      border-color: transparent;
+    }
+    .desktop-dock-item:hover .desktop-dock-icon {
+      transform: scale(0);
+    }
+    .desktop-dock-item:hover .desktop-dock-label {
+      transform: scale(1);
+      transition-delay: 150ms;
+    }
+  }
+  .desktop-dock-dot {
     position: absolute;
     bottom: -6px;
+    left: 50%;
+    display: none;
     width: 4px;
     height: 4px;
     border-radius: 999px;
     background: var(--color-accent);
+    transform: translateX(-50%);
+  }
+  .desktop-dock-item.is-open .desktop-dock-dot {
+    display: block;
   }
   @media (prefers-reduced-motion: reduce) {
     .desktop::before {

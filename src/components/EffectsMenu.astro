@@ -4,7 +4,7 @@
 ---
 
 <div class="fx-menu" data-effects-menu hidden>
-  <button type="button" class="fx-trigger" data-effects-trigger aria-expanded="false" aria-controls="effects-panel">
+  <button type="button" class="fx-trigger gradient-hover" data-effects-trigger aria-expanded="false" aria-controls="effects-panel">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
       <path d="M12 3.5 13.9 9l5.6 1.1-4.3 3.6 1 5.8L12 16.6l-4.2 2.9 1-5.8-4.3-3.6L10.1 9Z" stroke-linejoin="round"></path>
     </svg>
@@ -48,9 +48,17 @@
     color: var(--color-ink);
     cursor: pointer;
   }
-  .fx-trigger:hover,
   .fx-trigger[aria-expanded='true'] {
     background: color-mix(in srgb, var(--color-champagne) 14%, transparent);
+  }
+  /* Scoped styles tie with the shared gradient hover on specificity, so the white text is restated here. */
+  .fx-trigger:focus-visible {
+    color: #fff;
+  }
+  @media (hover: hover) {
+    .fx-trigger:hover {
+      color: #fff;
+    }
   }
   .fx-panel {
     position: absolute;

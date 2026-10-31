@@ -8,8 +8,9 @@ interface Props {
 const { zalo } = Astro.props;
 ---
 
-<button type="button" class="chat-fab" data-chat-fab aria-label="Trò chuyện với Agent DũngTQ" aria-controls="chat-panel" aria-expanded="false" hidden>
+<button type="button" class="chat-fab gradient-hover" data-chat-fab aria-label="Trò chuyện với Agent DũngTQ" aria-controls="chat-panel" aria-expanded="false" hidden>
   <img src="/mascot/idle.webp" alt="" width="128" height="128" loading="lazy" decoding="async" />
+  <span class="chat-fab-label" aria-hidden="true">Trò chuyện</span>
 </button>
 
 <div class="chat-scrim" data-chat-scrim hidden></div>
@@ -83,7 +84,11 @@ const { zalo } = Astro.props;
     background: radial-gradient(circle at 50% 30%, var(--color-panel), var(--color-tint));
     box-shadow: var(--shadow-lift);
     -webkit-tap-highlight-color: transparent;
-    transition: transform 150ms var(--os-ease);
+    transition:
+      transform 150ms var(--os-ease),
+      width 500ms var(--os-ease),
+      border-color 500ms var(--os-ease),
+      box-shadow 500ms var(--os-ease);
   }
   /* The pose image is a full figure; enlarge it so the face fills the circle. */
   .chat-fab img {
@@ -95,6 +100,32 @@ const { zalo } = Astro.props;
     max-width: none;
     object-fit: contain;
     transform: translateX(-50%);
+    transform-origin: 50% 30%;
+    transition: transform 500ms var(--os-ease);
+  }
+  /* With a mouse the round button stretches left into a gradient pill: the mascot shrinks away and the label grows in. */
+  .chat-fab-label {
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 600;
+    white-space: nowrap;
+    transform: scale(0);
+    transition: transform 500ms var(--os-ease);
+  }
+  @media (hover: hover) {
+    .chat-fab:hover {
+      width: 152px;
+      border-color: transparent;
+      /* overflow: hidden clips the shared blurred glow, so the glow comes from a shadow here. */
+      box-shadow: 0 14px 30px -8px rgb(94 68 19 / 0.5);
+    }
+    .chat-fab:hover img {
+      transform: translateX(-50%) scale(0);
+    }
+    .chat-fab:hover .chat-fab-label {
+      transform: scale(1);
+      transition-delay: 150ms;
+    }
   }
   .chat-fab:active {
     transform: scale(0.94);

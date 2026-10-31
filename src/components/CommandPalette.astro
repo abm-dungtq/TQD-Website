@@ -158,8 +158,15 @@
     color: var(--color-ink);
     cursor: pointer;
   }
-  .cmdk-trigger:hover {
-    background: color-mix(in srgb, var(--color-champagne) 14%, transparent);
+  .cmdk-trigger:focus-visible,
+  .cmdk-trigger:focus-visible kbd {
+    color: #fff;
+  }
+  @media (hover: hover) {
+    .cmdk-trigger:hover,
+    .cmdk-trigger:hover kbd {
+      color: #fff;
+    }
   }
   .cmdk-trigger kbd {
     font-family: var(--font-mono);
