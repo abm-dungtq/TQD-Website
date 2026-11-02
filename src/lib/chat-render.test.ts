@@ -2,15 +2,17 @@ import { describe, expect, it } from 'vitest';
 import { isSiteUrl, parseInline, parseReply } from './chat-render';
 
 describe('isSiteUrl', () => {
-  it.each(['https://tqd.io.vn', 'https://tqd.io.vn/', 'https://tqd.io.vn/bai-viet/agent', 'https://tqd.io.vn/#lien-he'])('accepts %s', (url) => {
+  it.each(['https://tqd.me', 'https://tqd.me/', 'https://tqd.me/bai-viet/agent', 'https://tqd.me/#lien-he', 'https://tqd.io.vn/bai-viet/agent'])('accepts %s', (url) => {
     expect(isSiteUrl(url)).toBe(true);
   });
 
   it.each([
-    'http://tqd.io.vn/',
-    'https://tqd.io.vn.evil.example/',
-    'https://evil.example/https://tqd.io.vn',
-    'https://tqd.io.vn@evil.example/',
+    'http://tqd.me/',
+    'https://tqd.me.evil.example/',
+    'https://tqd.mesh.example/',
+    'https://evil.example/https://tqd.me',
+    'https://tqd.me.evil.example/',
+    'https://tqd.mesh.example/',
     'javascript:alert(1)',
   ])('rejects %s', (url) => {
     expect(isSiteUrl(url)).toBe(false);
@@ -19,9 +21,9 @@ describe('isSiteUrl', () => {
 
 describe('parseInline', () => {
   it('links site URLs and leaves trailing punctuation as text', () => {
-    expect(parseInline('Xem https://tqd.io.vn/san-pham.')).toEqual([
+    expect(parseInline('Xem https://tqd.me/san-pham.')).toEqual([
       { kind: 'text', text: 'Xem ' },
-      { kind: 'link', text: 'https://tqd.io.vn/san-pham', href: 'https://tqd.io.vn/san-pham' },
+      { kind: 'link', text: 'https://tqd.me/san-pham', href: 'https://tqd.me/san-pham' },
       { kind: 'text', text: '.' },
     ]);
   });
@@ -39,10 +41,10 @@ describe('parseInline', () => {
   });
 
   it('turns markdown site links and bold into parts', () => {
-    expect(parseInline('**Viết Pro**: [chi tiết](https://tqd.io.vn/san-pham)')).toEqual([
+    expect(parseInline('**Viết Pro**: [chi tiết](https://tqd.me/san-pham)')).toEqual([
       { kind: 'bold', text: 'Viết Pro' },
       { kind: 'text', text: ': ' },
-      { kind: 'link', text: 'chi tiết', href: 'https://tqd.io.vn/san-pham' },
+      { kind: 'link', text: 'chi tiết', href: 'https://tqd.me/san-pham' },
     ]);
   });
 

@@ -3,4 +3,4 @@ Allow: /
 Disallow: /admin
 Disallow: /api/
 
-Sitemap: https://tqd.io.vn/sitemap.xml
+Sitemap: https://tqd.me/sitemap.xml

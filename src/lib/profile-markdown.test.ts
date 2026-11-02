@@ -31,11 +31,11 @@ const data = {
 describe('sectionMarkdown', () => {
   it('makes links to the site absolute and keeps external links', () => {
     const md = sectionMarkdown('san-pham', data);
-    expect(md).toContain('[Bài giới thiệu](https://tqd.io.vn/bai-viet/viet-pro)');
+    expect(md).toContain('[Bài giới thiệu](https://tqd.me/bai-viet/viet-pro)');
     expect(md).toContain('[GitHub](https://github.com/abm-dungtq/viet-pro-codex)');
   });
 
   it('lists articles by their markdown twins', () => {
-    expect(sectionMarkdown('bai-viet', data)).toContain('(https://tqd.io.vn/bai-viet/viet-pro.md): Tóm tắt');
+    expect(sectionMarkdown('bai-viet', data)).toContain('(https://tqd.me/bai-viet/viet-pro.md): Tóm tắt');
   });
 });

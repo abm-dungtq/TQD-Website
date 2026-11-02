@@ -1,5 +1,5 @@
 // Checks that public HTML is served from the Cache API. Usage: node scripts/verify/cache.mjs <base-url>
-const base = (process.argv[2] ?? 'https://tqd.io.vn').replace(/\/$/, '');
+const base = (process.argv[2] ?? 'https://tqd.me').replace(/\/$/, '');
 const seen = [];
 for (let i = 0; i < 3; i += 1) {
   if (i) await new Promise((resolve) => setTimeout(resolve, 1000));

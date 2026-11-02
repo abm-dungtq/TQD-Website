@@ -43,7 +43,7 @@ describe('ipBucket', () => {
 });
 
 describe('sameOrigin', () => {
-  const origin = 'https://tqd.io.vn';
+  const origin = 'https://tqd.me';
   const req = (headers: Record<string, string>) => new Request(`${origin}/api/chat`, { method: 'POST', headers });
 
   it('accepts same-origin requests', () => {

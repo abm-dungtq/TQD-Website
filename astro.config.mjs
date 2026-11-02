@@ -4,7 +4,7 @@ import cloudflare from '@astrojs/cloudflare';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
-  site: 'https://tqd.io.vn',
+  site: 'https://tqd.me',
   output: 'server',
   adapter: cloudflare({ imageService: 'passthrough' }),
   session: false,

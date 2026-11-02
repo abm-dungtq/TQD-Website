@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// CLI for the tqd.io.vn agent API. Node >= 20, no dependencies. Never prints the API key.
-// Key: TQD_API_KEY, or --key-file <path>, or ~/.config/tqd/api-key. Base: TQD_API_BASE (default https://tqd.io.vn).
+// CLI for the tqd.me agent API. Node >= 20, no dependencies. Never prints the API key.
+// Key: TQD_API_KEY, or --key-file <path>, or ~/.config/tqd/api-key. Base: TQD_API_BASE (default https://tqd.me).
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -35,7 +35,7 @@ const die = (data) => {
 const need = (value, what) => value ?? die({ error: 'usage', message: `Thiếu ${what}.`, usage: USAGE });
 
 async function main() {
-  const base = (process.env.TQD_API_BASE ?? 'https://tqd.io.vn').replace(/\/$/, '');
+  const base = (process.env.TQD_API_BASE ?? 'https://tqd.me').replace(/\/$/, '');
   const keyFile = flags['key-file'] ?? path.join(os.homedir(), '.config', 'tqd', 'api-key');
   let key = process.env.TQD_API_KEY?.trim();
   if (!key) {

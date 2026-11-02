@@ -1,6 +1,6 @@
 # Đăng bài từ agent
 
-Agent (Claude Code, Codex hoặc script bất kỳ) đăng bài lên tqd.io.vn qua API `/api/v1` bằng API key. Code: `src/lib/api.ts`, `src/lib/api-key.ts`, `src/pages/api/v1/`. Kiểm tra đầu-cuối: `scripts/verify/api.mjs`. Các việc admin khác mà API chưa có: [admin-agent-operations.md](admin-agent-operations.md).
+Agent (Claude Code, Codex hoặc script bất kỳ) đăng bài lên tqd.me qua API `/api/v1` bằng API key. Code: `src/lib/api.ts`, `src/lib/api-key.ts`, `src/pages/api/v1/`. Kiểm tra đầu-cuối: `scripts/verify/api.mjs`. Các việc admin khác mà API chưa có: [admin-agent-operations.md](admin-agent-operations.md).
 
 ## Hợp đồng API
 
@@ -31,25 +31,25 @@ Giới hạn tệp: ảnh 10 MB, video 95 MB. Loại tệp được kiểm bằn
 
 ```bash
 # $TQD_API_KEY lấy từ biến môi trường; không ghi key thật vào lệnh hay file commit.
-curl -s https://tqd.io.vn/api/v1/me -H "Authorization: Bearer $TQD_API_KEY"
+curl -s https://tqd.me/api/v1/me -H "Authorization: Bearer $TQD_API_KEY"
 
-curl -s "https://tqd.io.vn/api/v1/media?filename=anh.png&alt=Ảnh minh hoạ" \
+curl -s "https://tqd.me/api/v1/media?filename=anh.png&alt=Ảnh minh hoạ" \
   -H "Authorization: Bearer $TQD_API_KEY" -H "Content-Type: image/png" --data-binary @anh.png
 
-curl -s -X PUT https://tqd.io.vn/api/v1/articles/bai-dau-tien \
+curl -s -X PUT https://tqd.me/api/v1/articles/bai-dau-tien \
   -H "Authorization: Bearer $TQD_API_KEY" -H "Content-Type: application/json" \
   -d '{"title":"Bài đầu tiên","bodyMd":"Xin chào.","publish":true}'
 
 # Sửa bài: lấy ETag trước rồi gửi lại trong If-Match.
-curl -si https://tqd.io.vn/api/v1/articles/bai-dau-tien -H "Authorization: Bearer $TQD_API_KEY" | grep -i etag
-curl -s -X PUT https://tqd.io.vn/api/v1/articles/bai-dau-tien \
+curl -si https://tqd.me/api/v1/articles/bai-dau-tien -H "Authorization: Bearer $TQD_API_KEY" | grep -i etag
+curl -s -X PUT https://tqd.me/api/v1/articles/bai-dau-tien \
   -H "Authorization: Bearer $TQD_API_KEY" -H "Content-Type: application/json" -H 'If-Match: "v1"' \
   -d '{"title":"Bài đầu tiên","bodyMd":"Xin chào lần nữa."}'
 ```
 
 ## Tạo và thu hồi key
 
-- **Trong admin.** Vào `https://tqd.io.vn/admin/api-keys`, đặt tên và chọn quyền. Mặc định chỉ có `articles:write` và `media:write`, tức agent chỉ tạo được nháp. Key chỉ hiện một lần: chép ngay vào `~/.config/tqd/api-key` trên máy chạy agent. Nút **Thu hồi** khoá key ngay lập tức.
+- **Trong admin.** Vào `https://tqd.me/admin/api-keys`, đặt tên và chọn quyền. Mặc định chỉ có `articles:write` và `media:write`, tức agent chỉ tạo được nháp. Key chỉ hiện một lần: chép ngay vào `~/.config/tqd/api-key` trên máy chạy agent. Nút **Thu hồi** khoá key ngay lập tức.
 - **Bằng script.** Dùng cho kiểm thử; key ghi vào file và không in ra màn hình:
 
   ```bash

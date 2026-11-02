@@ -1,7 +1,7 @@
 // Markdown versions of the site content, for /index.md, /{section}.md and llms.txt readers.
 import { isVideoKey, mediaUrl, type Item, type SectionId, type SiteData } from './content';
 
-const DEFAULT_SITE = 'https://tqd.io.vn';
+const DEFAULT_SITE = 'https://tqd.me';
 
 const itemMarkdown = (item: Item, site = DEFAULT_SITE): string => {
   const lines = [`### ${item.title}`, ''];

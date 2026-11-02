@@ -1,7 +1,7 @@
 // schema.org nodes for the pages' JSON-LD. BaseLayout adds WebSite and WebPage; pages add these.
 import { introParagraphs, type Article, type Site } from './content';
 
-const DEFAULT_ORIGIN = 'https://tqd.io.vn/';
+const DEFAULT_ORIGIN = 'https://tqd.me/';
 export const PERSON_ID = `${DEFAULT_ORIGIN}#person`;
 
 const normalizeOrigin = (origin = DEFAULT_ORIGIN) => (origin.endsWith('/') ? origin : `${origin}/`);

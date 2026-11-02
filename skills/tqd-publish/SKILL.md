@@ -1,21 +1,21 @@
 ---
 name: tqd-publish
-description: Đăng bài viết, ảnh và video lên tqd.io.vn qua API có API key. Dùng khi cần đăng hoặc sửa bài trên website DũngTQ.
+description: Đăng bài viết, ảnh và video lên tqd.me qua API có API key. Dùng khi cần đăng hoặc sửa bài trên website DũngTQ.
 ---
 
 # tqd-publish
 
-Đăng và sửa bài trên https://tqd.io.vn bằng `scripts/tqd-publish.mjs` (Node ≥ 20, không cần cài gói).
+Đăng và sửa bài trên https://tqd.me bằng `scripts/tqd-publish.mjs` (Node ≥ 20, không cần cài gói).
 
 ## Cấu hình key
 
-Key do chủ site tạo tại `https://tqd.io.vn/admin/api-keys`. Script đọc key theo thứ tự:
+Key do chủ site tạo tại `https://tqd.me/admin/api-keys`. Script đọc key theo thứ tự:
 
 1. biến môi trường `TQD_API_KEY`;
 2. `--key-file <path>`;
 3. file mặc định `~/.config/tqd/api-key`.
 
-Không in, không dán, không commit key. `TQD_API_BASE` đổi địa chỉ site (mặc định `https://tqd.io.vn`).
+Không in, không dán, không commit key. `TQD_API_BASE` đổi địa chỉ site (mặc định `https://tqd.me`).
 
 Kiểm tra: `node scripts/tqd-publish.mjs whoami` → `{"name":"...","scopes":[...]}`.
 

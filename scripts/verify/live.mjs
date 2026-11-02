@@ -1,5 +1,5 @@
 // Checks the live site answers the expected status codes and shows the owner's name.
-const base = process.argv[2] ?? 'https://tqd.io.vn';
+const base = process.argv[2] ?? 'https://tqd.me';
 const want = {
   '/': 200, '/san-pham': 200, '/bai-viet': 200, '/lien-he': 200,
   '/llms.txt': 200, '/index.md': 200, '/sitemap.xml': 200, '/og.png': 200,

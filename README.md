@@ -1,4 +1,4 @@
-# tqd.io.vn — website cá nhân của Trịnh Quang Dũng (DũngTQ)
+# tqd.me — website cá nhân của Trịnh Quang Dũng (DũngTQ)
 
 Website giới thiệu hồ sơ, sản phẩm AI tự xây, thư viện ảnh và video, video AI, bài viết và liên hệ của DũngTQ. Trang chủ có giao diện kiểu màn hình máy tính (dock, cửa sổ) trên màn hình rộng; trên điện thoại hoặc khi tắt JavaScript, mỗi mục là một trang thường tại `/{mục}`. Địa chỉ cũ `/dao-tao` chuyển hướng 301 sang `/thu-vien`.
 
@@ -37,7 +37,7 @@ Agent (Claude Code, Codex) đăng bài, ảnh và video qua API `/api/v1` bằng
 | `npm test` | Unit test (Vitest) |
 | `npm run check:privacy -- <url>` | Xác nhận site tại `<url>` không chứa văn bản bài Facebook |
 | `npm run deploy:preview` | Deploy bản preview `tqd-next` |
-| `npm run deploy` | Deploy production lên `tqd.io.vn` |
+| `npm run deploy` | Deploy production lên `tqd.me` |
 
 Các kiểm tra khác nằm trong `scripts/verify/` (`site`, `admin`, `articles`, `api`, `cache`, `seed`, `live`, `lighthouse`, `mascot-files`).
 

@@ -28,6 +28,7 @@ describe('renderMarkdown', () => {
   });
 
   it('leaves own links alone', async () => {
+    expect(await renderMarkdown('[x](https://tqd.me/bai-viet)')).not.toContain('ugc');
     expect(await renderMarkdown('[x](https://tqd.io.vn/bai-viet)')).not.toContain('ugc');
   });
 });

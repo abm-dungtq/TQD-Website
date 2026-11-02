@@ -5,7 +5,7 @@
 | Mục | Giá trị |
 |---|---|
 | Tài khoản Cloudflare | Xaotiensinh@gmail.com's Account (`b243f38bff984ce1741c379547e97a75`) |
-| Worker production | `tqd-website`, custom domain `tqd.io.vn`, cron sao lưu `0 19 * * *` |
+| Worker production | `tqd-website`, custom domain `tqd.me` (chính), `www.tqd.me` và `tqd.io.vn` (tên miền cũ) chuyển hướng 301 về `tqd.me`; cron sao lưu `0 19 * * *` |
 | Worker preview | `tqd-next` (`env.preview`), https://tqd-next.ngulongyquan.workers.dev, không cron |
 | Mã chạy | Astro SSR qua `@astrojs/cloudflare`; entry [`src/worker.ts`](../src/worker.ts) (fetch + scheduled) |
 | Cấu hình | [`wrangler.jsonc`](../wrangler.jsonc) |
@@ -34,7 +34,7 @@ node scripts/admin-password.mjs --generate .secrets/admin-next.txt | npx wrangle
 ```bash
 npx wrangler login          # một lần, đúng tài khoản ở trên
 npm run deploy:preview      # build với CLOUDFLARE_ENV=preview rồi deploy tqd-next
-npm run deploy              # build rồi deploy tqd-website lên tqd.io.vn
+npm run deploy              # build rồi deploy tqd-website lên tqd.me
 ```
 
 Môi trường được chọn **lúc build** (plugin Vite của Cloudflare ghi cấu hình Wrangler vào bản build), nên deploy preview phải qua `npm run deploy:preview`, không chạy `wrangler deploy --env preview` trên bản build production. Nếu máy đăng nhập nhiều tài khoản, đặt `CLOUDFLARE_ACCOUNT_ID=b243f38bff984ce1741c379547e97a75`.
@@ -44,10 +44,10 @@ Migration D1: `npx wrangler d1 migrations apply tqd_db --remote` (sao lưu trư�
 ## Kiểm tra sau deploy
 
 ```bash
-node scripts/verify/site.mjs https://tqd.io.vn       # OK site
-npm run check:privacy -- https://tqd.io.vn            # OK no post text ...
+node scripts/verify/site.mjs https://tqd.me       # OK site
+npm run check:privacy -- https://tqd.me            # OK no post text ...
 node scripts/verify/live.mjs                          # OK live
-node scripts/verify/cache.mjs https://tqd.io.vn       # OK cache
+node scripts/verify/cache.mjs https://tqd.me       # OK cache
 TQD_ADMIN_PASSWORD=... node scripts/verify/admin.mjs https://tqd-next.ngulongyquan.workers.dev   # OK admin
 ```
 
@@ -55,7 +55,7 @@ TQD_ADMIN_PASSWORD=... node scripts/verify/admin.mjs https://tqd-next.ngulongyqu
 
 ## Cache trang
 
-HTML công khai được lưu trong Cache API với khoá `<đường dẫn>?v=<content_version>&b=<build id>`. Mỗi lần ghi nội dung tăng `content_version`; mỗi lần build có build id mới, nên không cần xoá cache tay. Header `X-Cache: HIT|MISS` và `X-Content-Version` cho biết trạng thái. Cache API không hoạt động trên `workers.dev`, chỉ trên `tqd.io.vn`.
+HTML công khai được lưu trong Cache API với khoá `<đường dẫn>?v=<content_version>&b=<build id>`. Mỗi lần ghi nội dung tăng `content_version`; mỗi lần build có build id mới, nên không cần xoá cache tay. Header `X-Cache: HIT|MISS` và `X-Content-Version` cho biết trạng thái. Cache API không hoạt động trên `workers.dev`, chỉ trên `tqd.me`.
 
 ## Giới hạn CPU gói Free
 
@@ -67,7 +67,7 @@ Ngày 2026-10-12 đã thử `cf` 1.0.0-beta.14: `cf build` / `cf deploy` dừng 
 
 ## Tên miền
 
-`routes: [{ "pattern": "tqd.io.vn", "custom_domain": true }]` để Wrangler tự tạo bản ghi DNS và chứng chỉ. Nếu deploy báo xung đột bản ghi DNS, gắn tay trong dashboard (Workers & Pages → `tqd-website` → Settings → Domains & Routes). Không xoá bản ghi DNS sẵn có khi chưa hỏi chủ tên miền.
+Từ 2026-11-02 tên miền chính là `tqd.me`. `routes` trong `wrangler.jsonc` gắn `tqd.me`, `www.tqd.me` và `tqd.io.vn` dạng custom domain để Wrangler tự tạo bản ghi DNS và chứng chỉ. [`src/worker.ts`](../src/worker.ts) chuyển hướng `www.tqd.me` và `tqd.io.vn` về `tqd.me`, giữ nguyên đường dẫn: 301 cho GET/HEAD, 308 cho các phương thức ghi. Máy chủ chatbot vẫn ở `goclaw.tqd.io.vn` (xem [chatbot.md](chatbot.md)), nên chưa bỏ được tên miền cũ. Nếu deploy báo xung đột bản ghi DNS, gắn tay trong dashboard (Workers & Pages → `tqd-website` → Settings → Domains & Routes). Không xoá bản ghi DNS sẵn có khi chưa hỏi chủ tên miền.
 
 ## Rollback
 

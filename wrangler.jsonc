@@ -9,6 +9,7 @@
   "routes": [
     { "pattern": "tqd.me", "custom_domain": true },
     { "pattern": "www.tqd.me", "custom_domain": true },
+    // Old domain: kept attached so src/worker.ts can redirect it to tqd.me.
     { "pattern": "tqd.io.vn", "custom_domain": true }
   ],
   "observability": { "enabled": true },
