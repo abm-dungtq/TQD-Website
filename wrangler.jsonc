@@ -6,7 +6,11 @@
   "compatibility_date": "2026-09-01",
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": false,
-  "routes": [{ "pattern": "tqd.io.vn", "custom_domain": true }],
+  "routes": [
+    { "pattern": "tqd.me", "custom_domain": true },
+    { "pattern": "www.tqd.me", "custom_domain": true },
+    { "pattern": "tqd.io.vn", "custom_domain": true }
+  ],
   "observability": { "enabled": true },
   "vars": { "ADMIN_EMAIL": "dungtq.ceo@gmail.com", "GOCLAW_BASE_URL": "https://goclaw.tqd.io.vn", "GOCLAW_AGENT": "dungtq-web", "CHAT_DAILY_CAP": "300" },
   "d1_databases": [

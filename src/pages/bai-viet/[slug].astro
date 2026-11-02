@@ -22,7 +22,7 @@ const published = article.publishedAt
   path={`/bai-viet/${article.slug}`}
   ogType="article"
   markdownPath={`/bai-viet/${article.slug}.md`}
-  jsonLd={[articleNode(article, new URL(`/bai-viet/${article.slug}`, Astro.site).href)]}
+  jsonLd={[articleNode(article, new URL(`/bai-viet/${article.slug}`, Astro.url.origin).href)]}
 >
   <article class="mx-auto max-w-3xl">
     <p class="eyebrow mb-6">

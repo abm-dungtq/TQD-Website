@@ -5,14 +5,14 @@
 export type Inline = { kind: 'text'; text: string } | { kind: 'bold'; text: string } | { kind: 'link'; text: string; href: string };
 export type Block = { kind: 'p'; lines: Inline[][] } | { kind: 'ul' | 'ol'; items: Inline[][] };
 
-const SITE = /^https:\/\/tqd\.io\.vn(?:[/?#]\S*)?$/;
+const SITE = /^https:\/\/(?:www\.)?tqd\.(?:io\.vn|me)(?:[/?#]\S*)?$/;
 const TRAILING = /[.,;:!?)\]]+$/;
 const BULLET = /^\s*[-*•]\s+/;
 const NUMBER = /^\s*\d+[.)]\s+/;
 // Markdown link, bold, or bare URL.
 const TOKEN = /\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)|\*\*([^*\n]+)\*\*|(https?:\/\/[^\s<>"']+)/g;
 
-/** True for https links on tqd.io.vn only. */
+/** True for https links on tqd.io.vn or tqd.me only. */
 export const isSiteUrl = (url: string): boolean => SITE.test(url);
 
 function pushText(out: Inline[], text: string) {

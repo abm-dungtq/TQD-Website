@@ -15,7 +15,7 @@ const isExternal = (href: string): boolean => {
   if (!/^https?:\/\//i.test(href)) return false;
   try {
     const host = new URL(href).hostname;
-    return host !== 'tqd.io.vn' && !host.endsWith('.tqd.io.vn');
+    return host !== 'tqd.io.vn' && !host.endsWith('.tqd.io.vn') && host !== 'tqd.me' && !host.endsWith('.tqd.me');
   } catch {
     return true;
   }

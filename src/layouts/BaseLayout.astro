@@ -18,9 +18,10 @@ interface Props {
 const { site, title, description, path, ogType = 'website', markdownPath = '/index.md', jsonLd = [] } = Astro.props;
 const { links, person, sections } = site;
 const fullTitle = title ? `${title} · ${person.handle}` : `${person.name} (${person.handle})`;
-const canonical = new URL(path, Astro.site).href;
-const origin = new URL('/', Astro.site).href;
-const ogImage = new URL('/og.png', Astro.site).href;
+const baseOrigin = Astro.url.origin || Astro.site?.origin || 'https://tqd.me';
+const canonical = new URL(path, baseOrigin).href;
+const origin = new URL('/', baseOrigin).href;
+const ogImage = new URL('/og.png', baseOrigin).href;
 const current = path.replace(/^\//, '').split('/')[0];
 
 const structured = {
