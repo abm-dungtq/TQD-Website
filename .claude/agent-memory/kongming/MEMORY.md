@@ -1,2 +1,3 @@
 - [User review style](user_review_style.md) — Vietnamese owner via orchestrator; wants must-fix vs later, file:line, Status line; Free-plan CF, shared D1/R2
+- [GoClaw chatbot](project_goclaw_chatbot.md) — 2026-10-13 mascot chat via GoClaw agent dungtq-web; fixed decisions + counsel (D1 limits, SSE passthrough, scripts on PC)
 - [Luxury light redesign](project_luxury_light_redesign.md) — 2026-10-12 decisions: no dark mode, single champagne-gold accent, Cormorant display; why + counsel given

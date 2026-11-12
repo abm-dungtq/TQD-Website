@@ -12,9 +12,10 @@ Trên màn hình rộng: tìm nhanh bằng `Ctrl K` / `⌘K`; cửa sổ mở, t
 
 Giao diện chỉ có một bảng màu sáng: nền ngà `#faf7f1`, chữ mực `#1b2030`, màu chữ ký vàng champagne (`#8a6420` cho chữ và nút, `#b8935a` chỉ để trang trí); tiêu đề dùng Cormorant Garamond. Token màu nằm trong `src/styles/global.css`. Menu **Hiệu ứng** tắt/bật **Linh vật**, **Hiệu ứng thời tiết** và **Nền động**. Khi hệ điều hành bật giảm chuyển động (`prefers-reduced-motion`), mọi hiệu ứng đứng yên. Ảnh linh vật tạo lại bằng `node scripts/make-mascot.mjs` (hoặc `--fallback` để dùng ảnh chân dung tròn).
 
-## Chatbot
+## Chatbot & Công cụ Tải Video (`/tai-video`)
 
-Bấm linh vật (desktop) hoặc nút tròn mặt linh vật (điện thoại) để trò chuyện với **Agent DũngTQ**, một agent chạy trên GoClaw tự host, trả lời dựa trên nội dung website. Khi máy chủ nhà tắt, khung chat mời khách nhắn Zalo. Giới hạn, cấu hình, cách đồng bộ kiến thức sau khi đăng bài và cách thu hồi key: [docs/chatbot.md](docs/chatbot.md).
+- **Chatbot**: Bấm linh vật (desktop) hoặc nút tròn mặt linh vật (điện thoại) để trò chuyện với **Agent DũngTQ**, một agent chạy trên GoClaw tự host, trả lời dựa trên nội dung website. Khi máy chủ nhà tắt, khung chat mời khách nhắn Zalo. Giới hạn, cấu hình, cách đồng bộ kiến thức sau khi đăng bài và cách thu hồi key: [docs/chatbot.md](docs/chatbot.md).
+- **Tải Video & Nhạc Đa Nền Tảng (`/tai-video`)**: Công cụ trực tuyến tải video MP4 chuẩn H.264, Shorts/Reels 9:16, Playlist, kênh `@profile` và tách nhạc MP3 320kbps từ hơn 14 nền tảng (YouTube, TikTok, Facebook, Instagram, X, SoundCloud...) qua kiến trúc Hybrid Worker + Home Daemon (`yt-dlp` & `ffmpeg`), tự xóa file tạm ngay sau khi truyền về trình duyệt. Kiến trúc, phân quyền 2 tầng và cách vận hành: [docs/video-downloader.md](docs/video-downloader.md).
 
 ## Nội dung
 
@@ -35,6 +36,8 @@ Agent (Claude Code, Codex) đăng bài, ảnh và video qua API `/api/v1` bằng
 | `npx astro dev --background` | Chạy thử tại `http://localhost:4321` (cần `.dev.vars`, xem docs/deployment.md) |
 | `npm run build` | Kiểm tra type và build |
 | `npm test` | Unit test (Vitest) |
+| `npm run verify:dl` | Kiểm chứng Home Daemon tải video (`scripts/verify/dl-daemon.mjs`) |
+| `npm run dl:daemon` | Chạy Home Daemon `yt-dlp` + `ffmpeg` (cần biến `DL_API_KEY`) |
 | `npm run check:privacy -- <url>` | Xác nhận site tại `<url>` không chứa văn bản bài Facebook |
 | `npm run deploy:preview` | Deploy bản preview `tqd-next` |
 | `npm run deploy` | Deploy production lên `tqd.me` |

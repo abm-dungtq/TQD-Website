@@ -28,6 +28,7 @@ Nguyên tắc: việc gì API `/api/v1` làm được thì dùng API, vì nó h�
 | `/admin/sao-luu` | Sao lưu ngay, xem danh sách bản sao lưu | `POST /admin/sao-luu`, `GET /admin/sao-luu` (HTML) |
 | `/admin/api-keys` | Tạo, thu hồi API key | `POST /admin/api-keys` |
 | `/admin/chat` | Xem thống kê chat | `GET /admin/chat` (HTML) |
+| `/admin/thong-ke` | Xem thống kê truy cập đa site (`tuvi.tqd.me` & `tqd.me`), phễu sản phẩm, doanh thu 2027 và tổng hợp lại dữ liệu | `GET /admin/thong-ke?site=tuvi.tqd.me&range=7` (HTML), `POST /admin/api/analytics-rollup` |
 
 ## Phiên admin
 
@@ -207,7 +208,7 @@ await submit('/admin/lien-he', { links: links.map((l) => `${l.label} | ${l.href}
 | `sort` | Số nguyên; rỗng là 0 |
 | `visible` | Gửi `on` để hiện; không gửi là ẩn |
 | `tiktokUrl` | Chỉ với video. Nhận link `https://www.tiktok.com/@kenh/video/<số>`, `/player/v1/<số>`, `/embed/v2/<số>`, link rút gọn `vm.`/`vt.tiktok.com` hoặc chỉ dãy số id. Khi sửa video đã có TikTok, gửi lại giá trị đang hiện trong form (`https://www.tiktok.com/player/v1/<id>`), nếu không link sẽ bị xoá |
-| `coverKey` | Chỉ với video. Key một ảnh trong media, hoặc rỗng |
+| `coverKey` | Key một ảnh trong media làm ảnh bìa/ảnh chụp dự án, hoặc rỗng |
 
 ```js
 await submit('/admin/muc/video', {
