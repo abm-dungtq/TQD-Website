@@ -1,20 +1,47 @@
 ---
 import { env } from 'cloudflare:workers';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import PageActions from '../components/PageActions.astro';
 import PageHeading from '../components/PageHeading.astro';
 import SectionBody from '../components/SectionBody.astro';
 import { loadSiteData } from '../lib/content';
-import { personNode, profilePageNode } from '../lib/structured-data';
+import { breadcrumbNode, personNode, profilePageNode } from '../lib/structured-data';
+
+const VALID_SECTIONS = new Set(['ho-so', 'san-pham', 'thu-vien', 'video-ai', 'bai-viet', 'lien-he']);
+const requestedSection = Astro.params.section ?? '';
+// Reject unknown routes before running D1 queries (CB-11)
+if (!VALID_SECTIONS.has(requestedSection)) return Astro.rewrite('/404');
 
 const data = await loadSiteData(env.DB);
-const index = data.site.sections.findIndex((x) => x.id === Astro.params.section);
+const index = data.site.sections.findIndex((x) => x.id === requestedSection);
 const s = data.site.sections[index];
 if (!s) return Astro.rewrite('/404');
+
+const origin = new URL('/', Astro.url.origin).href;
 const url = new URL(`/${s.id}`, Astro.url.origin).href;
-const jsonLd = s.id === 'ho-so' ? [personNode(data.site, Astro.url.origin), profilePageNode(url)] : [];
+const breadcrumb = breadcrumbNode(
+  [
+    { name: 'Trang chủ', url: origin },
+    { name: s.title, url },
+  ],
+  url,
+);
+const jsonLd =
+  s.id === 'ho-so'
+    ? [personNode(data.site, Astro.url.origin), profilePageNode(url), breadcrumb]
+    : [breadcrumb];
 ---
 
-<BaseLayout site={data.site} title={s.title} description={s.short} path={`/${s.id}`} markdownPath={`/${s.id}.md`} jsonLd={jsonLd}>
+<BaseLayout
+  site={data.site}
+  title={s.title}
+  description={s.short}
+  path={`/${s.id}`}
+  markdownPath={`/${s.id}.md`}
+  ogImagePath={`/og/${s.id}.png`}
+  jsonLd={jsonLd}
+>
   <PageHeading index={index + 1} label={data.site.person.handle} title={s.title} lede={s.short} />
+  <PageActions markdownPath={`/${s.id}.md`} canonicalUrl={url} title={s.title} class="-mt-5 mb-9" />
   <SectionBody id={s.id} data={data} eager />
 </BaseLayout>

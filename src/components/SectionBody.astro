@@ -1,4 +1,6 @@
 ---
+import { env } from 'cloudflare:workers';
+import Icon from './Icon.astro';
 import ItemCard from './ItemCard.astro';
 import TikTokPlayer from './TikTokPlayer.astro';
 import { introParagraphs, isVideoKey, mediaUrl, type SectionId, type SiteData } from '../lib/content';
@@ -15,6 +17,35 @@ const { person, links, topics, gallery } = data.site;
 const { products, videos, articles } = data;
 const gridClass = 'grid gap-4 sm:grid-cols-2';
 const formatDate = (iso?: string) => (iso ? iso.slice(0, 10).split('-').reverse().join('/') : '');
+const primaryZalo = person.zalo || 'https://zalo.me/trinhquangdung';
+const enterpriseClients = ['BSR (Lọc Hóa dầu Bình Sơn)', 'Agribank', 'ABIC', 'Hanoitourist'];
+
+const galleryAvailability =
+  id === 'thu-vien'
+    ? await Promise.all(
+        gallery.map(async (g) => {
+          const hasMain = Boolean(await env.MEDIA?.head?.(g.key).catch(() => null));
+          const hasPoster = g.poster
+            ? Boolean(await env.MEDIA?.head?.(g.poster).catch(() => null))
+            : false;
+          return { entry: g, hasMain, hasPoster };
+        }),
+      )
+    : [];
+
+const tiktokCovers =
+  id === 'video-ai'
+    ? new Map(
+        await Promise.all(
+          videos
+            .filter((v) => v.tiktokId && v.coverKey)
+            .map(async (v) => {
+              const ok = Boolean(await env.MEDIA?.head?.(v.coverKey!).catch(() => null));
+              return [v.id, ok ? mediaUrl(v.coverKey!) : undefined] as const;
+            }),
+        ),
+      )
+    : new Map<number, string | undefined>();
 ---
 
 {
@@ -35,12 +66,41 @@ const formatDate = (iso?: string) => (iso ? iso.slice(0, 10).split('-').reverse(
       <div class="flex flex-col gap-4">
         <div>
           <h2 class="display text-4xl sm:text-5xl">{person.name}</h2>
-          <p class="mt-3 text-muted">{person.role}</p>
+          <p class="mt-2 font-medium text-accent-ink">{person.role}</p>
         </div>
+
+        {/* Answer-First B2B positioning, enterprise proof, and primary CTA */}
+        <div class="rounded-2xl border border-champagne/45 bg-tint/65 p-4 sm:p-5">
+          <p class="text-sm font-medium leading-relaxed text-ink">
+            Trực tiếp đào tạo nội bộ, thiết kế hệ thống <strong>AI Agent &amp; Skill</strong> gắn sát quy trình vận hành thực tế cho doanh nghiệp tại Việt Nam.
+          </p>
+          <div class="mt-3 flex flex-wrap items-center gap-1.5 text-xs">
+            <span class="font-semibold uppercase tracking-wider text-muted">Thực địa:</span>
+            {enterpriseClients.map((client) => (
+              <span class="lux-chip bg-panel px-2.5 py-0.5 font-semibold">{client}</span>
+            ))}
+          </div>
+          <div class="mt-4 flex flex-wrap items-center gap-2.5">
+            <a
+              href={primaryZalo}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="btn-gold text-sm"
+            >
+              <Icon name="chat" size={16} />
+              <span>Nhắn Zalo đặt lịch tư vấn</span>
+            </a>
+            <a href="/san-pham" class="btn-outline-gold text-sm">
+              <Icon name="box" size={16} />
+              <span>Xem sản phẩm &amp; Skill</span>
+            </a>
+          </div>
+        </div>
+
         {introParagraphs(person.intro).map((p) => (
           <p class="max-w-prose text-[1.0625rem] leading-relaxed">{p}</p>
         ))}
-        <ul class="flex flex-wrap gap-2">
+        <ul class="flex flex-wrap gap-2" aria-label="Lĩnh vực trọng tâm">
           {person.focus.map((f) => (
             <li class="lux-chip px-3.5 py-1.5 text-sm">{f}</li>
           ))}
@@ -53,6 +113,24 @@ const formatDate = (iso?: string) => (iso ? iso.slice(0, 10).split('-').reverse(
 {
   id === 'san-pham' && (
     <div class={gridClass}>
+      <article class="lux-card flex flex-col justify-between gap-4 border-champagne/55 bg-gradient-to-br from-panel via-panel to-tint/70 p-6 sm:col-span-2 sm:flex-row sm:items-center sm:gap-6">
+        <div class="flex flex-col gap-2.5">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-xs font-semibold uppercase tracking-wider text-accent">Công cụ trực tuyến miễn phí</span>
+            <span class="lux-chip px-2.5 py-0.5 text-xs font-semibold">yt-dlp · Whisper · Viết Pro</span>
+          </div>
+          <h3 class="display text-2xl sm:text-3xl">Tải Video &amp; Xưởng Mổ Xẻ Kịch Bản Viral AI</h3>
+          <p class="max-w-2xl text-sm leading-relaxed text-ink/90">
+            Tải video MP4 chuẩn H.264, Shorts/Reels 9:16, tách nhạc MP3 320kbps, kết hợp bóc băng lời thoại AI và nhân bản kịch bản sang 5 định dạng theo chuẩn chống văn mẫu AI <strong>Viết Pro</strong>.
+          </p>
+        </div>
+        <div class="flex shrink-0 flex-wrap items-center gap-2">
+          <a href="/tai-video" class="btn-gold text-xs sm:text-sm">
+            <Icon name="bolt" size={16} />
+            <span>Mở công cụ tải &amp; mổ xẻ</span>
+          </a>
+        </div>
+      </article>
       {products.map((item) => (
         <ItemCard item={item} />
       ))}
@@ -63,12 +141,17 @@ const formatDate = (iso?: string) => (iso ? iso.slice(0, 10).split('-').reverse(
 {
   id === 'thu-vien' && (
     <div class={gridClass}>
-      {gallery.map((g) => (
+      {galleryAvailability.map(({ entry: g, hasMain, hasPoster }) => (
         <figure class="lux-card gallery-item">
-          {isVideoKey(g.key) ? (
+          {!hasMain ? (
+            <div class="media-fallback rounded-none border-0" role="img" aria-label={g.caption}>
+              <span class="media-fallback-mark">{isVideoKey(g.key) ? 'VIDEO THỰC ĐỊA' : 'TƯ LIỆU ĐÀO TẠO'}</span>
+              <span class="media-fallback-caption">{g.caption}</span>
+            </div>
+          ) : isVideoKey(g.key) ? (
             <video
               src={mediaUrl(g.key)}
-              poster={g.poster ? mediaUrl(g.poster) : undefined}
+              poster={g.poster && hasPoster ? mediaUrl(g.poster) : undefined}
               controls
               playsinline
               preload="none"
@@ -77,7 +160,7 @@ const formatDate = (iso?: string) => (iso ? iso.slice(0, 10).split('-').reverse(
               aria-label={g.caption}
             />
           ) : (
-            <a href={mediaUrl(g.key)} target="_blank" rel="noopener" aria-label={`Xem ảnh lớn: ${g.caption}`}>
+            <a href={mediaUrl(g.key)} target="_blank" rel="noopener noreferrer" aria-label={`Xem ảnh lớn: ${g.caption}`}>
               <img src={mediaUrl(g.key)} alt={g.caption} width="1280" height="720" loading="lazy" decoding="async" />
             </a>
           )}
@@ -90,28 +173,44 @@ const formatDate = (iso?: string) => (iso ? iso.slice(0, 10).split('-').reverse(
 
 {
   id === 'video-ai' && (
-    <div class={gridClass}>
-      {videos.map((item) =>
-        item.tiktokId ? (
-          <article class="lux-card flex flex-col gap-3 p-6">
-            <TikTokPlayer id={item.tiktokId} title={item.title} coverUrl={item.coverKey ? mediaUrl(item.coverKey) : undefined} />
-            <div>
-              {item.date && <p class="font-mono text-xs text-muted">{item.date}</p>}
-              <h3 class="display mt-1 text-2xl">{item.title}</h3>
-            </div>
-            <p class="text-sm leading-relaxed">{item.summary}</p>
-            {item.tags.length > 0 && (
-              <ul class="mt-auto flex flex-wrap gap-1.5" aria-label="Nhãn">
-                {item.tags.map((t) => (
-                  <li class="lux-chip px-2.5 py-0.5 text-xs">{t}</li>
-                ))}
-              </ul>
-            )}
-          </article>
-        ) : (
-          <ItemCard item={item} />
-        ),
-      )}
+    <div class="flex flex-col gap-4">
+      <div class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-tint/60 px-4 py-3 text-sm">
+        <p class="text-ink/90">
+          Các thử nghiệm phim ngắn, hoạt họa và kịch bản sản xuất bằng AI thực chiến trên kênh chính thức.
+        </p>
+        <a
+          href="https://www.tiktok.com/@abmdungtq"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn-outline-gold text-xs"
+        >
+          <Icon name="external" size={14} />
+          <span>TikTok @abmdungtq</span>
+        </a>
+      </div>
+      <div class={gridClass}>
+        {videos.map((item) =>
+          item.tiktokId ? (
+            <article class="lux-card flex flex-col gap-3 p-6">
+              <TikTokPlayer id={item.tiktokId} title={item.title} coverUrl={tiktokCovers.get(item.id)} />
+              <div>
+                {item.date && <p class="font-mono text-xs text-muted">{item.date}</p>}
+                <h3 class="display mt-1 text-2xl">{item.title}</h3>
+              </div>
+              <p class="text-sm leading-relaxed">{item.summary}</p>
+              {item.tags.length > 0 && (
+                <ul class="mt-auto flex flex-wrap gap-1.5" aria-label="Nhãn">
+                  {item.tags.map((t) => (
+                    <li class="lux-chip px-2.5 py-0.5 text-xs">{t}</li>
+                  ))}
+                </ul>
+              )}
+            </article>
+          ) : (
+            <ItemCard item={item} />
+          ),
+        )}
+      </div>
     </div>
   )
 }
@@ -171,20 +270,32 @@ const formatDate = (iso?: string) => (iso ? iso.slice(0, 10).split('-').reverse(
 {
   id === 'lien-he' && (
     <div class="flex flex-col gap-6">
-      <p class="max-w-prose text-[1.0625rem] leading-relaxed">Cần trao đổi về ứng dụng AI cho doanh nghiệp, đào tạo hay skill, agent? Nhắn mình qua:</p>
+      <p class="max-w-prose text-[1.0625rem] leading-relaxed">
+        Cần trao đổi về đào tạo AI nội bộ cho doanh nghiệp, tư vấn quy trình vận hành AI hay thiết kế Skill &amp; Agent chuyên biệt? Kết nối trực tiếp với mình qua:
+      </p>
+      <div class="flex flex-wrap items-center gap-3">
+        <a href={primaryZalo} target="_blank" rel="noopener noreferrer" class="btn-gold text-sm">
+          <Icon name="chat" size={16} />
+          <span>Nhắn Zalo đặt lịch tư vấn</span>
+        </a>
+        <a href={`mailto:${person.email}`} class="btn-outline-gold text-sm">
+          <Icon name="mail" size={16} />
+          <span>Gửi Email công việc</span>
+        </a>
+      </div>
       <dl class="grid gap-3 sm:grid-cols-2">
+        <div class="lux-card relative p-6">
+          <dt class="text-sm text-muted">Zalo trực tiếp</dt>
+          <dd class="display mt-2 text-2xl break-all">
+            <a href={primaryZalo} target="_blank" rel="noopener noreferrer" class="inline-flex min-h-11 -my-1.5 items-center after:absolute after:inset-0">
+              {primaryZalo.replace('https://', '')}
+            </a>
+          </dd>
+        </div>
         <div class="lux-card relative p-6">
           <dt class="text-sm text-muted">Email</dt>
           <dd class="display mt-2 text-2xl break-all">
             <a href={`mailto:${person.email}`} class="inline-flex min-h-11 -my-1.5 items-center after:absolute after:inset-0">{person.email}</a>
-          </dd>
-        </div>
-        <div class="lux-card relative p-6">
-          <dt class="text-sm text-muted">Zalo</dt>
-          <dd class="display mt-2 text-2xl break-all">
-            <a href={person.zalo} target="_blank" rel="noopener" class="inline-flex min-h-11 -my-1.5 items-center after:absolute after:inset-0">
-              {person.zalo.replace('https://', '')}
-            </a>
           </dd>
         </div>
       </dl>
@@ -196,7 +307,7 @@ const formatDate = (iso?: string) => (iso ? iso.slice(0, 10).split('-').reverse(
               <a
                 href={l.href}
                 target="_blank"
-                rel="noopener"
+                rel="noopener noreferrer"
                 class="lux-card inline-flex min-h-11 items-center rounded-full px-5 font-semibold no-underline"
               >
                 {l.label}

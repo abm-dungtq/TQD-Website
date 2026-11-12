@@ -3,7 +3,6 @@ import { env } from 'cloudflare:workers';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import DesktopShell from '../components/DesktopShell.astro';
 import MobileShell from '../components/MobileShell.astro';
-import ChatPanel from '../components/ChatPanel.astro';
 import SectionBody from '../components/SectionBody.astro';
 import { introParagraphs, loadSiteData } from '../lib/content';
 import { personNode } from '../lib/structured-data';
@@ -12,11 +11,16 @@ const data = await loadSiteData(env.DB);
 const { person, sections } = data.site;
 ---
 
-<BaseLayout site={data.site} description={`${person.role}. ${introParagraphs(person.intro)[0] ?? ''}`} path="/" jsonLd={[personNode(data.site, Astro.url.origin)]}>
+<BaseLayout
+  site={data.site}
+  description={`${person.role}. ${introParagraphs(person.intro)[0] ?? ''}`}
+  path="/"
+  markdownPath="/index.md"
+  ogImagePath="/og.png"
+  jsonLd={[personNode(data.site, Astro.url.origin)]}
+>
   <DesktopShell slot="before" data={data} />
-  <ChatPanel slot="before" zalo={person.zalo} />
-  <h1 class="sr-only">{person.name} ({person.handle})</h1>
-  {/* Phones get a home screen of apps; wide screens without JavaScript get the profile and section list. */}
+  {/* Phones get the OS home screen with above-the-fold B2B value prop; wide screens without JS get the profile and section list. */}
   <div class="lg:hidden">
     <MobileShell site={data.site} />
   </div>
@@ -39,6 +43,14 @@ const { person, sections } = data.site;
             </li>
           ))
       }
+      <li>
+        <a href="/tai-video" class="lux-card block h-full p-6 text-ink no-underline">
+          <span class="display block text-2xl">Tải Video</span>
+          <span class="mt-2 block text-sm text-muted">
+            Tải video MP4 chuẩn H.264, tách nhạc MP3 320kbps, bóc băng lời thoại AI và nhân bản kịch bản chuẩn Viết Pro.
+          </span>
+        </a>
+      </li>
     </ul>
   </div>
 </BaseLayout>

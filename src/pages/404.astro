@@ -8,17 +8,32 @@ const site = await getSite(env.DB);
 ---
 
 <BaseLayout site={site} title="Không tìm thấy trang" description="Trang này không tồn tại." path="/404">
-  <p class="eyebrow mb-4"><span class="eyebrow-index">404</span><span class="eyebrow-rule" aria-hidden="true" /></p>
+  <p class="eyebrow mb-4">
+    <span class="eyebrow-index">404</span>
+    <span class="eyebrow-rule" aria-hidden="true" />
+    <span>Không tìm thấy nội dung</span>
+  </p>
   <h1 class="display mb-4 text-[2.5rem] sm:text-6xl">Không tìm thấy trang</h1>
-  <p class="mb-8 text-muted">Đường dẫn này không tồn tại. Về <a href="/">trang chủ</a> hoặc chọn một mục:</p>
-  <ul class="grid gap-2 sm:grid-cols-2">
+  <p class="mb-8 text-muted">
+    Đường dẫn này không tồn tại hoặc đã được chuyển đi. Quay về{' '}
+    <a href="/" class="inline-flex min-h-11 items-center font-semibold">trang chủ</a> hoặc chọn một mục bên dưới:
+  </p>
+  <ul class="grid gap-3 sm:grid-cols-2">
     {
       site.sections.map((s) => (
-        <li>
-          <a href={`/${s.id}`}>{s.title}</a>
-          <span class="text-muted"> — {s.short}</span>
+        <li class="lux-card relative p-5">
+          <a href={`/${s.id}`} class="display text-xl text-ink no-underline after:absolute after:inset-0 hover:text-accent-ink">
+            {s.title}
+          </a>
+          <p class="mt-1 text-sm text-muted">{s.short}</p>
         </li>
       ))
     }
+    <li class="lux-card relative p-5">
+      <a href="/tai-video" class="display text-xl text-ink no-underline after:absolute after:inset-0 hover:text-accent-ink">
+        Tải Video &amp; Xưởng Kịch Bản AI
+      </a>
+      <p class="mt-1 text-sm text-muted">Tải MP4 H.264, MP3 320kbps, bóc băng &amp; mổ xẻ kịch bản chuẩn Viết Pro.</p>
+    </li>
   </ul>
 </BaseLayout>

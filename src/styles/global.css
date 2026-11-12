@@ -15,7 +15,7 @@
   --color-tint: #f6f0e4;
   --font-sans: var(--font-be-vietnam-pro), system-ui, sans-serif;
   --font-display: var(--font-cormorant), Georgia, serif;
-  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+  --font-mono: var(--font-jetbrains-mono), var(--font-be-vietnam-pro), ui-monospace, monospace;
   --shadow-soft: 0 1px 2px rgb(94 68 19 / 0.05), 0 12px 32px -18px rgb(94 68 19 / 0.22);
   --shadow-lift: 0 2px 4px rgb(94 68 19 / 0.06), 0 28px 60px -28px rgb(94 68 19 / 0.32);
 }
@@ -123,6 +123,7 @@
   .btn-gold {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 0.5rem;
     min-height: 44px;
     padding: 0 1.25rem;
@@ -135,11 +136,133 @@
   .btn-gold:focus-visible {
     box-shadow: 0 0 0 2px #fff;
   }
+
+  .btn-outline-gold {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    padding: 0 1.15rem;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--color-champagne) 65%, var(--color-line));
+    background: var(--color-panel);
+    color: var(--color-accent-ink);
+    font-weight: 600;
+    text-decoration: none;
+    transition:
+      border-color 180ms var(--os-ease),
+      background-color 180ms var(--os-ease),
+      transform 180ms var(--os-ease);
+  }
+  .btn-outline-gold:hover {
+    border-color: var(--color-accent);
+    background: var(--color-tint);
+  }
+
+  /* Page-level AX action bar (Copy Markdown, View .md, Send to AI, Share) */
+  .page-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 44px;
+    padding: 0 0.9rem;
+    border-radius: 999px;
+    border: 1px solid var(--color-line);
+    background: var(--color-panel);
+    color: var(--color-ink);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+      border-color 180ms var(--os-ease),
+      background-color 180ms var(--os-ease),
+      color 180ms var(--os-ease);
+  }
+  .page-action-btn:hover,
+  .page-action-btn[aria-expanded='true'] {
+    border-color: var(--color-champagne);
+    background: var(--color-tint);
+    color: var(--color-accent-ink);
+  }
+  .page-ai-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 45;
+    min-width: 14.5rem;
+    padding: 0.4rem;
+    border-radius: 0.875rem;
+    border: 1px solid var(--color-line);
+    background: var(--color-panel);
+    box-shadow: var(--shadow-lift);
+  }
+  .page-ai-menu[hidden] {
+    display: none;
+  }
+  .page-ai-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-height: 44px;
+    padding: 0 0.75rem;
+    border-radius: 0.6rem;
+    border: 0;
+    background: transparent;
+    color: var(--color-ink);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 150ms var(--os-ease);
+  }
+  .page-ai-item:hover {
+    background: var(--color-tint);
+    color: var(--color-accent-ink);
+  }
+
+  /* Ivory Atelier placeholder when local R2 /media/* objects are absent */
+  .media-fallback {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    padding: 1.25rem;
+    border-radius: 0.75rem;
+    border: 1px solid color-mix(in srgb, var(--color-champagne) 38%, var(--color-line));
+    background:
+      radial-gradient(circle at 22% 20%, rgb(184 147 90 / 0.16), transparent 65%),
+      linear-gradient(160deg, var(--color-panel), var(--color-tint));
+    text-align: center;
+  }
+  .media-fallback-mark {
+    display: inline-grid;
+    place-items: center;
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--color-champagne) 55%, transparent);
+    background: var(--color-panel);
+    font-family: var(--font-sans);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    color: var(--color-accent);
+  }
+  .media-fallback-caption {
+    max-width: 26ch;
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 600;
+    line-height: 1.25;
+    color: var(--color-ink);
+  }
 }
 
-/* Gradient hover shared by icon and action buttons: a gold gradient fades in behind the content and a
-   blurred copy glows underneath. Buttons pick a pair through --grad-from/--grad-to; every pair keeps
-   white text above 4.5:1. Unlayered so the hover colour beats each component's own base colour. */
+/* Gradient hover shared by icon and action buttons: crisp 220ms transition (was 500ms). */
 .gradient-hover,
 .btn-gold {
   --grad-from: #8a6420;
@@ -158,7 +281,7 @@
   background: linear-gradient(45deg, var(--grad-from), var(--grad-to));
   opacity: 0;
   pointer-events: none;
-  transition: opacity 500ms var(--os-ease);
+  transition: opacity 220ms var(--os-ease);
 }
 .gradient-hover::before,
 .btn-gold::before {
@@ -225,10 +348,20 @@
 .prose-article a:hover {
   text-decoration-color: currentColor;
 }
+@media (width < 48rem) {
+  .prose-article li > a,
+  .prose-article td > a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
 .prose-article > * + * {
   margin-top: 1rem;
 }
 .prose-article h2 {
+  scroll-margin-top: 5.5rem;
   margin-top: 2.5rem;
   font-family: var(--font-display);
   font-size: 2rem;
@@ -237,6 +370,7 @@
   text-wrap: balance;
 }
 .prose-article h3 {
+  scroll-margin-top: 5.5rem;
   margin-top: 1.5rem;
   font-size: 1.2rem;
   font-weight: 600;
@@ -262,6 +396,40 @@
   max-width: 100%;
   height: auto;
   border-radius: 0.5rem;
+}
+.code-block-wrap {
+  position: relative;
+  margin-top: 1rem;
+}
+.code-block-wrap > pre {
+  margin-top: 0;
+  padding-right: 5.5rem;
+}
+.code-copy-btn {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-line);
+  background: var(--color-panel);
+  color: var(--color-accent-ink);
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color 160ms var(--os-ease),
+    background-color 160ms var(--os-ease);
+}
+.code-copy-btn:hover {
+  border-color: var(--color-champagne);
+  background: var(--color-tint);
 }
 .prose-article pre {
   overflow-x: auto;

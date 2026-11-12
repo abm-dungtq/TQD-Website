@@ -1,6 +1,5 @@
-// Chat panel for the website agent, loaded on the first open. Desktop: a floating panel beside the mascot.
-// Phones: a bottom sheet that is a history entry, so Back closes it. Replies stream from /api/chat as SSE
-// and are rendered through parseReply, which only ever produces text nodes and links to this site.
+// Chat panel for the website agent, loaded on the first open. Desktop: a floating panel beside the mascot
+// (or above the FAB on subpages). Phones: a bottom sheet that is a history entry, so Back closes it.
 import { parseReply, type Inline } from '../lib/chat-render';
 import { EASE, play, SPRING } from './motion';
 
@@ -14,7 +13,14 @@ const KEEP = 40;
 const STALL_MS = 45_000;
 const STATUS_TTL = 60_000;
 const NARROW = window.matchMedia('(max-width: 1023px)');
-const GREETING = 'Tôi là phiên bản Agent của DũngTQ, bạn có thể tìm hiểu các kiến thức về AI từ tôi. Bạn muốn hỏi gì?';
+const GREETING =
+  'Chào bạn! Mình là Agent AI của DũngTQ — chuyên giải đáp về lộ trình đào tạo AI doanh nghiệp, hệ Skill (Viết Pro, Opus Video) và cách triển khai Agent thực chiến. Bạn cần tìm hiểu nội dung nào?';
+
+const STARTER_PROMPTS = [
+  'Chương trình đào tạo AI thực chiến cho doanh nghiệp gồm những gì?',
+  'Giới thiệu bộ Skill Viết Pro và Opus Video của DũngTQ',
+  'Cách dùng công cụ Tải Video & Mổ xẻ kịch bản Viral AI',
+];
 
 const panel = document.querySelector<HTMLElement>('[data-chat]');
 const scrim = document.querySelector<HTMLElement>('[data-chat-scrim]');
@@ -28,7 +34,7 @@ const newButton = q<HTMLButtonElement>('[data-chat-new]');
 const offlineBox = q<HTMLElement>('[data-chat-offline]');
 const sub = q<HTMLElement>('[data-chat-sub]');
 const avatar = q<HTMLImageElement>('[data-chat-avatar]');
-const zalo = panel.dataset.zalo ?? '';
+const zalo = panel.dataset.zalo ?? 'https://zalo.me/trinhquangdung';
 const fallback = document.querySelector<HTMLElement>('[data-fallback]');
 const skipLink = document.querySelector<HTMLElement>('[data-skip]');
 const fab = document.querySelector<HTMLButtonElement>('[data-chat-fab]');
@@ -54,7 +60,7 @@ const save = () => {
   try {
     sessionStorage.setItem(STORE, JSON.stringify(state));
   } catch {
-    /* storage full or blocked: the conversation still works for this page */
+    /* storage full or blocked */
   }
 };
 
@@ -80,7 +86,6 @@ const inlineNodes = (parts: Inline[]): Node[] =>
     return a;
   });
 
-// appendChild rather than append: the Workers types redeclare Element.append for HTMLRewriter.
 const put = (parent: Node, nodes: Node[]) => nodes.forEach((node) => parent.appendChild(node));
 
 const renderReply = (el: HTMLElement, text: string) => {
@@ -119,7 +124,7 @@ const bubble = (entry: Entry): HTMLElement => {
     const a = document.createElement('a');
     a.href = zalo;
     a.target = '_blank';
-    a.rel = 'noopener';
+    a.rel = 'noopener noreferrer';
     a.textContent = 'Nhắn Zalo cho DũngTQ';
     const p = document.createElement('p');
     p.appendChild(a);
@@ -128,16 +133,42 @@ const bubble = (entry: Entry): HTMLElement => {
   return el;
 };
 
+const buildStarterChips = (): HTMLElement => {
+  const wrap = document.createElement('div');
+  wrap.className = 'chat-starters';
+  wrap.dataset.chatStarters = '1';
+  for (const promptText of STARTER_PROMPTS) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'chat-starter-chip';
+    btn.textContent = promptText;
+    btn.addEventListener('click', () => {
+      if (busy || online === false) return;
+      wrap.remove();
+      void send(promptText);
+    });
+    wrap.appendChild(btn);
+  }
+  return wrap;
+};
+
 const scrollDown = () => {
   log.scrollTop = log.scrollHeight;
 };
 
 const renderAll = () => {
-  log.replaceChildren(bubble({ role: 'agent', text: GREETING }), ...state.entries.map(bubble));
+  const nodes: Node[] = [bubble({ role: 'agent', text: GREETING })];
+  if (state.entries.length === 0) {
+    nodes.push(buildStarterChips());
+  } else {
+    nodes.push(...state.entries.map(bubble));
+  }
+  log.replaceChildren(...nodes);
   scrollDown();
 };
 
 const add = (entry: Entry) => {
+  log.querySelector('[data-chat-starters]')?.remove();
   state.entries.push(entry);
   save();
   log.appendChild(bubble(entry));
@@ -161,11 +192,10 @@ const setOnline = (value: boolean) => {
   online = value;
   checkedAt = Date.now();
   offlineBox.hidden = value;
-  sub.textContent = value ? 'Đang trực tuyến' : 'Đang nghỉ';
+  sub.textContent = value ? 'Đang trực tuyến' : 'Tạm nghỉ · Nhắn Zalo trực tiếp';
   emit(value ? 'online' : 'offline');
   const hadFocus = panel.contains(document.activeElement) || document.activeElement === document.body;
   syncControls();
-  // A disabled textarea drops focus; keep it in the panel so Escape and Tab still work here.
   if (isOpen && hadFocus) (value && !NARROW.matches ? input : panel).focus({ preventScroll: true });
 };
 
@@ -183,7 +213,6 @@ const checkStatus = async (force = false) => {
 
 type Outcome = { text: string; done: boolean };
 
-/** Reads the SSE body, calling onText as content arrives. Aborts when nothing arrives for STALL_MS. */
 const readStream = async (res: Response, controller: AbortController, onText: (text: string) => void): Promise<Outcome> => {
   const reader = res.body!.getReader();
   const decoder = new TextDecoder();
@@ -220,7 +249,6 @@ const readStream = async (res: Response, controller: AbortController, onText: (t
       }
     }
   } catch (e) {
-    // A stall after some text keeps what arrived; the caller reports the answer as cut off.
     if (!text) throw e;
   } finally {
     clearTimeout(stall);
@@ -239,7 +267,6 @@ const send = async (message: string) => {
   const pending = document.createElement('div');
   pending.className = 'chat-msg';
   pending.dataset.role = 'agent';
-  // Hidden from assistive tech while it streams; the finished answer is appended as a new message.
   pending.setAttribute('aria-hidden', 'true');
   pending.innerHTML = '<span class="chat-dots"><span></span><span></span><span></span></span>';
   log.appendChild(pending);
@@ -277,7 +304,6 @@ const send = async (message: string) => {
         started = true;
         emit('stream');
       }
-      // GoClaw reports a failure as content starting with "Error: "; never show its raw text.
       if (latest.startsWith('Error: ')) return;
       frame ||= requestAnimationFrame(() => {
         frame = 0;
@@ -316,7 +342,6 @@ form.addEventListener('submit', (e) => {
   void send(message);
 });
 input.addEventListener('keydown', (e) => {
-  // isComposing: Vietnamese input methods use Enter to confirm a word.
   if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
     e.preventDefault();
     form.requestSubmit();
@@ -347,7 +372,6 @@ const show = async () => {
   isOpen = true;
   avatar.src ||= '/mascot/idle.webp';
   panel.hidden = false;
-  // Modal only as a phone sheet; on desktop the windows stay usable beside it.
   panel.setAttribute('aria-modal', String(NARROW.matches));
   setExpanded(true);
   emit('open');
@@ -367,7 +391,7 @@ const show = async () => {
   } else {
     input.focus({ preventScroll: true });
     await play(panel, [{ opacity: 0, transform: 'scale(0.92) translateY(12px)' }, { opacity: 1, transform: 'none' }], {
-      duration: 260,
+      duration: 240,
       easing: SPRING,
     });
   }
@@ -381,8 +405,8 @@ const hide = async () => {
   const narrow = !scrim.hidden;
   await (narrow
     ? Promise.all([
-        play(panel, [{ transform: 'translateY(0)' }, { transform: 'translateY(100%)' }], { duration: 260, easing: EASE }),
-        play(scrim, [{ opacity: 1 }, { opacity: 0 }], { duration: 260, easing: EASE }),
+        play(panel, [{ transform: 'translateY(0)' }, { transform: 'translateY(100%)' }], { duration: 240, easing: EASE }),
+        play(scrim, [{ opacity: 1 }, { opacity: 0 }], { duration: 240, easing: EASE }),
       ])
     : play(panel, [{ opacity: 1 }, { opacity: 0, transform: 'scale(0.96) translateY(8px)' }], { duration: 160, easing: EASE }));
   if (isOpen) return;
@@ -392,11 +416,9 @@ const hide = async () => {
   if (skipLink) skipLink.inert = false;
   if (fab) fab.inert = false;
   document.documentElement.style.overflow = '';
-  // The mascot may have been switched off while the chat was open.
   (opener?.isConnected && opener.offsetParent ? opener : fab)?.focus({ preventScroll: true });
 };
 
-/** On phones the sheet is a history entry, so Back and the close button agree. */
 const requestClose = () => {
   if (history.state?.chat) history.back();
   else void hide();
@@ -421,7 +443,6 @@ q<HTMLElement>('[data-chat-close]').addEventListener('click', requestClose);
 scrim.addEventListener('click', requestClose);
 panel.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
-  // The desktop also closes its top window on Escape; this one belongs to the chat.
   e.stopPropagation();
   requestClose();
 });
@@ -429,7 +450,6 @@ NARROW.addEventListener('change', () => {
   if (isOpen) requestClose();
 });
 
-// Drag the sheet header down to close it on phones.
 const drag = q<HTMLElement>('[data-chat-drag]');
 drag.addEventListener('pointerdown', (start) => {
   if (!NARROW.matches || (start.target as Element).closest('button, a')) return;

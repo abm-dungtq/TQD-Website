@@ -1,6 +1,7 @@
 ---
-// Chat with the website agent. The markup is static and hidden: src/scripts/chat-panel.ts loads on the
-// first open (the mascot on desktop, the round button on phones), so nothing is fetched before that.
+// Chat with the website agent. Available site-wide via BaseLayout:
+// - On `/` desktop (when mascot is active), visitors talk via Mascot or `[data-chat-open]`.
+// - On subpages and mobile viewports, `.chat-fab` floats in the bottom-right with a GPU tooltip.
 interface Props {
   zalo: string;
 }
@@ -8,9 +9,19 @@ interface Props {
 const { zalo } = Astro.props;
 ---
 
-<button type="button" class="chat-fab gradient-hover" data-chat-fab aria-label="Trò chuyện với Agent DũngTQ" aria-controls="chat-panel" aria-expanded="false" hidden>
-  <img src="/mascot/idle.webp" alt="" width="128" height="128" loading="lazy" decoding="async" />
-  <span class="chat-fab-label" aria-hidden="true">Trò chuyện</span>
+<button
+  type="button"
+  class="chat-fab gradient-hover"
+  data-chat-fab
+  aria-label="Trò chuyện với Agent DũngTQ"
+  aria-controls="chat-panel"
+  aria-expanded="false"
+  hidden
+>
+  <span class="chat-fab-avatar">
+    <img src="/mascot/idle.webp" alt="" width="128" height="128" loading="lazy" decoding="async" />
+  </span>
+  <span class="chat-fab-label" aria-hidden="true">Hỏi Agent AI</span>
 </button>
 
 <div class="chat-scrim" data-chat-scrim hidden></div>
@@ -20,7 +31,7 @@ const { zalo } = Astro.props;
     <img class="chat-avatar" alt="" width="40" height="40" data-chat-avatar />
     <div class="min-w-0">
       <h2 id="chat-title" class="chat-title">Agent DũngTQ</h2>
-      <p class="chat-sub" data-chat-sub>Phiên bản AI của DũngTQ</p>
+      <p class="chat-sub" data-chat-sub>Trợ lý AI thực chiến của DũngTQ</p>
     </div>
     <button type="button" class="chat-icon-btn ml-auto" data-chat-new title="Cuộc trò chuyện mới" aria-label="Cuộc trò chuyện mới">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true">
@@ -37,27 +48,26 @@ const { zalo } = Astro.props;
   <div class="chat-log" role="log" aria-live="polite" aria-label="Hội thoại" data-chat-log></div>
 
   <div class="chat-offline" data-chat-offline hidden>
-    <p>Agent đang nghỉ, bạn có thể nhắn Zalo cho DũngTQ.</p>
+    <p>Agent đang tạm nghỉ, bạn có thể nhắn Zalo trực tiếp cho DũngTQ:</p>
     <div class="chat-offline-actions">
-      <a class="chat-zalo" href={zalo} target="_blank" rel="noopener">Nhắn Zalo</a>
+      <a class="chat-zalo" href={zalo} target="_blank" rel="noopener noreferrer">Nhắn Zalo ngay</a>
       <button type="button" class="chat-retry" data-chat-retry>Thử lại</button>
     </div>
   </div>
 
   <form class="chat-form" data-chat-form>
     <label for="chat-input" class="sr-only">Tin nhắn cho Agent DũngTQ</label>
-    <textarea id="chat-input" class="chat-input" rows="1" maxlength="1000" placeholder="Hỏi về AI, agent, sản phẩm…" data-chat-input></textarea>
-    <button type="submit" class="chat-send" data-chat-send aria-label="Gửi" disabled>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <textarea id="chat-input" class="chat-input" rows="1" maxlength="1000" placeholder="Hỏi về đào tạo AI, Agent, Skill…" data-chat-input></textarea>
+    <button type="submit" class="chat-send" data-chat-send aria-label="Gửi tin nhắn" disabled>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M12 19V5M5 12l7-7 7 7"></path>
       </svg>
     </button>
   </form>
-  <p class="chat-note">Tin nhắn được gửi tới agent AI của DũngTQ và được lưu để tiếp nối hội thoại; đừng gửi thông tin cá nhân.</p>
+  <p class="chat-note">Tin nhắn gửi tới Agent AI của DũngTQ và chỉ lưu tạm trong phiên trò chuyện; vui lòng không gửi mật khẩu hay dữ liệu nhạy cảm.</p>
 </section>
 
 <script>
-  // Phones get the round button; the panel script itself loads on the first tap.
   const fab = document.querySelector<HTMLButtonElement>('[data-chat-fab]');
   if (fab) {
     fab.hidden = false;
@@ -65,6 +75,12 @@ const { zalo } = Astro.props;
       import('../scripts/chat-panel').then((m) => m.toggleChat(fab)).catch(() => {});
     });
   }
+  document.addEventListener('click', (ev) => {
+    const trigger = (ev.target as Element | null)?.closest<HTMLElement>('[data-chat-open]');
+    if (!trigger) return;
+    ev.preventDefault();
+    import('../scripts/chat-panel').then((m) => m.openChat(trigger)).catch(() => {});
+  });
 </script>
 
 <style is:global>
@@ -78,54 +94,71 @@ const { zalo } = Astro.props;
     place-items: center;
     width: 56px;
     height: 56px;
-    overflow: hidden;
+    padding: 0;
     border: 1px solid var(--color-line);
     border-radius: 999px;
     background: radial-gradient(circle at 50% 30%, var(--color-panel), var(--color-tint));
     box-shadow: var(--shadow-lift);
+    cursor: pointer;
     -webkit-tap-highlight-color: transparent;
     transition:
-      transform 150ms var(--os-ease),
-      width 500ms var(--os-ease),
-      border-color 500ms var(--os-ease),
-      box-shadow 500ms var(--os-ease);
+      transform 180ms var(--os-ease),
+      border-color 180ms var(--os-ease),
+      box-shadow 180ms var(--os-ease);
   }
-  /* The pose image is a full figure; enlarge it so the face fills the circle. */
+  .chat-fab-avatar {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border-radius: 999px;
+    pointer-events: none;
+  }
   .chat-fab img {
     position: absolute;
-    top: 7px;
+    top: 6px;
     left: 50%;
-    width: 76px;
-    height: 76px;
+    width: 74px;
+    height: 74px;
     max-width: none;
     object-fit: contain;
     transform: translateX(-50%);
-    transform-origin: 50% 30%;
-    transition: transform 500ms var(--os-ease);
   }
-  /* With a mouse the round button stretches left into a gradient pill: the mascot shrinks away and the label grows in. */
   .chat-fab-label {
-    color: #fff;
-    font-size: 0.875rem;
+    position: absolute;
+    right: calc(100% + 10px);
+    top: 50%;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    border: 1px solid var(--color-line);
+    background: var(--color-panel);
+    color: var(--color-ink);
+    font-size: 0.8125rem;
     font-weight: 600;
     white-space: nowrap;
-    transform: scale(0);
-    transition: transform 500ms var(--os-ease);
+    box-shadow: var(--shadow-soft);
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(-50%) translateX(6px);
+    transition:
+      opacity 180ms var(--os-ease),
+      transform 180ms var(--os-ease);
   }
   @media (hover: hover) {
     .chat-fab:hover {
-      width: 152px;
-      border-color: transparent;
-      /* overflow: hidden clips the shared blurred glow, so the glow comes from a shadow here. */
-      box-shadow: 0 14px 30px -8px rgb(94 68 19 / 0.5);
-    }
-    .chat-fab:hover img {
-      transform: translateX(-50%) scale(0);
+      transform: translateY(-2px);
+      border-color: var(--color-champagne);
+      box-shadow: 0 14px 30px -8px rgb(94 68 19 / 0.42);
     }
     .chat-fab:hover .chat-fab-label {
-      transform: scale(1);
-      transition-delay: 150ms;
+      opacity: 1;
+      transform: translateY(-50%) translateX(0);
     }
+  }
+  .chat-fab:focus-visible .chat-fab-label {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
   }
   .chat-fab:active {
     transform: scale(0.94);
@@ -137,9 +170,9 @@ const { zalo } = Astro.props;
   .chat-fab[hidden] {
     display: none;
   }
-  /* Wide screens talk through the mascot; the button only returns when the mascot is switched off. */
+  /* Only hide .chat-fab on desktop when DesktopShell's Mascot is present and active. */
   @media (min-width: 1024px) {
-    html:not([data-mascot='off']) .chat-fab {
+    html:has([data-desktop]):not([data-mascot='off']) .chat-fab {
       display: none;
     }
   }
@@ -156,12 +189,12 @@ const { zalo } = Astro.props;
   }
   .chat-panel {
     position: fixed;
-    right: 168px;
+    right: 24px;
     bottom: 84px;
     z-index: 1010;
     display: flex;
     flex-direction: column;
-    width: min(400px, calc(100vw - 200px));
+    width: min(400px, calc(100vw - 48px));
     height: min(600px, calc(100vh - 140px));
     overflow: hidden;
     border: 1px solid var(--color-line);
@@ -172,8 +205,11 @@ const { zalo } = Astro.props;
     outline: none;
     transform-origin: 100% 100%;
   }
-  html[data-mascot='off'] .chat-panel {
-    right: 24px;
+  @media (min-width: 1024px) {
+    html:has([data-desktop]):not([data-mascot='off']) .chat-panel {
+      right: 168px;
+      width: min(400px, calc(100vw - 200px));
+    }
   }
   .chat-head {
     position: relative;
@@ -218,6 +254,7 @@ const { zalo } = Astro.props;
     height: 44px;
     border-radius: 999px;
     color: var(--color-muted);
+    cursor: pointer;
     transition:
       background-color 150ms var(--os-ease),
       color 150ms var(--os-ease);
@@ -239,6 +276,34 @@ const { zalo } = Astro.props;
     overscroll-behavior: contain;
     padding: 1rem;
     scroll-behavior: smooth;
+  }
+  .chat-starters {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+    margin-top: 0.25rem;
+  }
+  .chat-starter-chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0.4rem 0.85rem;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--color-champagne) 50%, var(--color-line));
+    background: var(--color-tint);
+    color: var(--color-accent-ink);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+    transition:
+      background-color 150ms var(--os-ease),
+      border-color 150ms var(--os-ease);
+  }
+  .chat-starter-chip:hover {
+    border-color: var(--color-accent);
+    background: var(--color-panel);
   }
   .chat-msg {
     max-width: 88%;
@@ -343,6 +408,7 @@ const { zalo } = Astro.props;
     border-radius: 999px;
     font-size: 0.8125rem;
     font-weight: 600;
+    cursor: pointer;
   }
   .chat-zalo {
     background: var(--color-accent);
@@ -359,9 +425,9 @@ const { zalo } = Astro.props;
     align-items: flex-end;
     gap: 0.5rem;
     margin: 0 1rem;
-    padding: 0.375rem 0.375rem 0.375rem 0.875rem;
+    padding: 0.35rem 0.35rem 0.35rem 0.875rem;
     border: 1px solid var(--color-line);
-    border-radius: 18px;
+    border-radius: 22px;
     background: var(--color-panel);
     transition: border-color 150ms var(--os-ease);
   }
@@ -370,9 +436,9 @@ const { zalo } = Astro.props;
   }
   .chat-input {
     flex: 1;
-    min-height: 32px;
+    min-height: 36px;
     max-height: 132px;
-    padding: 0.375rem 0;
+    padding: 0.45rem 0;
     resize: none;
     border: 0;
     background: transparent;
@@ -389,11 +455,12 @@ const { zalo } = Astro.props;
     display: grid;
     flex: none;
     place-items: center;
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
     border-radius: 999px;
     background: var(--color-accent);
     color: #fff;
+    cursor: pointer;
     transition:
       opacity 150ms var(--os-ease),
       transform 150ms var(--os-ease);
@@ -403,6 +470,7 @@ const { zalo } = Astro.props;
   }
   .chat-send:disabled {
     opacity: 0.35;
+    cursor: default;
   }
   .chat-icon-btn:focus-visible,
   .chat-send:focus-visible,
@@ -420,8 +488,7 @@ const { zalo } = Astro.props;
 
   /* Phones: a sheet from the bottom, like the section sheets on the home screen. */
   @media (max-width: 1023px) {
-    .chat-panel,
-    html[data-mascot='off'] .chat-panel {
+    .chat-panel {
       inset: auto 0 0 0;
       z-index: 1100;
       width: auto;
@@ -445,14 +512,6 @@ const { zalo } = Astro.props;
       border-radius: 999px;
       background: var(--color-line);
       transform: translateX(-50%);
-    }
-    .chat-icon-btn {
-      width: 44px;
-      height: 44px;
-    }
-    .chat-send {
-      width: 44px;
-      height: 44px;
     }
     .chat-input {
       font-size: 1rem;

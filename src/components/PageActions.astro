@@ -1,0 +1,123 @@
+---
+import Icon from './Icon.astro';
+
+interface Props {
+  markdownPath: string;
+  canonicalUrl: string;
+  title: string;
+  class?: string;
+}
+
+const { markdownPath, canonicalUrl, title, class: className = '' } = Astro.props;
+const absMarkdownUrl = new URL(markdownPath, canonicalUrl).href;
+const aiPrompt = `Hãy đọc trang "${title}" của Trịnh Quang Dũng (DũngTQ) tại ${canonicalUrl} (bản Markdown sạch: ${absMarkdownUrl}) và tóm tắt các ý cốt lõi kèm gợi ý áp dụng thực tế cho công việc / doanh nghiệp bằng tiếng Việt tự nhiên.`;
+
+const chatGptHref = `https://chatgpt.com/?q=${encodeURIComponent(aiPrompt)}`;
+const claudeHref = `https://claude.ai/new?q=${encodeURIComponent(aiPrompt)}`;
+const perplexityHref = `https://www.perplexity.ai/search/new?q=${encodeURIComponent(aiPrompt)}`;
+---
+
+<div
+  class:list={['page-actions flex flex-wrap items-center gap-2', className]}
+  data-page-actions
+  aria-label="Tiện ích đọc trang & AI"
+>
+  <button
+    type="button"
+    class="page-action-btn"
+    data-copy-md={markdownPath}
+  >
+    <Icon name="clipboard" size={15} />
+    <span data-copy-md-label>Sao chép Markdown</span>
+  </button>
+
+  <a
+    href={markdownPath}
+    class="page-action-btn no-underline"
+    title="Mở bản văn bản Markdown sạch dành cho AI Agent và trình đọc"
+  >
+    <Icon name="file-text" size={15} />
+    <span>Xem bản .md</span>
+  </a>
+
+  <div class="relative" data-ai-dropdown>
+    <button
+      type="button"
+      class="page-action-btn"
+      aria-expanded="false"
+      aria-haspopup="true"
+      data-ai-trigger
+    >
+      <Icon name="sparkles" size={15} />
+      <span>Tóm tắt bằng AI</span>
+      <Icon name="chevron-down" size={14} class="opacity-70" />
+    </button>
+
+    <div
+      class="page-ai-menu"
+      data-ai-panel
+      hidden
+    >
+      <p class="px-3 py-1.5 text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-accent">
+        Gửi nội dung sang AI
+      </p>
+      <a
+        href={chatGptHref}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="page-ai-item"
+      >
+        <span>Mở trong ChatGPT</span>
+        <Icon name="external" size={14} class="text-muted" />
+      </a>
+      <a
+        href={claudeHref}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="page-ai-item"
+      >
+        <span>Mở trong Claude</span>
+        <Icon name="external" size={14} class="text-muted" />
+      </a>
+      <a
+        href={perplexityHref}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="page-ai-item"
+      >
+        <span>Mở trong Perplexity</span>
+        <Icon name="external" size={14} class="text-muted" />
+      </a>
+      <button
+        type="button"
+        class="page-ai-item w-full text-left"
+        data-ai-gemini={aiPrompt}
+      >
+        <span>Gemini (Chép lệnh &amp; mở)</span>
+        <Icon name="clipboard" size={14} class="text-muted" />
+      </button>
+    </div>
+  </div>
+
+  <button
+    type="button"
+    class="page-action-btn"
+    data-share-page
+    data-share-url={canonicalUrl}
+    data-share-title={title}
+  >
+    <Icon name="share" size={15} />
+    <span>Chia sẻ</span>
+  </button>
+
+  <span
+    class="text-xs font-medium text-accent"
+    role="status"
+    aria-live="polite"
+    data-page-action-status
+  ></span>
+</div>
+
+<script>
+  import '../scripts/page-actions.ts';
+</script>

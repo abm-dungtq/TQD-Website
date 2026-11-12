@@ -21,8 +21,22 @@ if (home && sheet && scrim && title && body && pageLink && fallback) {
   document.body.appendChild(scrim);
   document.body.appendChild(sheet);
 
+  // Clean poster-first video activation: reveal native controls only when tapped
+  const videoEl = home.querySelector<HTMLVideoElement>('[data-m-video]');
+  const videoPlayBtn = home.querySelector<HTMLButtonElement>('[data-m-video-play]');
+  videoPlayBtn?.addEventListener('click', () => {
+    if (!videoEl) return;
+    videoPlayBtn.hidden = true;
+    videoEl.controls = true;
+    void videoEl.play().catch(() => {});
+  });
+
   const apps = new Map<string, HTMLAnchorElement>();
-  home.querySelectorAll<HTMLAnchorElement>('[data-m-open]').forEach((a) => apps.set(a.dataset.mOpen ?? '', a));
+  const appTriggers = home.querySelectorAll<HTMLAnchorElement>('[data-m-open]');
+  appTriggers.forEach((a) => {
+    const id = a.dataset.mOpen ?? '';
+    if (id && !apps.has(id)) apps.set(id, a);
+  });
   let current: string | null = null;
   let loadToken = 0;
 
@@ -48,7 +62,6 @@ if (home && sheet && scrim && title && body && pageLink && fallback) {
       const main = doc.querySelector('main#main');
       if (!main) throw new Error('no main');
       if (token !== loadToken) return;
-      // Same-origin HTML rendered by this site; the page's own heading is shown in the sheet header.
       const h1 = main.querySelector('h1');
       (h1?.closest('header') ?? h1)?.remove();
       body.replaceChildren();
@@ -63,7 +76,7 @@ if (home && sheet && scrim && title && body && pageLink && fallback) {
     const app = apps.get(id);
     if (!app) return;
     current = id;
-    title.textContent = app.querySelector('.m-label')?.textContent ?? '';
+    title.textContent = app.querySelector('.m-label')?.textContent ?? app.textContent?.trim() ?? '';
     pageLink.href = `/${id}`;
     sheet.hidden = false;
     scrim.hidden = false;
@@ -119,8 +132,10 @@ if (home && sheet && scrim && title && body && pageLink && fallback) {
     }
   });
 
-  apps.forEach((app, id) => {
-    app.addEventListener('click', (e) => {
+  appTriggers.forEach((trigger) => {
+    const id = trigger.dataset.mOpen;
+    if (!id) return;
+    trigger.addEventListener('click', (e) => {
       if (!NARROW.matches || e.metaKey || e.ctrlKey || e.shiftKey) return;
       e.preventDefault();
       history.pushState({ sheet: id }, '', `#${id}`);
@@ -176,7 +191,6 @@ if (home && sheet && scrim && title && body && pageLink && fallback) {
   // A shared link such as /#san-pham opens that sheet directly.
   const fromHash = location.hash.slice(1);
   if (NARROW.matches && apps.has(fromHash)) {
-    // Put the plain home screen underneath, so Back closes the sheet instead of leaving the site.
     history.replaceState(null, '', location.pathname);
     history.pushState({ sheet: fromHash }, '', `#${fromHash}`);
     void show(fromHash);

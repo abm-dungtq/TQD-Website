@@ -80,7 +80,7 @@ if (desktop && fallback) {
   );
 
   const clampWindow = (win: HTMLElement) => {
-    if (win.hidden || !win.style.left) return;
+    if (win.hidden || !win.style.left || !win.offsetWidth) return;
     const maxLeft = window.innerWidth - 80;
     const maxTop = window.innerHeight - 60;
     win.style.left = `${Math.min(Math.max(win.offsetLeft, 80 - win.offsetWidth), maxLeft)}px`;
@@ -312,6 +312,7 @@ if (desktop && fallback) {
 
     const { count, winWidth, withFeature } = layoutWindows();
     window.addEventListener('resize', () => {
+      if (!wide.matches || desktop.classList.contains('hidden')) return;
       layoutWindows();
       windows.forEach(clampWindow);
     });
@@ -339,7 +340,12 @@ if (desktop && fallback) {
     desktop.classList.toggle('hidden', !wide.matches);
     fallback.classList.toggle('hidden', wide.matches);
     skipLink?.setAttribute('href', wide.matches ? '#desktop' : '#main');
-    if (wide.matches && !booted) boot();
+    if (!wide.matches) return;
+    if (!booted) boot();
+    else {
+      layoutWindows();
+      windows.forEach(clampWindow);
+    }
   };
 
   apply();
