@@ -3,6 +3,7 @@ import { env } from 'cloudflare:workers';
 import { apiError, etag, jsonResponse, parseIfMatch, readBodyCapped, requireKey } from '../../../../lib/api';
 import { ConflictError, deleteArticle, saveArticle, ValidationError } from '../../../../lib/articles';
 import { type ArticleStatus, getArticle } from '../../../../lib/content';
+import { logSecurityEvent } from '../../../../lib/security-log';
 
 const MAX_BODY = 200_000;
 const NO_PUBLISH_WARNING = 'Key không có quyền publish nên bài được lưu nháp.';
@@ -140,5 +141,10 @@ export const DELETE: APIRoute = async (context) => {
     return apiError(403, 'forbidden', 'Bài đang đăng, key cần quyền publish để xoá.');
   }
   if (!(await deleteArticle(env.DB, slug))) return apiError(404, 'not_found', 'Không có bài này.');
+  await logSecurityEvent(
+    'article.deleted',
+    { actor: `agent:${key.name}`, keyId: key.id, slug, status: current.status },
+    context.request,
+  );
   return new Response(null, { status: 204 });
 };

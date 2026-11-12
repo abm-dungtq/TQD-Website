@@ -8,7 +8,6 @@ import { getSite } from '../../lib/content';
 if (!Astro.locals.admin) return new Response('Unauthorized', { status: 401 });
 
 const site = await getSite(env.DB);
-let statsText = JSON.stringify(site.stats, null, 2);
 let topicsText = JSON.stringify(site.topics, null, 2);
 let error = '';
 
@@ -22,31 +21,13 @@ const parse = (label: string, text: string): Record<string, unknown> => {
   throw new InputError(`${label}: JSON không hợp lệ.`);
 };
 const isStringList = (v: unknown) => Array.isArray(v) && v.every((s) => typeof s === 'string');
-// Every public page renders the stats, so a malformed entry would break the whole site.
-const isRecord = (v: unknown): v is Record<string, unknown> => Boolean(v) && typeof v === 'object' && !Array.isArray(v);
-const isHeadline = (v: unknown) =>
-  isRecord(v) && typeof v.label === 'string' && typeof v.value === 'string' && (v.note === undefined || typeof v.note === 'string');
-const isGroup = (v: unknown) => isRecord(v) && typeof v.label === 'string' && typeof v.count === 'number' && Number.isFinite(v.count) && v.count >= 0;
 
 if (Astro.request.method === 'POST') {
   const form = await Astro.request.formData();
-  const target = String(form.get('target'));
+  const target = String(form.get('target') ?? 'topics');
   const text = String(form.get('json') ?? '');
   try {
-    if (target === 'stats') {
-      statsText = text;
-      const stats = parse('Số liệu', text);
-      if (!Array.isArray(stats.headline) || !Array.isArray(stats.byGroup)) {
-        throw new InputError('Số liệu cần mảng "headline" và "byGroup".');
-      }
-      if (!stats.headline.every(isHeadline)) {
-        throw new InputError('Mỗi mục "headline" cần "label" và "value" là chuỗi ("note" tuỳ chọn).');
-      }
-      if (!stats.byGroup.every(isGroup)) {
-        throw new InputError('Mỗi mục "byGroup" cần "label" là chuỗi và "count" là số không âm.');
-      }
-      await saveSetting(env.DB, 'stats', stats);
-    } else if (target === 'topics') {
+    if (target === 'topics') {
       topicsText = text;
       const topics = parse('Chủ đề', text);
       if (!isStringList(topics.howTo) || !isStringList(topics.marketWatch)) {
@@ -66,14 +47,9 @@ if (Astro.request.method === 'POST') {
 const saved = Astro.url.searchParams.has('ok');
 ---
 
-<AdminLayout title="Số liệu và chủ đề">
+<AdminLayout title="Chủ đề nội dung">
   {saved && <p class="admin-ok">Đã lưu.</p>}
   {error && <p class="admin-error" role="alert">{error}</p>}
-  <form method="post" class="admin-form mb-10">
-    <input type="hidden" name="target" value="stats" />
-    <label>Số liệu (JSON) <textarea name="json" class="mono" rows="18">{statsText}</textarea></label>
-    <button type="submit" class="admin-btn">Lưu số liệu</button>
-  </form>
   <form method="post" class="admin-form">
     <input type="hidden" name="target" value="topics" />
     <label>Chủ đề (JSON) <textarea name="json" class="mono" rows="12">{topicsText}</textarea></label>

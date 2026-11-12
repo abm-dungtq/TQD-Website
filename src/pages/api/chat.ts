@@ -1,6 +1,6 @@
 // POST /api/chat: forwards one visitor message to the GoClaw agent and streams its SSE reply back.
 import type { APIRoute } from 'astro';
-import { env } from 'cloudflare:workers';
+import { env, waitUntil } from 'cloudflare:workers';
 import { apiError, readBodyCapped } from '../../lib/api';
 import {
   callGoclaw,
@@ -23,7 +23,7 @@ const offline = () => apiError(503, 'offline', 'Agent đang nghỉ. Bạn nhắn
 const limited = (message: string, retryAfter: number) =>
   apiError(429, 'rate_limited', message, { retryAfter }, { 'Retry-After': String(Math.max(1, retryAfter)) });
 
-export const POST: APIRoute = async ({ request, url, locals }) => {
+export const POST: APIRoute = async ({ request, url }) => {
   if (!sameOrigin(request, url.origin)) return apiError(403, 'forbidden', 'Yêu cầu không đến từ trang này.');
   if (!request.headers.get('Content-Type')?.toLowerCase().startsWith('application/json')) {
     return apiError(415, 'unsupported_media_type', 'Chỉ nhận JSON.');
@@ -35,7 +35,7 @@ export const POST: APIRoute = async ({ request, url, locals }) => {
 
   // Counted after the response is sent; a failed count never affects the visitor.
   const count = (outcome: ChatOutcome) =>
-    locals.cfContext.waitUntil(recordChat(env.DB, outcome, chat.visitorId).catch((e) => console.warn('chat stats', String(e))));
+    waitUntil(recordChat(env.DB, outcome, chat.visitorId).catch((e) => console.warn('chat stats', String(e))));
 
   const apiKey = env.GOCLAW_API_KEY;
   const baseUrl = env.GOCLAW_BASE_URL;

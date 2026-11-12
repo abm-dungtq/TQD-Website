@@ -64,7 +64,7 @@ const form = draft ?? {
   version: existing?.version,
 };
 const { results: images } = await env.DB.prepare(
-  "SELECT key, alt FROM media WHERE content_type LIKE 'image/%' ORDER BY created_at DESC",
+  "SELECT key, alt FROM media WHERE content_type LIKE 'image/%' ORDER BY created_at DESC LIMIT 200",
 ).all<{ key: string; alt: string }>();
 const saved = Astro.url.searchParams.has('ok');
 ---

@@ -2,11 +2,15 @@
 import { execFileSync } from 'node:child_process';
 
 const target = process.argv.includes('--remote') ? '--remote' : '--local';
+const npxBin = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 
 function query(sql) {
-  const out = execFileSync('npx', ['wrangler', 'd1', 'execute', 'tqd_db', target, '--json', '--command', `"${sql}"`], {
+  if (!/^\s*SELECT\b/i.test(sql) || sql.includes(';')) {
+    throw new Error('Only single read-only SELECT queries are permitted in seed verification.');
+  }
+  const out = execFileSync(npxBin, ['wrangler', 'd1', 'execute', 'tqd_db', target, '--json', '--command', sql], {
     encoding: 'utf8',
-    shell: true,
+    shell: false,
     env: { ...process.env, CLOUDFLARE_ACCOUNT_ID: 'b243f38bff984ce1741c379547e97a75' },
     stdio: ['ignore', 'pipe', 'ignore'],
   });

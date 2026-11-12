@@ -10,7 +10,7 @@ if (!Astro.locals.admin) return new Response('Unauthorized', { status: 401 });
 const site = await getSite(env.DB);
 const DEFAULT_PORTRAIT = { portrait: '/img/portrait-480.webp', portraitSmall: '/img/portrait-240.webp' };
 const { results: images } = await env.DB.prepare(
-  "SELECT key, alt FROM media WHERE content_type LIKE 'image/%' ORDER BY created_at DESC",
+  "SELECT key, alt FROM media WHERE content_type LIKE 'image/%' ORDER BY created_at DESC LIMIT 200",
 ).all<{ key: string; alt: string }>();
 let person: Person = site.person;
 let error = '';

@@ -7,7 +7,7 @@ import { LIMITS } from '../../lib/media';
 if (!Astro.locals.admin) return new Response('Unauthorized', { status: 401 });
 
 const { results: media } = await env.DB.prepare(
-  'SELECT key, content_type, size, alt FROM media ORDER BY created_at DESC',
+  'SELECT key, content_type, size, alt FROM media ORDER BY created_at DESC LIMIT 200',
 ).all<{ key: string; content_type: string; size: number; alt: string }>();
 const size = (bytes: number) => (bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${(bytes / 1024).toFixed(0)} KB`);
 const snippet = (m: { key: string; content_type: string; alt: string }) =>

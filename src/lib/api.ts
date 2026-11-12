@@ -1,7 +1,7 @@
 // Shared plumbing for /api/v1: bearer-key auth, scopes, per-key rate limit, JSON errors.
 // Policy (scopes, publish rules) lives here and in the endpoints; the write helpers stay permission-free.
 import type { APIContext } from 'astro';
-import { env } from 'cloudflare:workers';
+import { env, waitUntil } from 'cloudflare:workers';
 import { type ApiKey, authenticate, type Scope } from './api-key';
 import { hit } from './rate-limit';
 
@@ -25,7 +25,7 @@ export async function requireKey(context: APIContext, scope?: Scope): Promise<Ap
     return apiError(429, 'rate_limited', `Tối đa ${REQUESTS_PER_MINUTE} request mỗi phút.`, {}, { 'Retry-After': String(Math.max(1, limit.retryAfter)) });
   }
   if (scope && !key.scopes.includes(scope)) return apiError(403, 'forbidden', `Key thiếu quyền ${scope}.`);
-  context.locals.cfContext.waitUntil(
+  waitUntil(
     env.DB.prepare("UPDATE api_keys SET last_used_at = datetime('now') WHERE id = ?1 AND (last_used_at IS NULL OR last_used_at < datetime('now', '-60 seconds'))").bind(key.id).run(),
   );
   return key;

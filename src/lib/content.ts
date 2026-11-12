@@ -24,7 +24,7 @@ export interface Item {
 
 export type SectionId = 'ho-so' | 'san-pham' | 'thu-vien' | 'video-ai' | 'bai-viet' | 'lien-he';
 
-export type IconName = 'user' | 'box' | 'image' | 'film' | 'book' | 'chart' | 'mail';
+export type IconName = 'user' | 'box' | 'image' | 'film' | 'book' | 'chart' | 'mail' | 'download';
 
 /** A photo or video in the gallery, stored in the media library. A video carries a poster image. */
 export interface GalleryEntry {
@@ -87,7 +87,7 @@ export interface Topics {
 
 export interface Site {
   person: Person;
-  stats: Stats;
+  stats?: Stats;
   links: Link[];
   topics: Topics;
   sections: Section[];
@@ -121,7 +121,7 @@ export interface SiteData {
   articles: Article[];
 }
 
-const SITE_KEYS = ['person', 'stats', 'links', 'topics', 'sections', 'gallery'] as const;
+const SITE_KEYS = ['person', 'links', 'topics', 'sections', 'gallery'] as const;
 
 const parseList = <T>(text: unknown): T[] => {
   try {
@@ -144,8 +144,13 @@ export async function getSite(db: D1Database): Promise<Site> {
     .bind(...SITE_KEYS)
     .all<{ key: string; value: string }>();
   const map: Record<string, unknown> = Object.fromEntries(results.map((r) => [r.key, JSON.parse(r.value)]));
+  const rawPerson = (map.person && typeof map.person === 'object' ? map.person : {}) as Partial<Person>;
+  const person: Person = {
+    ...(rawPerson as Person),
+    zalo: rawPerson.zalo?.trim() || 'https://zalo.me/trinhquangdung',
+  };
   // The gallery setting may not exist yet; every other key is seeded by the migrations.
-  return { gallery: [], ...map } as unknown as Site;
+  return { gallery: [], ...map, person } as unknown as Site;
 }
 
 interface ItemRow {

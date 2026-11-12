@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
 import { apiError, jsonResponse, requireKey } from '../../../lib/api';
 import { deleteMedia, MediaError, storeMedia } from '../../../lib/media';
+import { logSecurityEvent } from '../../../lib/security-log';
 
 const ERROR_CODE: Record<number, string> = { 400: 'invalid', 411: 'length_required', 413: 'too_large', 415: 'unsupported_type' };
 
@@ -32,8 +33,14 @@ export const POST: APIRoute = async (context) => {
 export const DELETE: APIRoute = async (context) => {
   const key = await requireKey(context, 'media:write');
   if (key instanceof Response) return key;
-  if (!(await deleteMedia(env, context.url.searchParams.get('key') ?? ''))) {
+  const mediaKey = context.url.searchParams.get('key') ?? '';
+  if (!(await deleteMedia(env, mediaKey))) {
     return apiError(404, 'not_found', 'Không có tệp này.');
   }
+  await logSecurityEvent(
+    'media.deleted',
+    { actor: `agent:${key.name}`, keyId: key.id, mediaKey },
+    context.request,
+  );
   return new Response(null, { status: 204 });
 };

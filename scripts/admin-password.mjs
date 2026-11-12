@@ -1,6 +1,6 @@
 // Prints a PBKDF2 hash for ADMIN_PASSWORD_HASH. Only the hash goes to stdout.
 // Usage:
-//   node scripts/admin-password.mjs --generate <file>   random password written to <file>
+//   node scripts/admin-password.mjs --generate <file>   random password written to <file> (0600)
 //   node scripts/admin-password.mjs --from <file>       hash the password stored in <file>
 //   node scripts/admin-password.mjs --prompt            type the password (no echo)
 import fs from 'node:fs';
@@ -25,8 +25,10 @@ const ask = (question) =>
 let password;
 if (mode === '--generate' && file) {
   password = Buffer.from(crypto.getRandomValues(new Uint8Array(18))).toString('base64url');
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, password);
+  const dir = path.dirname(path.resolve(file));
+  fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+  fs.writeFileSync(file, password, { mode: 0o600 });
+  fs.chmodSync(file, 0o600);
 } else if (mode === '--from' && file) {
   password = fs.readFileSync(file, 'utf8').trim();
 } else if (mode === '--prompt') {

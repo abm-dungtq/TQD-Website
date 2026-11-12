@@ -4,6 +4,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
 import { cookieHeader, createSession } from '../../lib/auth';
 import { verifyPassword } from '../../lib/password';
 import { hit, reset } from '../../lib/rate-limit';
+import { logSecurityEvent } from '../../lib/security-log';
 
 let error = '';
 let email = '';
@@ -12,10 +13,19 @@ if (Astro.request.method === 'POST') {
   email = String(form.get('email') ?? '').trim();
   const password = String(form.get('password') ?? '');
   const bucket = 'login:' + (Astro.request.headers.get('cf-connecting-ip') ?? 'local');
-  const limit = await hit(env.DB, bucket, 5, 900);
-  if (!limit.allowed) {
+  const [ipLimit, globalLimit] = await Promise.all([
+    hit(env.DB, bucket, 5, 900),
+    hit(env.DB, 'login:global', 25, 900),
+  ]);
+  if (!ipLimit.allowed || !globalLimit.allowed) {
+    const retryAfter = Math.max(ipLimit.retryAfter, globalLimit.retryAfter);
+    await logSecurityEvent(
+      'admin.login.rate_limited',
+      { scope: !ipLimit.allowed ? 'ip' : 'global', retryAfter },
+      Astro.request,
+    );
     Astro.response.status = 429;
-    error = `Sai quá nhiều lần. Thử lại sau ${Math.max(1, Math.ceil(limit.retryAfter / 60))} phút.`;
+    error = `Sai quá nhiều lần. Thử lại sau ${Math.max(1, Math.ceil(retryAfter / 60))} phút.`;
   } else if (!env.ADMIN_PASSWORD_HASH) {
     Astro.response.status = 503;
     error = 'Chưa đặt mật khẩu admin.';
@@ -24,8 +34,10 @@ if (Astro.request.method === 'POST') {
     if (passwordOk && email.toLowerCase() === env.ADMIN_EMAIL.toLowerCase()) {
       await reset(env.DB, bucket);
       const token = await createSession(env.DB);
+      await logSecurityEvent('admin.login.success', {}, Astro.request);
       return new Response(null, { status: 303, headers: { Location: '/admin', 'Set-Cookie': cookieHeader(token) } });
     }
+    await logSecurityEvent('admin.login.failure', {}, Astro.request);
     Astro.response.status = 401;
     error = 'Sai email hoặc mật khẩu.';
   }

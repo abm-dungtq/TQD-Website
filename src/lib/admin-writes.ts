@@ -69,9 +69,8 @@ export async function itemFromForm(form: FormData, kind: ItemKind, db: D1Databas
   const sort = Number(text('sort') || 0);
   if (!Number.isInteger(sort)) throw new InputError('Thứ tự phải là số nguyên.');
 
-  // Only videos carry a TikTok id and a cover image.
+  // Only videos carry a TikTok id; both products and videos may carry a cover image.
   let tiktokId: string | null = null;
-  let coverKey: string | null = null;
   if (kind === 'video') {
     const tiktokUrl = text('tiktokUrl');
     if (tiktokUrl) {
@@ -80,10 +79,10 @@ export async function itemFromForm(form: FormData, kind: ItemKind, db: D1Databas
         throw new InputError('Không đọc được link TikTok. Dán link đầy đủ dạng https://www.tiktok.com/@kenh/video/<số>.');
       }
     }
-    coverKey = text('coverKey') || null;
-    if (coverKey && !(await db.prepare("SELECT 1 FROM media WHERE key = ?1 AND content_type LIKE 'image/%'").bind(coverKey).first())) {
-      throw new InputError('Ảnh bìa không có trong thư viện media.');
-    }
+  }
+  const coverKey = text('coverKey') || null;
+  if (coverKey && !(await db.prepare("SELECT 1 FROM media WHERE key = ?1 AND content_type LIKE 'image/%'").bind(coverKey).first())) {
+    throw new InputError('Ảnh bìa không có trong thư viện media.');
   }
 
   return {

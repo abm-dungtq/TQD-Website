@@ -2,6 +2,7 @@
 import { env } from 'cloudflare:workers';
 import AdminLayout from '../../layouts/AdminLayout.astro';
 import { generateApiKey, SCOPES } from '../../lib/api-key';
+import { logSecurityEvent } from '../../lib/security-log';
 
 // Second line of defence; the middleware sets this only for a valid session.
 if (!Astro.locals.admin) return new Response('Unauthorized', { status: 401 });
@@ -13,10 +14,13 @@ let error = '';
 if (Astro.request.method === 'POST') {
   const form = await Astro.request.formData();
   if (form.get('_action') === 'revoke') {
-    if (!/^\d+$/.test(String(form.get('id')))) return new Response('Bad request', { status: 400 });
+    const rawId = String(form.get('id'));
+    if (!/^\d+$/.test(rawId)) return new Response('Bad request', { status: 400 });
+    const keyId = Number(rawId);
     await env.DB.prepare("UPDATE api_keys SET revoked_at = datetime('now') WHERE id = ?1 AND revoked_at IS NULL")
-      .bind(Number(form.get('id')))
+      .bind(keyId)
       .run();
+    await logSecurityEvent('apikey.revoked', { keyId }, Astro.request);
     return Astro.redirect('/admin/api-keys', 303);
   }
   const name = String(form.get('name') ?? '').trim();
@@ -28,6 +32,11 @@ if (Astro.request.method === 'POST') {
     await env.DB.prepare('INSERT INTO api_keys (name, prefix, hash, scopes) VALUES (?1, ?2, ?3, ?4)')
       .bind(name, prefix, hash, scopes.join(','))
       .run();
+    await logSecurityEvent(
+      'apikey.created',
+      { keyName: name, prefix, scopes: scopes.join(',') },
+      Astro.request,
+    );
     // Shown once in the response body only; never put the key in a URL or redirect.
     created = key;
   }

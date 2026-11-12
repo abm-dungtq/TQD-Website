@@ -22,8 +22,14 @@ export default {
     const { runBackup } = await import('./lib/backup');
     const { cleanupChatLimits } = await import('./lib/chat');
     const { pruneChatVisitors } = await import('./lib/chat-stats');
+    const { cleanupDlLimits } = await import('./lib/dl');
+    const { cleanupViralCache } = await import('./lib/viral');
+    const { rollupRecentDays } = await import('./lib/analytics/rollup');
     ctx.waitUntil(runBackup(env));
     ctx.waitUntil(cleanupChatLimits(env.DB));
     ctx.waitUntil(pruneChatVisitors(env.DB));
+    ctx.waitUntil(cleanupDlLimits(env.DB));
+    ctx.waitUntil(cleanupViralCache(env.DB));
+    ctx.waitUntil(rollupRecentDays(env));
   },
 } satisfies ExportedHandler<Env>;
