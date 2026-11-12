@@ -5,6 +5,7 @@ import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   site: 'https://tqd.me',
+  devToolbar: { enabled: false },
   output: 'server',
   adapter: cloudflare({ imageService: 'passthrough' }),
   session: false,

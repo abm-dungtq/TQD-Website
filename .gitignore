@@ -19,11 +19,22 @@ pnpm-debug.log*
 .dev.vars
 .secrets/
 
-# local tooling
+# local tooling & scratch media
 .wrangler/
 .cache/
 .lighthouse-*.json
 paseo.json
+assets/
+viet-tai-lieu-toan-bo-du-an-*.md
+plans/261017-1426-chi-phi-ai-theo-nhan-vien/
+plans/261030-0900-ban-tin-ai-agent/
+plans/261031-0911-claude-max-ultra/
+plans/261104-1615-cloudflare-cho-nguoi-moi-vibe-code/
+plans/261104-1700-tu-dien-ai-agent-no-code/
+plans/261111-showcase-san-pham/
+plans/daily-*/
+plans/fb-caption*.md
+plans/seo-aeo-queue.json
 
 # macOS-specific files
 .DS_Store

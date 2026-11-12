@@ -6,6 +6,9 @@
     "./worker-configuration.d.ts"
   ],
   "exclude": [
-    "dist"
+    "dist",
+    "node_modules",
+    "assets",
+    "plans"
   ]
 }
