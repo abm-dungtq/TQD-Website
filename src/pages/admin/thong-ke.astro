@@ -1,0 +1,638 @@
+---
+import { env } from 'cloudflare:workers';
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import {
+  loadDashboardSummary,
+} from '../../lib/analytics/rollup';
+import {
+  type AllowedAnalyticsSite,
+  getVnDayOffset,
+} from '../../lib/analytics/wae-client';
+import {
+  getRevenueSummary,
+  listRecentOrders,
+  listUnmatchedSepayEvents,
+  type OrderRecord,
+  type RevenueSummary,
+  type UnmatchedSepayRecord,
+} from '../../lib/analytics/revenue';
+
+if (!Astro.locals.admin) return new Response('Unauthorized', { status: 401 });
+
+const rawSite = Astro.url.searchParams.get('site') ?? 'tuvi.tqd.me';
+const site: AllowedAnalyticsSite = rawSite === 'tqd.me' ? 'tqd.me' : 'tuvi.tqd.me';
+
+const rawRange = Number(Astro.url.searchParams.get('range') ?? '7');
+const rangeDays = [1, 7, 30, 90, 365].includes(rawRange) ? rawRange : 7;
+
+const rollupStatus = Astro.url.searchParams.get('rollup');
+const nextFrom = Astro.url.searchParams.get('nextFrom') ?? getVnDayOffset(1);
+const nextTo = Astro.url.searchParams.get('to') ?? getVnDayOffset(0);
+
+// Đọc nhanh từ D1 khi mở trang (không chạy WAE SQL đồng bộ trên GET); quản trị viên bấm nút POST khi cần cập nhật ngày hôm nay.
+const todayVn = getVnDayOffset(0);
+const waeLiveNote: string | null =
+  !env.CF_ACCOUNT_ID || !env.CF_ANALYTICS_TOKEN
+    ? 'Chưa cấu hình CF_ANALYTICS_TOKEN; đang hiển thị dữ liệu tổng hợp từ D1.'
+    : null;
+
+let summary = await loadDashboardSummary(env.DB, site, rangeDays).catch(() => ({
+  site,
+  rangeDays,
+  fromDay: getVnDayOffset(rangeDays - 1),
+  toDay: todayVn,
+  waeLiveNote,
+  maxSampleInterval: 1,
+  totals: {
+    pageviews: 0,
+    visits: 0,
+    visitors: 0,
+    htmlHits: 0,
+    pvWithEnd: 0,
+    p50Ms: 0,
+    p75Ms: 0,
+    beaconCoveragePct: 0,
+    htmlHitCoveragePct: 0,
+  },
+  dailySeries: [],
+  sections: [],
+  topPaths: [],
+  referrers: [],
+  utms: [],
+  devices: [],
+  countries: [],
+  eventCounts: {} as Record<string, number>,
+  aiOutcomes: {} as Record<string, number>,
+  aiLatencyP95Ms: 0,
+}));
+
+const fmt = (n: number) => Math.round(n).toLocaleString('vi-VN');
+const fmtSec = (ms: number) => `${(ms / 1000).toFixed(1)}s`;
+const dayLabel = (day: string) => day.split('-').reverse().slice(0, 2).join('/');
+
+const maxDailyPv = Math.max(1, ...summary.dailySeries.map((d) => d.pageviews));
+
+// Số liệu Phễu sản phẩm & Thương mại (riêng tuvi.tqd.me)
+const ev = summary.eventCounts;
+const sumEvPrefix = (prefix: string) =>
+  Object.entries(ev)
+    .filter(([k]) => k === prefix || k.startsWith(`${prefix}:`))
+    .reduce((acc, [, v]) => acc + v, 0);
+
+const chartPv = summary.topPaths.find((p) => p.path === '/chart')?.pageviews ?? 0;
+const chartGenTotal = sumEvPrefix('chart_generated');
+const interpAuto = ev['interpret_started:auto_overview'] ?? 0;
+const interpActive =
+  (ev['interpret_started:topic'] ?? 0) +
+  (ev['interpret_started:palace'] ?? 0) +
+  (ev['interpret_started:sihua'] ?? 0) +
+  (ev['interpret_started:followup'] ?? 0);
+const interpDone = sumEvPrefix('interpret_completed');
+const shareOpened = sumEvPrefix('share_opened');
+const shareAction = sumEvPrefix('share_action');
+
+const pwViewA = ev['paywall_view:tv2027:A'] ?? 0;
+const pwViewB = ev['paywall_view:tv2027:B'] ?? 0;
+const checkoutA = ev['checkout_start:tv2027:A'] ?? 0;
+const checkoutB = ev['checkout_start:tv2027:B'] ?? 0;
+const paidEvA = ev['payment_success:tv2027:A'] ?? 0;
+const paidEvB = ev['payment_success:tv2027:B'] ?? 0;
+
+const emptyRevenueSummary: RevenueSummary = {
+  totalRevenueVnd: 0,
+  paidCount: 0,
+  underpaidCount: 0,
+  pendingCount: 0,
+  overallConversionPct: 0,
+  variants: {
+    A: {
+      variant: 'A',
+      priceVnd: 49000,
+      paywallViews: pwViewA,
+      ordersCreated: 0,
+      ordersPaid: 0,
+      ordersUnderpaid: 0,
+      ordersPending: 0,
+      conversionPct: 0,
+      revenueVnd: 0,
+      revenuePer1kViewsVnd: 0,
+    },
+    B: {
+      variant: 'B',
+      priceVnd: 99000,
+      paywallViews: pwViewB,
+      ordersCreated: 0,
+      ordersPaid: 0,
+      ordersUnderpaid: 0,
+      ordersPending: 0,
+      conversionPct: 0,
+      revenueVnd: 0,
+      revenuePer1kViewsVnd: 0,
+    },
+  },
+};
+
+const tuviDb = site === 'tuvi.tqd.me' ? (env as { TUVI_DB?: D1Database }).TUVI_DB : undefined;
+const fromIso = new Date(`${summary.fromDay}T00:00:00+07:00`).toISOString();
+const [revenueSummary, recentOrders, unmatchedSepay] =
+  site === 'tuvi.tqd.me'
+    ? await Promise.all([
+        getRevenueSummary(tuviDb, fromIso, { A: pwViewA, B: pwViewB }).catch(
+          (): RevenueSummary => emptyRevenueSummary,
+        ),
+        listRecentOrders(tuviDb, 30).catch((): OrderRecord[] => []),
+        listUnmatchedSepayEvents(tuviDb, 20).catch((): UnmatchedSepayRecord[] => []),
+      ])
+    : [emptyRevenueSummary, [] as OrderRecord[], [] as UnmatchedSepayRecord[]];
+
+// Ma trận 14 Chính Tinh x 13 Chủ đề (182 trang)
+const STARS_14 = [
+  'ziwei', 'tianji', 'taiyang', 'wuqu', 'tiantong', 'lianzhen', 'tianfu',
+  'taiyin', 'tanlang', 'jumen', 'tianxiang', 'tianliang', 'qisha', 'pojun',
+];
+const TOPICS_13 = [
+  'overview', 'personality', 'career', 'wealth', 'love', 'health', 'family',
+  'friends', 'study', 'property', 'travel', 'karma', 'yearly',
+];
+const pathPvLookup = new Map(summary.topPaths.map((p) => [p.path, p.pageviews]));
+let zeroViewCount = 0;
+const zeroViewSample: string[] = [];
+for (const st of STARS_14) {
+  for (const tp of TOPICS_13) {
+    const p = `/knowledge/${st}/${tp}`;
+    if (!pathPvLookup.get(p)) {
+      zeroViewCount += 1;
+      if (zeroViewSample.length < 12) zeroViewSample.push(p);
+    }
+  }
+}
+---
+
+<AdminLayout title="Thống kê truy cập & Phễu chuyển đổi">
+  {/* Thanh lọc Site & Khoảng thời gian */}
+  <div class="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-lg border border-line bg-panel p-4">
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="text-sm font-semibold text-muted">Website:</span>
+      {(['tuvi.tqd.me', 'tqd.me'] as const).map((s) => (
+        <a
+          href={`/admin/thong-ke?site=${s}&range=${rangeDays}`}
+          class={`rounded-md px-3 py-1.5 text-sm font-semibold no-underline ${
+            site === s ? 'bg-ink text-paper' : 'border border-line text-ink'
+          }`}
+        >
+          {s}
+        </a>
+      ))}
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="text-sm font-semibold text-muted">Khoảng ngày:</span>
+      {[1, 7, 30, 90, 365].map((r) => (
+        <a
+          href={`/admin/thong-ke?site=${site}&range=${r}`}
+          class={`rounded-md px-3 py-1.5 text-sm font-semibold no-underline ${
+            rangeDays === r ? 'bg-ink text-paper' : 'border border-line text-ink'
+          }`}
+        >
+          {r === 1 ? 'Hôm nay' : `${r} ngày`}
+        </a>
+      ))}
+      <form method="post" action="/admin/api/analytics-rollup" class="ml-1 inline-flex">
+        <input type="hidden" name="site" value={site} />
+        <input type="hidden" name="range" value={String(rangeDays)} />
+        <input type="hidden" name="fromDay" value={todayVn} />
+        <input type="hidden" name="toDay" value={todayVn} />
+        <button type="submit" class="admin-btn text-xs">Làm mới hôm nay (WAE)</button>
+      </form>
+    </div>
+  </div>
+
+  {waeLiveNote && (
+    <p class="mb-4 rounded-lg border border-line bg-tint px-4 py-2.5 text-xs text-muted">
+      ℹ️ {waeLiveNote} (Khoảng ngày đang xem: {summary.fromDay} → {summary.toDay})
+    </p>
+  )}
+
+  {summary.maxSampleInterval > 1 && (
+    <p class="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-2.5 text-xs font-semibold text-ink">
+      ⚠️ Cảnh báo lấy mẫu WAE: max_sample_interval = {summary.maxSampleInterval} (&gt; 1) trong khoảng thời gian đang chọn. Các chỉ số tổng đã được nhân bù theo _sample_interval.
+    </p>
+  )}
+
+  {rollupStatus === 'ok' && (
+    <p class="mb-4 rounded-lg border border-line bg-panel px-4 py-2.5 text-xs font-semibold">
+      ✓ Đã tổng hợp lại dữ liệu từ WAE sang D1 thành công.
+    </p>
+  )}
+  {rollupStatus === 'error' && (
+    <p class="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-2.5 text-xs font-semibold text-ink">
+      ⚠️ Không thể truy vấn WAE SQL lúc này; đang hiển thị dữ liệu lịch sử từ D1.
+    </p>
+  )}
+  {rollupStatus === 'missing_token' && (
+    <p class="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-2.5 text-xs font-semibold text-ink">
+      ⚠️ Chưa cấu hình CF_ANALYTICS_TOKEN hoặc CF_ACCOUNT_ID để chạy rollup WAE.
+    </p>
+  )}
+  {rollupStatus === 'partial' && (
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-panel px-4 py-3 text-xs">
+      <span>Đã xử lý 2 ngày đầu tiên. Nhấn nút bên cạnh để tiếp tục tổng hợp từ ngày <strong>{nextFrom}</strong> đến <strong>{nextTo}</strong>.</span>
+      <form method="post" action="/admin/api/analytics-rollup">
+        <input type="hidden" name="site" value={site} />
+        <input type="hidden" name="range" value={String(rangeDays)} />
+        <input type="hidden" name="fromDay" value={nextFrom} />
+        <input type="hidden" name="toDay" value={nextTo} />
+        <button type="submit" class="admin-btn">Tiếp tục tổng hợp →</button>
+      </form>
+    </div>
+  )}
+  {/* Khối 1: Thẻ tổng quan */}
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+    <div class="rounded-lg border border-line bg-panel p-4">
+      <span class="block text-xs text-muted">Lượt xem trang (Pageviews)</span>
+      <span class="text-2xl font-bold">{fmt(summary.totals.pageviews)}</span>
+      {site === 'tqd.me' && (
+        <span class="block text-xs text-muted">HTML hits: {fmt(summary.totals.htmlHits)}</span>
+      )}
+    </div>
+    <div class="rounded-lg border border-line bg-panel p-4">
+      <span class="block text-xs text-muted">Phiên truy cập (Visits)</span>
+      <span class="text-2xl font-bold">{fmt(summary.totals.visits)}</span>
+      <span class="block text-xs text-muted">Khách-ngày: {fmt(summary.totals.visitors)}</span>
+    </div>
+    <div class="rounded-lg border border-line bg-panel p-4">
+      <span class="block text-xs text-muted">Thời gian tương tác p50</span>
+      <span class="text-2xl font-bold">{fmtSec(summary.totals.p50Ms)}</span>
+      <span class="block text-xs text-muted">Trung vị từ 10 bucket</span>
+    </div>
+    <div class="rounded-lg border border-line bg-panel p-4">
+      <span class="block text-xs text-muted">Thời gian tương tác p75</span>
+      <span class="text-2xl font-bold">{fmtSec(summary.totals.p75Ms)}</span>
+      <span class="block text-xs text-muted">Phân vị 75%</span>
+    </div>
+    <div class="rounded-lg border border-line bg-panel p-4">
+      <span class="block text-xs text-muted">Tỷ lệ phủ Beacon</span>
+      <span class="text-2xl font-bold">{summary.totals.beaconCoveragePct}%</span>
+      <span class="block text-xs text-muted">
+        {site === 'tqd.me'
+          ? `PV / HTML hit: ${summary.totals.htmlHitCoveragePct}%`
+          : `Có page_end: ${fmt(summary.totals.pvWithEnd)}`}
+      </span>
+    </div>
+  </div>
+
+  {/* Khối 2: Biểu đồ cột SVG nội tuyến theo ngày */}
+  <h2 class="mb-3 mt-8 text-lg font-bold">Xu hướng theo ngày ({summary.fromDay} → {summary.toDay})</h2>
+  {summary.dailySeries.length === 0 ? (
+    <p class="text-sm text-muted">Chưa có dữ liệu tổng hợp theo ngày trong khoảng này.</p>
+  ) : (
+    <div class="rounded-lg border border-line bg-panel p-4 overflow-x-auto">
+      <svg viewBox={`0 0 ${Math.max(400, summary.dailySeries.length * 42)} 140`} class="h-36 w-full min-w-[400px]">
+        {summary.dailySeries.map((d, idx) => {
+          const barH = Math.max(4, Math.round((d.pageviews / maxDailyPv) * 95));
+          const x = idx * 42 + 12;
+          const y = 105 - barH;
+          return (
+            <g>
+              <rect x={x} y={y} width="24" height={barH} rx="3" fill="currentColor" class="text-ink opacity-80" />
+              <text x={x + 12} y="122" text-anchor="middle" font-size="9" fill="currentColor" class="text-muted">
+                {dayLabel(d.day)}
+              </text>
+              <text x={x + 12} y={Math.max(10, y - 4)} text-anchor="middle" font-size="9" fill="currentColor">
+                {d.pageviews}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  )}
+
+  {/* Khối 3: Chuyên mục & Top 20 Đường dẫn */}
+  <div class="mt-8 grid gap-6 lg:grid-cols-2">
+    <div>
+      <h2 class="mb-3 text-lg font-bold">Chuyên mục (Section)</h2>
+      <table class="admin-table">
+        <thead>
+          <tr><th>Chuyên mục</th><th>Lượt xem</th><th>Thời gian p50</th></tr>
+        </thead>
+        <tbody>
+          {summary.sections.length === 0 ? (
+            <tr><td colspan="3" class="text-muted">Chưa có dữ liệu.</td></tr>
+          ) : (
+            summary.sections.map((s) => (
+              <tr>
+                <td><code>{s.section}</code></td>
+                <td>{fmt(s.pageviews)}</td>
+                <td>{fmtSec(s.p50Ms)}</td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+
+    <div>
+      <h2 class="mb-3 text-lg font-bold">Top 20 Đường dẫn (Path)</h2>
+      <table class="admin-table">
+        <thead>
+          <tr><th>Đường dẫn</th><th>Lượt xem</th><th>Thời gian p50</th></tr>
+        </thead>
+        <tbody>
+          {summary.topPaths.length === 0 ? (
+            <tr><td colspan="3" class="text-muted">Chưa có dữ liệu.</td></tr>
+          ) : (
+            summary.topPaths.map((p) => (
+              <tr>
+                <td><code>{p.path}</code></td>
+                <td>{fmt(p.pageviews)}</td>
+                <td>{fmtSec(p.p50Ms)}</td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {/* Khối 4: Nguồn truy cập, UTM, Thiết bị & Quốc gia */}
+  <div class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+    <div>
+      <h2 class="mb-2 text-base font-bold">Nguồn (Referrer)</h2>
+      <table class="admin-table">
+        <thead><tr><th>Host</th><th>Lượt</th></tr></thead>
+        <tbody>
+          {summary.referrers.map((r) => (
+            <tr><td>{r.ref}</td><td>{fmt(r.count)}</td></tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <h2 class="mb-2 text-base font-bold">Chiến dịch (UTM)</h2>
+      <table class="admin-table">
+        <thead><tr><th>UTM</th><th>Lượt</th></tr></thead>
+        <tbody>
+          {summary.utms.map((u) => (
+            <tr><td>{u.utm || '(trực tiếp)'}</td><td>{fmt(u.count)}</td></tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <h2 class="mb-2 text-base font-bold">Thiết bị</h2>
+      <table class="admin-table">
+        <thead><tr><th>Loại</th><th>Lượt</th></tr></thead>
+        <tbody>
+          {summary.devices.map((d) => (
+            <tr><td>{d.device}</td><td>{fmt(d.count)}</td></tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <h2 class="mb-2 text-base font-bold">Quốc gia</h2>
+      <table class="admin-table">
+        <thead><tr><th>Mã</th><th>Lượt</th></tr></thead>
+        <tbody>
+          {summary.countries.map((c) => (
+            <tr><td>{c.country}</td><td>{fmt(c.count)}</td></tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {/* Khối 5: Phễu sản phẩm & Hiệu năng AI (riêng tuvi.tqd.me) */}
+  {site === 'tuvi.tqd.me' && (
+    <div class="mt-8 space-y-6">
+      <h2 class="text-lg font-bold">Phễu Sản phẩm Tử Vi &amp; Hiệu năng AI (tuvi.tqd.me)</h2>
+
+      <div class="grid gap-6 lg:grid-cols-2">
+        <div class="rounded-lg border border-line bg-panel p-4">
+          <h3 class="mb-3 text-base font-bold">Phễu 1: Trải nghiệm Ла́ số &amp; Luận giải</h3>
+          <table class="admin-table">
+            <thead><tr><th>Bước phễu</th><th>Số lượng</th></tr></thead>
+            <tbody>
+              <tr><td>1. Xem trang /chart</td><td>{fmt(chartPv)}</td></tr>
+              <tr><td>2. Lập lá số (chart_generated)</td><td>{fmt(chartGenTotal)}</td></tr>
+              <tr><td>3a. Luận giải tự động (auto_overview)</td><td>{fmt(interpAuto)}</td></tr>
+              <tr><td>3b. Luận giải tương tác chủ động</td><td>{fmt(interpActive)}</td></tr>
+              <tr><td>4. Hoàn tất luận giải (interpret_completed)</td><td>{fmt(interpDone)}</td></tr>
+              <tr><td>5. Mở hộp chia sẻ (share_opened)</td><td>{fmt(shareOpened)}</td></tr>
+              <tr><td>6. Thực hiện chia sẻ / tải PNG (share_action)</td><td>{fmt(shareAction)}</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="rounded-lg border border-line bg-panel p-4">
+          <h3 class="mb-3 text-base font-bold">Phễu 2: Ấn phẩm Lưu niên 2027 (A/B Giá)</h3>
+          <table class="admin-table">
+            <thead>
+              <tr><th>Bước chuyển đổi</th><th>Nhánh A (49.000đ)</th><th>Nhánh B (99.000đ)</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1. Hiển thị thẻ Paywall (paywall_view)</td>
+                <td>{fmt(pwViewA)}</td>
+                <td>{fmt(pwViewB)}</td>
+              </tr>
+              <tr>
+                <td>2. Tạo mã VietQR (checkout_start)</td>
+                <td>{fmt(checkoutA)}</td>
+                <td>{fmt(checkoutB)}</td>
+              </tr>
+              <tr>
+                <td>3. Thanh toán thành công (payment_success)</td>
+                <td>{fmt(paidEvA)}</td>
+                <td>{fmt(paidEvB)}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h4 class="mb-2 mt-4 text-sm font-bold">Độ trễ AI p95: {fmtSec(summary.aiLatencyP95Ms)} · Kết quả AI</h4>
+          <table class="admin-table">
+            <thead><tr><th>Phân loại (scope:status:reason)</th><th>Số lượt</th></tr></thead>
+            <tbody>
+              {Object.entries(summary.aiOutcomes).length === 0 ? (
+                <tr><td colspan="2" class="text-muted">Chưa có dữ liệu AI outcome.</td></tr>
+              ) : (
+                Object.entries(summary.aiOutcomes).map(([k, v]) => (
+                  <tr><td><code>{k}</code></td><td>{fmt(v)}</td></tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="rounded-lg border border-line bg-panel p-4">
+        <h3 class="mb-2 text-base font-bold">
+          Độ phủ 182 trang Bách Khoa (14 Chính Tinh × 13 Chủ đề)
+        </h3>
+        <p class="text-xs text-muted mb-2">
+          Số trang chưa có lượt xem trong Top 50 đường dẫn: <strong>{zeroViewCount} / 182</strong> trang.
+          {zeroViewSample.length > 0 && ` Ví dụ: ${zeroViewSample.slice(0, 6).join(', ')}...`}
+        </p>
+      </div>
+    </div>
+  )}
+
+  {/* Khối Doanh thu Tử Vi 2027 & Đối soát Đơn hàng (chỉ hiển thị cho tuvi.tqd.me) */}
+  {site === 'tuvi.tqd.me' && (
+  <div class="mt-8 space-y-6">
+    <h2 class="text-lg font-bold">Doanh thu &amp; Đối soát Đơn hàng Tử Vi 2027 (D1 tuvi_db)</h2>
+
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div class="rounded-lg border border-line bg-panel p-4">
+        <span class="block text-xs text-muted">Tổng doanh thu thực thu</span>
+        <span class="text-2xl font-bold">{fmt(revenueSummary.totalRevenueVnd)}đ</span>
+        <span class="block text-xs text-muted">Loại trừ đơn thử nghiệm (is_test = 0)</span>
+      </div>
+      <div class="rounded-lg border border-line bg-panel p-4">
+        <span class="block text-xs text-muted">Số đơn đã thanh toán (paid)</span>
+        <span class="text-2xl font-bold">{fmt(revenueSummary.paidCount)}</span>
+        <span class="block text-xs text-muted">Đang chờ (pending): {fmt(revenueSummary.pendingCount)}</span>
+      </div>
+      <div class="rounded-lg border border-line bg-panel p-4">
+        <span class="block text-xs text-muted">Đơn chuyển thiếu (underpaid)</span>
+        <span class="text-2xl font-bold">{fmt(revenueSummary.underpaidCount)}</span>
+        <span class="block text-xs text-muted">Cần kiểm tra &amp; hỗ trợ khách</span>
+      </div>
+      <div class="rounded-lg border border-line bg-panel p-4">
+        <span class="block text-xs text-muted">Tỷ lệ chuyển đổi Paywall → Paid</span>
+        <span class="text-2xl font-bold">{revenueSummary.overallConversionPct}%</span>
+        <span class="block text-xs text-muted">Tính trên tổng lượt xem Paywall</span>
+      </div>
+    </div>
+
+    <div class="rounded-lg border border-line bg-panel p-4">
+      <h3 class="mb-3 text-base font-bold">Đối chiếu Thử nghiệm Giá: Variant A (49.000đ) vs Variant B (99.000đ)</h3>
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Biến thể</th>
+            <th>Mức giá</th>
+            <th>Lượt xem Paywall</th>
+            <th>Số đơn tạo</th>
+            <th>Số đơn Paid</th>
+            <th>Tỷ lệ chuyển đổi</th>
+            <th>Tổng doanh thu</th>
+            <th>Doanh thu / 1.000 views</th>
+          </tr>
+        </thead>
+        <tbody>
+          {([revenueSummary.variants.A, revenueSummary.variants.B]).map((v) => (
+            <tr>
+              <td><strong>Variant {v.variant}</strong></td>
+              <td>{fmt(v.priceVnd)}đ</td>
+              <td>{fmt(v.paywallViews)}</td>
+              <td>{fmt(v.ordersCreated)}</td>
+              <td>{fmt(v.ordersPaid)}</td>
+              <td>{v.conversionPct}%</td>
+              <td><strong>{fmt(v.revenueVnd)}đ</strong></td>
+              <td>{fmt(v.revenuePer1kViewsVnd)}đ</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="rounded-lg border border-line bg-panel p-4 overflow-x-auto">
+      <h3 class="mb-3 text-base font-bold">30 Đơn hàng gần nhất (tuvi_db.orders)</h3>
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Mã đơn</th>
+            <th>Gói / Biến thể</th>
+            <th>Số tiền</th>
+            <th>Đã nhận</th>
+            <th>Trạng thái</th>
+            <th>Lượt tải / AI</th>
+            <th>Thời gian tạo</th>
+            <th>Thời gian thanh toán</th>
+          </tr>
+        </thead>
+        <tbody>
+          {recentOrders.length === 0 ? (
+            <tr><td colspan="8" class="text-muted">Chưa có đơn hàng nào.</td></tr>
+          ) : (
+            recentOrders.map((o) => (
+              <tr>
+                <td><code>{o.code}</code></td>
+                <td>{o.product} · {o.variant}</td>
+                <td>{fmt(o.amount)}đ</td>
+                <td>{fmt(o.paid_amount)}đ</td>
+                <td><strong>{o.status}</strong></td>
+                <td>{o.redemptions}/30 · AI {o.ai_used}/10</td>
+                <td>{o.created_at}</td>
+                <td>{o.paid_at || '—'}</td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="rounded-lg border border-line bg-panel p-4 overflow-x-auto">
+      <h3 class="mb-2 text-base font-bold">Giao dịch SePay Chưa khớp / Cần đối soát (tuvi_db.sepay_events)</h3>
+      <p class="mb-3 text-xs text-muted">
+        Các giao dịch tiền vào chưa khớp tự động với mã đơn <code>TV...</code>. Chủ site có thể đối chiếu và chạy <code>node scripts/mark-paid.mjs &lt;code&gt; --remote</code> để cấp quyền cho khách.
+      </p>
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>ID SePay</th>
+            <th>Thời gian nhận</th>
+            <th>Mã trích xuất</th>
+            <th>Số tiền</th>
+            <th>Trạng thái khớp</th>
+          </tr>
+        </thead>
+        <tbody>
+          {unmatchedSepay.length === 0 ? (
+            <tr><td colspan="5" class="text-muted">Không có giao dịch chưa khớp nào.</td></tr>
+          ) : (
+            unmatchedSepay.map((evItem) => (
+              <tr>
+                <td><code>#{evItem.id}</code></td>
+                <td>{evItem.received_at}</td>
+                <td><code>{evItem.code || '(trống)'}</code></td>
+                <td>{fmt(evItem.amount)}đ</td>
+                <td>{evItem.matched}</td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  )}
+
+  {/* Khối 6: Form Tổng hợp lại dữ liệu (Backfill tối đa 2 ngày/lần) */}
+  <div class="mt-8 rounded-lg border border-line bg-panel p-5">
+    <h2 class="mb-2 text-lg font-bold">Tổng hợp lại dữ liệu từ WAE sang D1 (Backfill)</h2>
+    <p class="mb-4 text-xs text-muted">
+      Mỗi lần bấm xử lý tối đa 2 ngày (8 truy vấn WAE SQL) để đảm bảo an toàn dưới hạn mức subrequest của Cloudflare Worker.
+    </p>
+    <form method="post" action="/admin/api/analytics-rollup" class="flex flex-wrap items-end gap-4">
+      <input type="hidden" name="range" value={String(rangeDays)} />
+      <label class="grid gap-1 text-xs font-semibold">
+        <span>Website</span>
+        <select name="site" class="rounded border border-line bg-panel px-3 py-1.5 text-sm">
+          <option value="tuvi.tqd.me" selected={site === 'tuvi.tqd.me'}>tuvi.tqd.me</option>
+          <option value="tqd.me" selected={site === 'tqd.me'}>tqd.me</option>
+        </select>
+      </label>
+      <label class="grid gap-1 text-xs font-semibold">
+        <span>Từ ngày (VN)</span>
+        <input type="date" name="fromDay" value={getVnDayOffset(1)} class="rounded border border-line bg-panel px-3 py-1.5 text-sm" />
+      </label>
+      <label class="grid gap-1 text-xs font-semibold">
+        <span>Đến ngày (VN)</span>
+        <input type="date" name="toDay" value={getVnDayOffset(0)} class="rounded border border-line bg-panel px-3 py-1.5 text-sm" />
+      </label>
+      <button type="submit" class="admin-btn">Tổng hợp lại</button>
+    </form>
+  </div>
+</AdminLayout>
