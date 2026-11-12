@@ -1,0 +1,953 @@
+---
+import { env } from 'cloudflare:workers';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Icon from '../components/Icon.astro';
+import PageActions from '../components/PageActions.astro';
+import PageHeading from '../components/PageHeading.astro';
+import { getSite } from '../lib/content';
+import { breadcrumbNode, personNode, webAppNode } from '../lib/structured-data';
+import { INDUSTRY_PRESETS, VIRAL_FORMATS } from '../lib/viral';
+
+const site = await getSite(env.DB);
+const title = 'Tải Video & Mổ Xẻ Kịch Bản Viral AI';
+const description =
+  'Công cụ tải video MP4 H.264, tách nhạc MP3 320kbps, lấy Transcript phụ đề SRT và nhân bản kịch bản triệu view đa kênh chuẩn Viết Pro (0% văn mẫu AI) tại tqd.me.';
+const origin = Astro.url.origin;
+const canonicalUrl = `${origin}/tai-video`;
+const stripLeadingEmoji = (raw: string) => raw.replace(/^[^\p{L}\p{N}]+\s*/u, '');
+---
+
+<BaseLayout
+  site={site}
+  title={title}
+  description={description}
+  path="/tai-video"
+  markdownPath="/tai-video.md"
+  ogImagePath="/og/tai-video.png"
+  jsonLd={[
+    personNode(site, origin),
+    webAppNode(canonicalUrl, origin),
+    breadcrumbNode(
+      [
+        { name: 'Trang chủ', url: origin },
+        { name: title, url: canonicalUrl },
+      ],
+      canonicalUrl,
+    ),
+  ]}
+>
+  <PageHeading
+    label="Công cụ Creator & AI Lab"
+    title="Tải Video & Mổ Xẻ Kịch Bản Viral"
+    lede="Dán link YouTube, TikTok, Douyin, Facebook/Instagram Reels để tải MP4 H.264 / MP3 320kbps — hoặc bóc băng Transcript, phân tích X-Quang triệu view và nhân bản kịch bản đa kênh chuẩn Viết Pro."
+  />
+
+  <PageActions
+    markdownPath="/tai-video.md"
+    canonicalUrl={canonicalUrl}
+    title={title}
+    class="-mt-5 mb-6"
+  />
+
+  <section class="flex flex-col gap-6" aria-label="Trình tải video và xưởng mổ xẻ kịch bản viral">
+    <!-- Status & Tier Bar -->
+    <div class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-tint/70 px-4 py-3 text-xs sm:text-sm">
+      <div class="flex flex-wrap items-center gap-2.5">
+        <span id="dl-status-badge" class="lux-chip inline-flex items-center gap-2 px-3 py-1 font-medium">
+          <span id="dl-status-dot" class="inline-block h-2 w-2 rounded-full bg-accent" aria-hidden="true"></span>
+          <span id="dl-status-text">Đang kiểm tra lõi yt-dlp…</span>
+        </span>
+        <span id="dl-speed-pill" class="lux-chip px-3 py-1 text-xs font-medium tabular-nums" hidden>
+          Tốc độ: -- MB/s
+        </span>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <span id="dl-tier-badge" class="lux-chip px-3 py-1 text-xs font-medium tabular-nums">
+          Chế độ Công khai · Tối đa 1080p · Mổ xẻ ≤ 5 phút
+        </span>
+      </div>
+    </div>
+
+    <!-- Main Input Card -->
+    <div class="lux-card p-5 sm:p-7">
+      <div class="flex flex-col gap-4">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <label for="dl-input-url" class="text-sm font-semibold text-ink">
+            Đường dẫn Video / Shorts / Reels / Douyin / Playlist
+          </label>
+          <div class="flex flex-wrap items-center gap-2">
+            <span id="dl-platform-badge" class="lux-chip inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold">
+              <Icon name="globe" size={14} class="text-accent-ink" />
+              <span data-platform-label>Tự động nhận diện</span>
+            </span>
+            <button
+              type="button"
+              id="dl-btn-batch-toggle"
+              aria-pressed="false"
+              class="dl-btn-secondary inline-flex min-h-11 items-center gap-1.5 rounded-full px-3.5 text-xs font-semibold"
+            >
+              <Icon name="list" size={15} />
+              <span id="dl-batch-toggle-label">Tải nhiều link</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Single URL Input Row -->
+        <div id="dl-single-wrap" class="flex flex-col gap-3 lg:flex-row">
+          <div class="relative flex-1">
+            <input
+              id="dl-input-url"
+              type="url"
+              inputmode="url"
+              autocomplete="off"
+              spellcheck="false"
+              placeholder="https://www.tiktok.com/... hoặc YouTube, Douyin, FB Reels, IG Reels..."
+              class="dl-input w-full min-h-11 rounded-xl px-4 py-3 text-base"
+            />
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              id="dl-btn-paste"
+              class="dl-btn-secondary inline-flex min-h-11 items-center gap-1.5 rounded-full px-4 text-sm font-semibold"
+              title="Dán đường dẫn từ bộ nhớ tạm"
+            >
+              <Icon name="clipboard" size={15} />
+              <span>Dán</span>
+            </button>
+            <button
+              type="button"
+              id="dl-btn-clear"
+              class="dl-btn-secondary inline-flex min-h-11 items-center gap-1.5 rounded-full px-4 text-sm font-semibold"
+              title="Xóa ô nhập"
+            >
+              <Icon name="eraser" size={15} />
+              <span>Xóa</span>
+            </button>
+            <button
+              type="button"
+              id="dl-btn-main"
+              class="btn-gold cursor-pointer border-0 text-sm sm:px-5"
+            >
+              <Icon name="bolt" size={16} />
+              <span id="dl-btn-main-label">TẢI NGAY</span>
+            </button>
+            <button
+              type="button"
+              id="dl-btn-viral-main"
+              class="dl-btn-viral inline-flex min-h-11 items-center gap-1.5 rounded-full px-4 text-sm font-semibold sm:px-5"
+              title="Bóc băng lời thoại, phân tích công thức viral và viết lại kịch bản đa kênh chuẩn Viết Pro"
+            >
+              <Icon name="dna" size={16} />
+              <span id="dl-btn-viral-label">MỔ XẺ &amp; VIẾT KỊCH BẢN</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Batch Multi-URL Textarea (Hidden by default) -->
+        <div id="dl-batch-wrap" class="flex flex-col gap-3" hidden>
+          <textarea
+            id="dl-input-batch"
+            rows="4"
+            spellcheck="false"
+            placeholder="Dán mỗi dòng 1 đường dẫn (YouTube, TikTok, Facebook, Instagram, SoundCloud...)"
+            class="dl-input w-full rounded-xl p-4 font-mono text-sm leading-relaxed"
+          ></textarea>
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <p id="dl-batch-count" class="text-xs font-medium tabular-nums text-muted">
+              Đã nhận diện 0 đường dẫn hợp lệ
+            </p>
+            <div class="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                id="dl-btn-batch-clear"
+                class="dl-btn-secondary inline-flex min-h-11 items-center gap-1.5 rounded-full px-4 text-sm font-semibold"
+              >
+                <Icon name="eraser" size={15} />
+                <span>Xóa danh sách</span>
+              </button>
+              <button
+                type="button"
+                id="dl-btn-batch-submit"
+                class="btn-gold cursor-pointer border-0 text-sm sm:px-6"
+              >
+                <Icon name="bolt" size={16} />
+                <span>Quét &amp; đưa vào hàng đợi</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Presets & Toggles -->
+        <div class="mt-1 flex flex-col gap-3 border-t border-line pt-4 lg:flex-row lg:items-center lg:justify-between">
+          <div role="radiogroup" aria-label="Chế độ tải nhanh" class="flex flex-wrap items-center gap-2">
+            <label class="dl-preset-pill">
+              <input type="radio" name="dl-preset" value="best" checked />
+              <Icon name="sparkles" size={15} />
+              <span>Cao nhất (1080p / 4K)</span>
+            </label>
+            <label class="dl-preset-pill">
+              <input type="radio" name="dl-preset" value="720" />
+              <Icon name="film" size={15} />
+              <span>HD 720p</span>
+            </label>
+            <label class="dl-preset-pill">
+              <input type="radio" name="dl-preset" value="audio" />
+              <Icon name="music" size={15} />
+              <span>Nhạc MP3 320kbps</span>
+            </label>
+            <label class="dl-preset-pill">
+              <input type="radio" name="dl-preset" value="pick" />
+              <Icon name="sliders" size={15} />
+              <span>Chọn độ phân giải…</span>
+            </label>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-3 text-xs sm:text-sm">
+            <label class="inline-flex min-h-11 cursor-pointer items-center gap-1.5 pr-1 text-ink">
+              <span class="relative inline-grid h-11 w-11 shrink-0 place-items-center">
+                <input
+                  id="dl-chk-playlist"
+                  type="checkbox"
+                  class="peer absolute inset-0 m-0 h-11 w-11 cursor-pointer opacity-0"
+                />
+                <span class="grid h-5 w-5 place-items-center rounded border border-champagne bg-panel text-transparent transition-colors peer-checked:border-accent peer-checked:bg-accent peer-checked:text-white peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent">
+                  <Icon name="check" size={13} />
+                </span>
+              </span>
+              <span>Quét cả Playlist / Profile</span>
+            </label>
+            <label
+              class="inline-flex min-h-11 cursor-pointer items-center gap-1.5 pr-1 text-ink"
+              title="Ưu tiên codec H.264 (AVC1) + AAC để phát mượt trên iPhone, Zalo, Premiere và CapCut"
+            >
+              <span class="relative inline-grid h-11 w-11 shrink-0 place-items-center">
+                <input
+                  id="dl-chk-compat"
+                  type="checkbox"
+                  checked
+                  class="peer absolute inset-0 m-0 h-11 w-11 cursor-pointer opacity-0"
+                />
+                <span class="grid h-5 w-5 place-items-center rounded border border-champagne bg-panel text-transparent transition-colors peer-checked:border-accent peer-checked:bg-accent peer-checked:text-white peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent">
+                  <Icon name="check" size={13} />
+                </span>
+              </span>
+              <span>Chuẩn hóa H.264 (iPhone / Zalo)</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Status / Alert Banner -->
+        <div
+          id="dl-alert"
+          role="status"
+          aria-live="polite"
+          class="rounded-xl border border-line bg-tint px-4 py-3 text-sm text-ink"
+          hidden
+        ></div>
+      </div>
+    </div>
+
+    <!-- 4 Functional Tabs (2x2 balanced grid on mobile, inline pill bar on >=640px) -->
+    <div class="flex flex-col gap-4">
+      <div
+        role="tablist"
+        aria-label="Các bảng chức năng tải video và mổ xẻ kịch bản"
+        class="grid grid-cols-2 gap-2 border-b border-line pb-3 sm:flex sm:flex-wrap"
+      >
+        <button
+          type="button"
+          role="tab"
+          id="dl-tab-btn-queue"
+          aria-selected="true"
+          tabindex="0"
+          aria-controls="dl-panel-queue"
+          class="dl-tab-btn"
+        >
+          <Icon name="bolt" size={15} class="shrink-0" />
+          <span class="truncate sm:hidden">Tiến độ</span>
+          <span class="hidden truncate sm:inline">Tiến độ &amp; Hàng đợi</span>
+          <span id="dl-queue-count" class="lux-chip hidden px-2 py-0.5 font-mono text-xs sm:inline-flex">0</span>
+        </button>
+        <button
+          type="button"
+          role="tab"
+          id="dl-tab-btn-viral"
+          aria-selected="false"
+          tabindex="-1"
+          aria-controls="dl-panel-viral"
+          class="dl-tab-btn"
+        >
+          <Icon name="dna" size={15} class="shrink-0" />
+          <span class="truncate">Mổ Xẻ Viral AI</span>
+          <span class="lux-chip hidden px-2 py-0.5 text-[11px] font-semibold text-accent-ink sm:inline-flex">Viết Pro</span>
+        </button>
+        <button
+          type="button"
+          role="tab"
+          id="dl-tab-btn-formats"
+          aria-selected="false"
+          tabindex="-1"
+          aria-controls="dl-panel-formats"
+          class="dl-tab-btn"
+        >
+          <Icon name="sliders" size={15} class="shrink-0" />
+          <span class="truncate">Độ phân giải</span>
+          <span id="dl-formats-count" class="lux-chip hidden px-2 py-0.5 font-mono text-xs sm:inline-flex">0</span>
+        </button>
+        <button
+          type="button"
+          role="tab"
+          id="dl-tab-btn-history"
+          aria-selected="false"
+          tabindex="-1"
+          aria-controls="dl-panel-history"
+          class="dl-tab-btn"
+        >
+          <Icon name="history" size={15} class="shrink-0" />
+          <span class="truncate">Lịch sử đã tải</span>
+          <span id="dl-history-count" class="lux-chip hidden px-2 py-0.5 font-mono text-xs sm:inline-flex">0</span>
+        </button>
+      </div>
+
+      <!-- TAB 1: Progress & Queue -->
+      <div id="dl-panel-queue" role="tabpanel" aria-labelledby="dl-tab-btn-queue" class="flex flex-col gap-4">
+        <!-- Active Single Download / Preview Card -->
+        <article id="dl-active-card" class="lux-card p-5 sm:p-6" hidden>
+          <div class="flex flex-col gap-5 sm:flex-row sm:items-start">
+            <img
+              id="dl-preview-thumb"
+              src="/og/tai-video.png"
+              alt="Ảnh thu nhỏ video"
+              width="320"
+              height="180"
+              loading="lazy"
+              decoding="async"
+              referrerpolicy="no-referrer"
+              class="aspect-video w-full rounded-xl border border-line bg-tint object-cover sm:w-56"
+            />
+            <div class="flex flex-1 flex-col gap-2.5">
+              <div class="flex flex-wrap items-center gap-2">
+                <span id="dl-preview-platform" class="lux-chip px-2.5 py-0.5 text-xs font-semibold">YouTube</span>
+                <span id="dl-preview-kind" class="lux-chip px-2.5 py-0.5 text-xs font-medium tabular-nums">Video 16:9</span>
+              </div>
+              <h2 id="dl-preview-title" class="display text-2xl sm:text-3xl">Đang phân tích…</h2>
+              <p id="dl-preview-meta" class="text-xs font-medium tabular-nums text-muted"></p>
+
+              <!-- Progress Section -->
+              <div class="mt-2 flex flex-col gap-2">
+                <div class="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold">
+                  <span id="dl-progress-status" class="text-accent-ink">Sẵn sàng tải</span>
+                  <div class="flex items-center gap-3 font-mono text-muted">
+                    <span id="dl-progress-percent">0%</span>
+                    <span id="dl-progress-speed">-- MB/s</span>
+                    <span id="dl-progress-eta">ETA --</span>
+                  </div>
+                </div>
+                <div class="h-2.5 w-full overflow-hidden rounded-full bg-tint p-0.5">
+                  <div
+                    id="dl-progress-bar"
+                    class="h-full rounded-full bg-accent transition-all duration-300"
+                    style="width: 0%"
+                  ></div>
+                </div>
+                <div class="mt-1 flex flex-wrap items-center gap-3">
+                  <a
+                    id="dl-direct-link"
+                    href="#main"
+                    download
+                    class="btn-gold text-xs"
+                    hidden
+                  >
+                    <Icon name="download" size={15} />
+                    <span>Lưu file về máy</span>
+                  </a>
+                  <button
+                    type="button"
+                    id="dl-btn-switch-formats"
+                    class="dl-btn-secondary inline-flex min-h-11 items-center gap-1.5 rounded-full px-4 text-xs font-semibold"
+                  >
+                    <Icon name="sliders" size={14} />
+                    <span>Xem tất cả độ phân giải</span>
+                  </button>
+                  <button
+                    type="button"
+                    id="dl-btn-jump-viral"
+                    class="dl-btn-viral inline-flex min-h-11 items-center gap-1.5 rounded-full px-4 text-xs font-semibold"
+                  >
+                    <Icon name="dna" size={14} />
+                    <span>Mổ xẻ kịch bản video này</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Playlist / Profile / Batch Collection Queue -->
+        <div id="dl-collection-card" class="lux-card p-5 sm:p-6" hidden>
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
+            <div>
+              <h2 id="dl-collection-title" class="display text-2xl">Danh sách phát</h2>
+              <p id="dl-collection-subtitle" class="mt-0.5 text-xs text-muted">
+                Tích chọn các mục cần tải và bấm nút tải hàng loạt
+              </p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                id="dl-btn-select-all"
+                class="dl-btn-secondary inline-flex min-h-11 items-center rounded-full px-3.5 text-xs font-semibold"
+              >
+                Chọn tất cả
+              </button>
+              <button
+                type="button"
+                id="dl-btn-select-none"
+                class="dl-btn-secondary inline-flex min-h-11 items-center rounded-full px-3.5 text-xs font-semibold"
+              >
+                Bỏ chọn
+              </button>
+              <button
+                type="button"
+                id="dl-btn-download-selected"
+                class="btn-gold cursor-pointer border-0 text-xs sm:px-5"
+              >
+                <Icon name="bolt" size={15} />
+                <span>Tải các mục đã chọn</span>
+              </button>
+            </div>
+          </div>
+          <ul id="dl-collection-list" class="mt-4 divide-y divide-line"></ul>
+        </div>
+
+        <!-- Empty State & Platform Guide -->
+        <div id="dl-queue-empty" class="lux-card p-6 sm:p-8">
+          <div class="grid gap-6 md:grid-cols-2">
+            <div>
+              <h2 class="display text-2xl">Tải Video 14+ Nền Tảng &amp; Xưởng Kịch Bản Viral</h2>
+              <p class="mt-2 text-sm leading-relaxed text-muted">
+                {'Dán đường dẫn video lẻ, Shorts/Reels dọc 9:16, Douyin hoặc Playlist rồi bấm '}
+                <strong class="text-ink">TẢI NGAY</strong>
+                {' để lưu file — hoặc bấm '}
+                <strong class="text-ink">MỔ XẺ &amp; VIẾT KỊCH BẢN</strong>
+                {' để lấy lời thoại và nhân bản kịch bản triệu view.'}
+              </p>
+              <ul class="mt-4 flex flex-wrap gap-2 text-xs font-medium text-ink" aria-label="Các nền tảng hỗ trợ">
+                <li class="lux-chip px-3 py-1">YouTube &amp; Shorts</li>
+                <li class="lux-chip px-3 py-1">TikTok &amp; @Profile</li>
+                <li class="lux-chip px-3 py-1">Douyin (Việt hóa)</li>
+                <li class="lux-chip px-3 py-1">Facebook &amp; Reels</li>
+                <li class="lux-chip px-3 py-1">Instagram Reels</li>
+                <li class="lux-chip px-3 py-1">X / Twitter</li>
+                <li class="lux-chip px-3 py-1">Threads</li>
+                <li class="lux-chip px-3 py-1">SoundCloud &amp; YT Music</li>
+              </ul>
+            </div>
+            <div class="rounded-xl border border-line bg-tint/60 p-4 text-xs leading-relaxed text-muted">
+              <p class="font-semibold text-ink">Điểm khác biệt của TQD Creator Lab</p>
+              <ul class="mt-2 list-disc space-y-1.5 pl-4">
+                <li>
+                  <strong class="text-ink">Tải mượt mọi thiết bị:</strong> Chuẩn hóa <strong class="text-ink">H.264 + AAC faststart</strong> mở ngay trên iPhone, Zalo, CapCut, Premiere; tự xóa file tạm sau khi tải.
+                </li>
+                <li>
+                  <strong class="text-ink">Bóc băng kể cả video không phụ đề:</strong> Tự động nhận diện giọng nói AI cho TikTok, Reels, Douyin và xuất file phụ đề <code class="font-mono">.srt</code>.
+                </li>
+                <li>
+                  <strong class="text-ink">Đổi Ngành Giữ Khung chuẩn Viết Pro:</strong> Bê nguyên công thức giữ chân của clip triệu view sang ngành của bạn, kiểm định 0% văn mẫu AI.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: TQD Viral Video Lab (Transcript + Viral DNA + Viet-Pro Rewrite Studio) -->
+      <div id="dl-panel-viral" role="tabpanel" aria-labelledby="dl-tab-btn-viral" class="flex flex-col gap-5" hidden>
+        <!-- Onboarding / Empty Card -->
+        <div id="viral-empty-card" class="lux-card p-6 sm:p-8">
+          <div class="grid gap-6 lg:grid-cols-3">
+            <div class="lg:col-span-2">
+              <p class="text-xs font-semibold uppercase tracking-wider text-accent-ink">Powered by DeepSeek Flash &amp; Viết Pro</p>
+              <h2 class="display mt-1 text-2xl sm:text-3xl">Biến 1 link video triệu view thành 5 kịch bản ngành của bạn</h2>
+              <p class="mt-2 text-sm leading-relaxed text-muted">
+                Dán đường dẫn YouTube, TikTok, Facebook Reels, Instagram Reels hoặc cả video tiếng Trung (Douyin) / tiếng Anh vào ô phía trên, sau đó bấm nút bên dưới để bóc băng lời thoại và giải phẫu công thức viral.
+              </p>
+              <div class="mt-5 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  id="viral-btn-start-empty"
+                  class="btn-gold cursor-pointer border-0 text-sm sm:px-6"
+                >
+                  <Icon name="dna" size={16} />
+                  <span>Bóc băng &amp; Mổ xẻ link đang nhập</span>
+                </button>
+              </div>
+            </div>
+            <div class="rounded-xl border border-line bg-tint/60 p-4 text-xs leading-relaxed text-muted">
+              <p class="font-semibold text-ink">Quy trình 3 bước tự động</p>
+              <ol class="mt-2 list-decimal space-y-1.5 pl-4">
+                <li><strong class="text-ink">Bóc băng siêu tốc:</strong> Quét phụ đề gốc hoặc tách giọng nói Whisper AI kèm mốc thời gian <code class="font-mono">[mm:ss]</code>.</li>
+                <li><strong class="text-ink">X-Quang Viral:</strong> Chấm điểm câu Hook 3 giây đầu, nhịp giữ chân và đòn bẩy cảm xúc.</li>
+                <li><strong class="text-ink">Đổi Ngành Chuẩn Viết Pro:</strong> Viết lại bảng kịch bản 3 cột, bài Facebook, chuỗi Threads tự nhiên như người thật viết.</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+
+        <!-- Active Viral Workspace -->
+        <div id="viral-workspace" class="flex flex-col gap-5" hidden>
+          <!-- Step 1: Transcript & Metadata Card -->
+          <section class="lux-card p-5 sm:p-6" aria-label="Bản bóc băng lời thoại gốc">
+            <div class="flex flex-col gap-4 border-b border-line pb-4 sm:flex-row sm:items-start sm:justify-between">
+              <div class="flex flex-col gap-1.5">
+                <div class="flex flex-wrap items-center gap-2 text-xs">
+                  <span id="viral-platform-chip" class="lux-chip px-2.5 py-0.5 font-semibold">TikTok</span>
+                  <span id="viral-source-chip" class="lux-chip px-2.5 py-0.5 font-medium">Whisper AI</span>
+                  <span id="viral-stats-chip" class="lux-chip px-2.5 py-0.5 font-medium tabular-nums">-- từ</span>
+                </div>
+                <h2 id="viral-video-title" class="display text-2xl sm:text-3xl">Đang bóc băng lời thoại…</h2>
+                <p id="viral-video-meta" class="text-xs font-medium tabular-nums text-muted"></p>
+              </div>
+              <div class="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  id="viral-btn-copy-transcript"
+                  class="dl-btn-secondary inline-flex min-h-11 items-center gap-1.5 rounded-full px-3.5 text-xs font-semibold"
+                >
+                  <Icon name="clipboard" size={14} />
+                  <span>Copy lời thoại</span>
+                </button>
+                <button
+                  type="button"
+                  id="viral-btn-download-srt"
+                  class="dl-btn-secondary inline-flex min-h-11 items-center gap-1.5 rounded-full px-3.5 text-xs font-semibold"
+                >
+                  <Icon name="file-text" size={14} />
+                  <span>Tải file .SRT</span>
+                </button>
+                <button
+                  type="button"
+                  id="viral-btn-toggle-transcript"
+                  aria-expanded="true"
+                  class="dl-btn-secondary inline-flex min-h-11 items-center gap-1.5 rounded-full px-3.5 text-xs font-semibold"
+                >
+                  <Icon name="chevron-down" size={14} />
+                  <span data-toggle-label>Ẩn lời thoại</span>
+                </button>
+              </div>
+            </div>
+
+            <div id="viral-transcript-wrap" class="mt-4">
+              <div
+                id="viral-transcript-segments"
+                class="max-h-64 space-y-2 overflow-y-auto rounded-xl border border-line bg-tint/50 p-4 text-sm leading-relaxed text-ink"
+              ></div>
+            </div>
+          </section>
+
+          <!-- Step 2 & 3 Grid: Viral DNA X-Ray + Viet-Pro Multi-Format Script Studio -->
+          <div class="grid gap-5 lg:grid-cols-12">
+            <!-- Left Column (5 cols): Viral DNA X-Ray -->
+            <section class="lux-card flex flex-col gap-4 p-5 sm:p-6 lg:col-span-5" aria-label="X-Quang yếu tố Viral">
+              <div class="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-3">
+                <div>
+                  <p class="text-[11px] font-semibold uppercase tracking-wider text-accent-ink">Bước 2 · Giải phẫu triệu view</p>
+                  <h3 class="display text-2xl">X-Quang Công Thức Viral</h3>
+                </div>
+                <button
+                  type="button"
+                  id="viral-btn-rerun-xray"
+                  class="dl-btn-secondary inline-flex min-h-11 items-center gap-1.5 rounded-full px-3.5 text-xs font-semibold"
+                >
+                  <Icon name="refresh" size={14} />
+                  <span>Phân tích lại</span>
+                </button>
+              </div>
+              <div id="viral-xray-status" class="text-xs font-medium text-accent-ink" hidden>
+                Đang mổ xẻ cấu trúc Hook 3 giây &amp; nhịp giữ chân…
+              </div>
+              <div id="viral-xray-body" class="viral-prose space-y-3 text-sm leading-relaxed text-ink">
+                <p class="text-muted">Bản phân tích X-Quang sẽ tự động hiển thị ngay sau khi bóc băng xong.</p>
+              </div>
+            </section>
+
+            <!-- Right Column (7 cols): Viet-Pro Script Studio ("Đổi Ngành Giữ Khung") -->
+            <section class="lux-card flex flex-col gap-4 p-5 sm:p-6 lg:col-span-7" aria-label="Xưởng nhân bản kịch bản chuẩn Viết Pro">
+              <div class="border-b border-line pb-3">
+                <p class="text-[11px] font-semibold uppercase tracking-wider text-accent-ink">
+                  Bước 3 · Đổi Ngành Giữ Khung &amp; Việt Hóa Trend Ngoại
+                </p>
+                <h3 class="display text-2xl">Xưởng Viết Kịch Bản Chuẩn Viết Pro</h3>
+              </div>
+
+              <!-- Format Picker Pills -->
+              <fieldset class="flex flex-col gap-2">
+                <legend class="text-xs font-semibold text-ink">1. Chọn định dạng muốn nhân bản:</legend>
+                <div class="flex flex-wrap gap-2">
+                  {VIRAL_FORMATS.map((fmt, idx) => (
+                    <label class="dl-preset-pill" title={fmt.description}>
+                      <input type="radio" name="viral-format" value={fmt.key} checked={idx === 0} />
+                      <span>{stripLeadingEmoji(fmt.shortLabel)}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+
+              <!-- Industry Swap & Custom Angle Controls -->
+              <div class="grid gap-3 sm:grid-cols-2">
+                <div class="flex flex-col gap-1.5">
+                  <label for="viral-industry-select" class="text-xs font-semibold text-ink">
+                    2. Ngành nghề muốn áp khung ("Đổi ngành giữ khung"):
+                  </label>
+                  <select id="viral-industry-select" class="dl-input min-h-11 rounded-xl px-3.5 py-2 text-sm">
+                    {INDUSTRY_PRESETS.map((item) => (
+                      <option value={item.value}>{stripLeadingEmoji(item.label)}</option>
+                    ))}
+                    <option value="__custom__">Tự nhập ngành / sản phẩm riêng…</option>
+                  </select>
+                </div>
+
+                <div class="flex flex-col gap-1.5">
+                  <label for="viral-custom-angle" class="text-xs font-semibold text-ink">
+                    3. Ghi chú sản phẩm / Giọng điệu riêng (tùy chọn):
+                  </label>
+                  <input
+                    id="viral-custom-angle"
+                    type="text"
+                    maxlength="300"
+                    placeholder="VD: Bán máy ép chậm cho mẹ bỉm, giọng gần gũi thực tế..."
+                    class="dl-input min-h-11 rounded-xl px-3.5 py-2 text-sm"
+                  />
+                </div>
+              </div>
+
+              <div id="viral-industry-custom-wrap" class="flex flex-col gap-1.5" hidden>
+                <label for="viral-industry-custom" class="text-xs font-semibold text-ink">
+                  Nhập ngành nghề / sản phẩm cụ thể của bạn:
+                </label>
+                <input
+                  id="viral-industry-custom"
+                  type="text"
+                  maxlength="140"
+                  placeholder="VD: Nha khoa thẩm mỹ tại Hà Nội / Phần mềm quản lý kho cho tạp hóa..."
+                  class="dl-input min-h-11 rounded-xl px-3.5 py-2 text-sm"
+                />
+              </div>
+
+              <div class="flex flex-wrap items-center gap-3 pt-1">
+                <button
+                  type="button"
+                  id="viral-btn-generate"
+                  class="btn-gold cursor-pointer border-0 text-sm sm:px-6"
+                >
+                  <Icon name="sparkles" size={16} />
+                  <span>TẠO KỊCH BẢN CHUẨN VIẾT PRO</span>
+                </button>
+                <span id="viral-gen-status" class="text-xs font-medium text-accent-ink" hidden>
+                  DeepSeek Flash đang viết theo chuẩn Viết Pro…
+                </span>
+              </div>
+
+              <!-- Output & Viet-Pro Deterministic Quality Gate -->
+              <div id="viral-output-wrap" class="mt-2 flex flex-col gap-3 border-t border-line pt-4" hidden>
+                <!-- Viet-Pro Score & 1-Click Anti-AI Polish Bar -->
+                <div class="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line bg-tint/70 px-3.5 py-2.5">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span id="viral-lint-badge" class="lux-chip px-3 py-1 text-xs font-semibold text-accent-ink">
+                      Chuẩn Viết Pro: 100/100
+                    </span>
+                    <button
+                      type="button"
+                      id="viral-btn-toggle-findings"
+                      class="inline-flex min-h-11 cursor-pointer items-center border-0 bg-transparent px-2 text-xs font-medium text-muted underline"
+                      hidden
+                    >
+                      Xem chi tiết kiểm định
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    id="viral-btn-polish"
+                    class="dl-btn-viral inline-flex min-h-11 items-center gap-1.5 rounded-full px-3.5 text-xs font-semibold"
+                    title="Gửi các điểm cảnh báo cho biên tập viên AI gọt lại giọng người thật 100%"
+                  >
+                    <Icon name="wand" size={14} />
+                    <span>Khử văn mẫu AI 1-Click</span>
+                  </button>
+                </div>
+
+                <ul
+                  id="viral-lint-findings"
+                  class="space-y-1 rounded-xl border border-line bg-paper p-3 text-xs text-muted"
+                  hidden
+                ></ul>
+
+                <!-- Rendered Script Output -->
+                <div
+                  id="viral-script-body"
+                  class="viral-prose overflow-x-auto rounded-xl border border-line bg-paper p-4 text-sm leading-relaxed text-ink sm:p-5"
+                ></div>
+
+                <!-- Export & Share Toolbar -->
+                <div class="flex flex-wrap items-center gap-2 pt-1">
+                  <button
+                    type="button"
+                    id="viral-btn-copy-capcut"
+                    class="dl-btn-secondary inline-flex min-h-11 items-center gap-1.5 rounded-full px-4 text-xs font-semibold"
+                    title="Chỉ chép phần lời đọc thoại sạch sẽ để dán thẳng vào CapCut Teleprompter trên điện thoại"
+                  >
+                    <Icon name="mic" size={14} />
+                    <span>Copy đọc CapCut (chỉ lời thoại)</span>
+                  </button>
+                  <button
+                    type="button"
+                    id="viral-btn-copy-md"
+                    class="dl-btn-secondary inline-flex min-h-11 items-center gap-1.5 rounded-full px-4 text-xs font-semibold"
+                  >
+                    <Icon name="clipboard" size={14} />
+                    <span>Copy toàn bộ kịch bản</span>
+                  </button>
+                  <button
+                    type="button"
+                    id="viral-btn-share"
+                    class="dl-btn-viral inline-flex min-h-11 items-center gap-1.5 rounded-full px-4 text-xs font-semibold"
+                  >
+                    <Icon name="share" size={14} />
+                    <span>Lấy link chia sẻ báo cáo (/xray)</span>
+                  </button>
+                </div>
+
+                <!-- Share Link Box -->
+                <div
+                  id="viral-share-box"
+                  class="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-champagne/60 bg-tint px-4 py-3 text-xs"
+                  hidden
+                >
+                  <div class="min-w-0 flex-1 truncate">
+                    <span class="font-semibold text-ink">Link chia sẻ công khai: </span>
+                    <a id="viral-share-link" href="/tai-video" target="_blank" rel="noopener" class="font-mono text-accent-ink underline"></a>
+                  </div>
+                  <button
+                    type="button"
+                    id="viral-btn-copy-share"
+                    class="dl-btn-secondary inline-flex min-h-11 items-center gap-1.5 rounded-full px-3.5 text-xs font-semibold"
+                  >
+                    <Icon name="clipboard" size={14} />
+                    <span>Copy link</span>
+                  </button>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: Detailed Resolutions -->
+      <div id="dl-panel-formats" role="tabpanel" aria-labelledby="dl-tab-btn-formats" class="lux-card p-5 sm:p-6" hidden>
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-4">
+          <div>
+            <h2 id="dl-formats-title" class="display text-2xl">Bảng chọn độ phân giải chi tiết</h2>
+            <p class="mt-0.5 text-xs text-muted">
+              Chọn đúng mức chất lượng MP4 hoặc tách âm thanh MP3 320kbps
+            </p>
+          </div>
+        </div>
+        <div id="dl-formats-empty" class="py-8 text-center text-sm text-muted">
+          {'Hãy dán đường dẫn video và bấm '}
+          <strong class="text-ink">TẢI NGAY</strong>
+          {' (chế độ '}
+          <em>Chọn độ phân giải…</em>
+          {') để liệt kê đầy đủ các định dạng.'}
+        </div>
+        <div id="dl-formats-table-wrap" class="mt-4 overflow-x-auto" hidden>
+          <table class="w-full border-collapse text-left text-sm">
+            <thead>
+              <tr class="border-b border-line text-xs uppercase tracking-wider text-muted">
+                <th class="py-2.5 pr-4">Loại</th>
+                <th class="py-2.5 pr-4">Chất lượng &amp; Định dạng</th>
+                <th class="py-2.5 pr-4">Ước tính</th>
+                <th class="py-2.5 text-right">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody id="dl-formats-tbody" class="divide-y divide-line"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB 4: LocalStorage Download History -->
+      <div id="dl-panel-history" role="tabpanel" aria-labelledby="dl-tab-btn-history" class="lux-card p-5 sm:p-6" hidden>
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
+          <div>
+            <h2 class="display text-2xl">Lịch sử tải trên trình duyệt này</h2>
+            <p class="mt-0.5 text-xs text-muted">
+              Chỉ lưu cục bộ trong <code class="font-mono">localStorage</code> trên thiết bị của bạn (tối đa 50 mục)
+            </p>
+          </div>
+          <button
+            type="button"
+            id="dl-btn-clear-history"
+            class="dl-btn-secondary inline-flex min-h-11 items-center gap-1.5 rounded-full px-4 text-xs font-semibold"
+          >
+            <Icon name="trash" size={14} />
+            <span>Xóa lịch sử</span>
+          </button>
+        </div>
+        <div id="dl-history-empty" class="py-8 text-center text-sm text-muted">
+          Chưa có mục nào trong lịch sử tải.
+        </div>
+        <ul id="dl-history-list" class="mt-4 divide-y divide-line" hidden></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Hidden anchor for triggering native browser downloads without violating frame-src CSP -->
+  <a id="dl-hidden-trigger" href="#main" download hidden aria-hidden="true" tabindex="-1"></a>
+</BaseLayout>
+
+<script>
+  import '../scripts/tai-video.ts';
+</script>
+
+<style is:global>
+  .dl-input {
+    border: 1px solid var(--color-line);
+    background: var(--color-paper);
+    color: var(--color-ink);
+    transition: border-color 200ms var(--os-ease), background-color 200ms var(--os-ease);
+  }
+  .dl-input:focus,
+  .dl-input:focus-visible {
+    border-color: var(--color-accent);
+    background: var(--color-panel);
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
+  }
+  .dl-btn-secondary {
+    border: 1px solid var(--color-line);
+    background: var(--color-tint);
+    color: var(--color-ink);
+    cursor: pointer;
+    transition: border-color 200ms var(--os-ease), background-color 200ms var(--os-ease);
+  }
+  .dl-btn-secondary:hover {
+    border-color: var(--color-champagne);
+    background: color-mix(in srgb, var(--color-champagne) 18%, var(--color-tint));
+  }
+  .dl-btn-viral {
+    border: 1px solid color-mix(in srgb, var(--color-accent) 45%, var(--color-champagne));
+    background: color-mix(in srgb, var(--color-champagne) 20%, var(--color-panel));
+    color: var(--color-accent-ink);
+    cursor: pointer;
+    box-shadow: var(--shadow-soft);
+    transition: transform 180ms var(--os-ease), border-color 180ms var(--os-ease), background-color 180ms var(--os-ease);
+  }
+  .dl-btn-viral:hover {
+    border-color: var(--color-accent);
+    background: color-mix(in srgb, var(--color-champagne) 34%, var(--color-panel));
+    transform: translateY(-1px);
+  }
+  .dl-btn-viral:disabled {
+    opacity: 0.6;
+    cursor: wait;
+    transform: none;
+  }
+  .dl-preset-pill {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 44px;
+    padding: 0 0.95rem;
+    border: 1px solid var(--color-line);
+    border-radius: 999px;
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color 180ms var(--os-ease), background-color 180ms var(--os-ease), color 180ms var(--os-ease);
+  }
+  .dl-preset-pill input[type='radio'] {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+  .dl-preset-pill:hover {
+    border-color: var(--color-champagne);
+    background: var(--color-tint);
+  }
+  .dl-preset-pill:has(input:checked) {
+    border-color: var(--color-accent);
+    background: var(--color-tint);
+    color: var(--color-accent-ink);
+    font-weight: 600;
+  }
+  .dl-preset-pill:has(input:focus-visible) {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+  .dl-tab-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    min-width: 0;
+    min-height: 44px;
+    padding: 0 0.75rem;
+    border: 1px solid var(--color-line);
+    border-radius: 999px;
+    background: var(--color-paper);
+    color: var(--color-muted);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 180ms var(--os-ease), background-color 180ms var(--os-ease), border-color 180ms var(--os-ease);
+  }
+  @media (min-width: 640px) {
+    .dl-tab-btn {
+      justify-content: flex-start;
+      padding: 0 1rem;
+      border-color: transparent;
+      background: transparent;
+      font-size: 0.875rem;
+    }
+  }
+  .dl-tab-btn:hover {
+    color: var(--color-ink);
+    background: var(--color-tint);
+  }
+  .dl-tab-btn[aria-selected='true'] {
+    border-color: color-mix(in srgb, var(--color-accent) 45%, var(--color-line));
+    background: var(--color-panel);
+    color: var(--color-accent-ink);
+    box-shadow: var(--shadow-soft);
+  }
+  .viral-prose table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.75rem 0;
+    font-size: 0.8125rem;
+  }
+  .viral-prose th,
+  .viral-prose td {
+    border: 1px solid var(--color-line);
+    padding: 0.55rem 0.65rem;
+    vertical-align: top;
+    text-align: left;
+  }
+  .viral-prose th {
+    background: var(--color-tint);
+    font-weight: 700;
+    color: var(--color-accent-ink);
+  }
+  .viral-prose hr {
+    border: 0;
+    border-top: 1px dashed var(--color-champagne);
+    margin: 0.9rem 0;
+  }
+</style>
