@@ -11,6 +11,7 @@ import {
   createViralShare,
   DEFAULT_VIRAL_DAILY_CAP,
   getCachedTranscript,
+  getViralDurationError,
   MAX_VIRAL_BODY_BYTES,
   PUBLIC_SHARE_IP_PER_HOUR,
   PUBLIC_SHARE_VISITOR_PER_HOUR,
@@ -65,16 +66,14 @@ export const POST: APIRoute = async ({ request, url, cookies }) => {
 
   if (tier === 'public') {
     const ip = request.headers.get('CF-Connecting-IP') ?? 'unknown';
-    const dailyCap = Math.max(20, Number.parseInt(env.VIRAL_DAILY_CAP || '', 10) || DEFAULT_VIRAL_DAILY_CAP);
-    const [visitor, address, daily] = await Promise.all([
+    const [visitor, address] = await Promise.all([
       hit(env.DB, `viral:sh:v:${visitorId}`, PUBLIC_SHARE_VISITOR_PER_HOUR, HOUR),
       hit(env.DB, `viral:sh:ip:${await dlIpBucket(ip)}`, PUBLIC_SHARE_IP_PER_HOUR, HOUR),
-      hit(env.DB, `viral:day:${getVnDayKey()}`, dailyCap, DAY),
     ]);
-    if (!visitor.allowed || !address.allowed || !daily.allowed) {
+    if (!visitor.allowed || !address.allowed) {
       return limited(
         'Bạn đã tạo nhiều link chia sẻ trong một giờ. Vui lòng thử lại sau.',
-        Math.max(visitor.retryAfter, address.retryAfter, daily.retryAfter),
+        Math.max(visitor.retryAfter, address.retryAfter),
       );
     }
   }
@@ -84,6 +83,8 @@ export const POST: APIRoute = async ({ request, url, cookies }) => {
   if (!transcript) {
     return apiError(404, 'not_found', 'Không tìm thấy dữ liệu gốc của video này.');
   }
+  const durationError = getViralDurationError(transcript.duration, tier);
+  if (durationError) return apiError(400, 'video_too_long', durationError);
 
   const cleanXray =
     tier === 'public' ? sanitizePublicShareMarkdown(xrayMarkdown, transcript.canonicalUrl) : xrayMarkdown;
@@ -91,6 +92,12 @@ export const POST: APIRoute = async ({ request, url, cookies }) => {
     tier === 'public' ? sanitizePublicShareMarkdown(scriptMarkdown, transcript.canonicalUrl) : scriptMarkdown;
   if (!cleanXray && !cleanScript) {
     return apiError(400, 'empty', 'Nội dung chia sẻ không hợp lệ.');
+  }
+
+  if (tier === 'public') {
+    const dailyCap = Math.max(20, Number.parseInt(env.VIRAL_DAILY_CAP || '', 10) || DEFAULT_VIRAL_DAILY_CAP);
+    const daily = await hit(env.DB, `viral:day:${getVnDayKey()}`, dailyCap, DAY);
+    if (!daily.allowed) return limited('Hệ thống đã phục vụ đủ lượt xử lý công khai hôm nay.', daily.retryAfter);
   }
 
   const rawFmt = typeof raw.formatKey === 'string' ? raw.formatKey.trim() : 'xray';

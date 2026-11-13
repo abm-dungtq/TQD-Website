@@ -129,6 +129,12 @@ export function getViralMaxDuration(tier: DlTier): number {
   return tier === 'admin' ? ADMIN_MAX_VIDEO_SEC : PUBLIC_MAX_VIDEO_SEC;
 }
 
+/** Apply the caller's duration limit even when another tier populated the cache. */
+export function getViralDurationError(duration: number, tier: DlTier): string | null {
+  const max = getViralMaxDuration(tier);
+  return duration > max ? `Video vượt thời lượng cho phép (${max / 60} phút).` : null;
+}
+
 export function escapeXmlPromptData(raw: string): string {
   return String(raw || '')
     .replace(/&/g, '&amp;')

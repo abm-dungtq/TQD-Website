@@ -13,6 +13,7 @@ import {
   detectPlatform,
   getCachedTranscript,
   getViralMaxDuration,
+  getViralDurationError,
   MAX_VIRAL_BODY_BYTES,
   MAX_WHISPER_AUDIO_SEC,
   normalizeWhisperOutput,
@@ -52,6 +53,8 @@ export const POST: APIRoute = async ({ request, url, cookies }) => {
   const inputHash = await computeVideoHash(parsed.url);
   const cachedHit = await getCachedTranscript(env.DB, inputHash);
   if (cachedHit) {
+    const error = getViralDurationError(cachedHit.duration, tier);
+    if (error) return apiError(400, 'video_too_long', error);
     return jsonResponse({ ok: true, transcript: cachedHit, tier });
   }
 
@@ -61,21 +64,30 @@ export const POST: APIRoute = async ({ request, url, cookies }) => {
     return offline();
   }
 
+  let dailyBucket: string | undefined;
+  const releaseDailyQuota = async () => {
+    if (!dailyBucket) return;
+    await env.DB.prepare('UPDATE rate_limits SET count = MAX(0, count - 1) WHERE bucket = ?1').bind(dailyBucket).run();
+    dailyBucket = undefined;
+  };
+
   if (tier === 'public') {
     const ip = request.headers.get('CF-Connecting-IP') ?? 'unknown';
     const dailyCap = Math.max(20, Number.parseInt(env.VIRAL_DAILY_CAP || '', 10) || DEFAULT_VIRAL_DAILY_CAP);
     const todayKey = getVnDayKey();
-    const [visitor, address, daily] = await Promise.all([
+    const [visitor, address] = await Promise.all([
       hit(env.DB, `viral:tr:v:${parsed.visitorId}`, PUBLIC_TRANSCRIBE_VISITOR_PER_HOUR, HOUR),
       hit(env.DB, `viral:tr:ip:${await dlIpBucket(ip)}`, PUBLIC_TRANSCRIBE_IP_PER_HOUR, HOUR),
-      hit(env.DB, `viral:day:${todayKey}`, dailyCap, DAY),
     ]);
-    if (!visitor.allowed || !address.allowed || !daily.allowed) {
+    if (!visitor.allowed || !address.allowed) {
       return limited(
         'Bạn đã bóc băng nhiều video mới liên tiếp. Vui lòng đợi ít phút rồi thử lại nhé.',
-        Math.max(visitor.retryAfter, address.retryAfter, daily.retryAfter),
+        Math.max(visitor.retryAfter, address.retryAfter),
       );
     }
+    const daily = await hit(env.DB, `viral:day:${todayKey}`, dailyCap, DAY);
+    if (!daily.allowed) return limited('Hệ thống đã phục vụ đủ lượt xử lý công khai hôm nay.', daily.retryAfter);
+    dailyBucket = `viral:day:${todayKey}`;
   }
 
   const maxDurationSec = getViralMaxDuration(tier);
@@ -116,12 +128,20 @@ export const POST: APIRoute = async ({ request, url, cookies }) => {
   if (canonicalHash !== inputHash) {
     const secondCheck = await getCachedTranscript(env.DB, canonicalHash);
     if (secondCheck) {
+      await releaseDailyQuota();
+      const error = getViralDurationError(secondCheck.duration, tier);
+      if (error) return apiError(400, 'video_too_long', error);
       return jsonResponse({ ok: true, transcript: secondCheck, tier });
     }
   }
 
   const detected = detectPlatform(canonical.canonicalUrl);
   const durationSec = Number(daemonData.duration) || 0;
+  const durationError = getViralDurationError(durationSec, tier);
+  if (durationError) {
+    await releaseDailyQuota();
+    return apiError(400, 'video_too_long', durationError);
+  }
   let transcriptText = '';
   let segments: Array<{ start: number; end: number; text: string }> = [];
   let language = typeof daemonData.language === 'string' && daemonData.language ? daemonData.language : 'vi';

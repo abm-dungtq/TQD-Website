@@ -10,6 +10,7 @@ import { hit } from '../../../lib/rate-limit';
 import {
   buildViralMessages,
   getCachedTranscript,
+  getViralDurationError,
   MAX_VIRAL_BODY_BYTES,
   PUBLIC_GENERATE_IP_PER_HOUR,
   PUBLIC_GENERATE_VISITOR_PER_HOUR,
@@ -62,6 +63,8 @@ export const POST: APIRoute = async ({ request, url, cookies }) => {
   if (!transcript) {
     return apiError(404, 'transcript_not_found', 'Không tìm thấy bản bóc băng của video này. Vui lòng bấm bóc băng lại.');
   }
+  const durationError = getViralDurationError(transcript.duration, tier);
+  if (durationError) return apiError(400, 'video_too_long', durationError);
 
   const messages = buildViralMessages(transcript, parsed);
 
