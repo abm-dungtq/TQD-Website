@@ -93,7 +93,7 @@ describe('rollupSiteDay idempotency, SQL formula correctness, pv_id aggregation,
     };
 
     await rollupSiteDay(db, run1Config, 'tuvi.tqd.me', day);
-    expect(capturedSqls).toHaveLength(4);
+    expect(capturedSqls).toHaveLength(5);
 
     const afterRun1 = sqlite
       .prepare('SELECT metric, dim, value FROM analytics_daily WHERE site = ? AND day = ? ORDER BY metric, dim')
@@ -175,4 +175,45 @@ describe('rollupSiteDay idempotency, SQL formula correctness, pv_id aggregation,
     const summary = await loadDashboardSummary(db, 'tuvi.tqd.me', 7);
     expect(summary.site).toBe('tuvi.tqd.me');
   });
+});
+
+describe('knowledge page coverage independent of top-path limits', () => {
+  it('retains all viewed knowledge paths beyond both the 20-row display and 50-row rollup lists', async () => {
+    const { getVnDayOffset } = await import('./wae-client');
+    const stars = ['ziwei', 'tianji', 'taiyang', 'wuqu', 'tiantong', 'lianzhen', 'tianfu',
+      'taiyin', 'tanlang', 'jumen', 'tianxiang', 'tianliang', 'qisha', 'pojun'];
+    const topics = ['overview', 'personality', 'career', 'wealth', 'love', 'health', 'family',
+      'friends', 'study', 'property', 'travel', 'karma', 'yearly'];
+    const paths = stars.flatMap(s => topics.map(t => `/knowledge/${s}/${t}`));
+    let step = 0;
+    await rollupSiteDay(db, { customRunner: async () => ++step === 1
+      ? paths.map((path, i) => ({ event: 'page_view', section: 'knowledge', path, cnt: 182 - i, max_si: 1 }))
+      : [] }, 'tuvi.tqd.me', getVnDayOffset(0));
+    const summary = await loadDashboardSummary(db, 'tuvi.tqd.me', 7);
+    expect(summary.topPaths).toHaveLength(20);
+    expect(new Set(summary.viewedPaths)).toEqual(new Set(paths));
+    expect(paths.filter(p => !summary.viewedPaths.includes(p))).toHaveLength(0);
+  });
+});
+
+it('gets knowledge paths from a dedicated query when dimensional rows omit them', async () => {
+  const { getVnDayOffset } = await import('./wae-client');
+  const sqls = [];
+  await rollupSiteDay(db, { customRunner: async sql => {
+    sqls.push(sql);
+    if (sql.includes("blob2 = 'knowledge'")) {
+      expect(sql).toContain('GROUP BY blob4');
+      expect(sql).not.toContain('GROUP BY blob1, blob2');
+      expect(sql).not.toContain('LIMIT 10000');
+      return [{ path: '/knowledge/tianji/karma', cnt: 3 }];
+    }
+    if (sql.includes('blob4 AS path') && sql.includes('blob5 AS ref_host')) {
+      return [{ event: 'page_view', section: 'home', path: '/', cnt: 10_000, max_si: 1 }];
+    }
+    return [];
+  } }, 'tuvi.tqd.me', getVnDayOffset(0));
+  const summary = await loadDashboardSummary(db, 'tuvi.tqd.me', 7);
+  expect(sqls).toHaveLength(5);
+  expect(summary.viewedPaths).toContain('/knowledge/tianji/karma');
+  expect(summary.topPaths.find(p => p.path === '/knowledge/tianji/karma').pageviews).toBe(3);
 });

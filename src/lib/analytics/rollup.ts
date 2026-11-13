@@ -29,11 +29,12 @@ export interface DailyMetricRow {
 
 /**
  * Thực thi rollup bất biến cho một `(site, vnDay)`:
- * - Chạy 4 câu truy vấn WAE SQL phẳng (không dùng subquery `FROM (SELECT ...)`):
+ * - Chạy 5 câu truy vấn WAE SQL phẳng (không dùng subquery `FROM (SELECT ...)`):
  *   1a) Tổng hợp chiều hiển thị (section/path/ref/utm/country/device) tách khỏi sid/vid_day để không bị cắt bởi LIMIT 10000
  *   1b) Đếm phiên (sid) & khách-ngày (vid_day) duy nhất có trọng số `_sample_interval`
  *   2) Gộp `page_end` theo `pv_id` với `SUM(double1 * _sample_interval) / MAX(_sample_interval)`
  *   3) Sự kiện sản phẩm, Phễu A/B & AI
+ *   4) Lượt xem từng trang knowledge, tách khỏi tổ hợp nguồn truy cập
  * - Lưu nguyên tử vào D1 qua `db.batch`: 1 lệnh `DELETE` + các lệnh `INSERT` đa dòng (20 dòng/câu).
  */
 export async function rollupSiteDay(
@@ -58,11 +59,15 @@ export async function rollupSiteDay(
   // Truy vấn 3: Sự kiện sản phẩm, Phễu A/B & AI
   const q3Sql = `SELECT blob1 AS event, blob11 AS p1, blob12 AS p2, SUM(_sample_interval) AS cnt, quantileExactWeighted(0.95)(double3, _sample_interval) AS p95_ms FROM tqd_analytics WHERE index1 = '${site}' AND blob13 = '0' AND timestamp >= toDateTime('${startSql}') AND timestamp < toDateTime('${endSql}') GROUP BY blob1, blob11, blob12`;
 
-  const [q1Rows, q1UniqueRows, q2Rows, q3Rows] = await Promise.all([
+  // Knowledge coverage must not depend on the dimensional query's row limit.
+  const knowledgeSql = `SELECT blob4 AS path, SUM(_sample_interval) AS cnt FROM tqd_analytics WHERE index1 = '${site}' AND blob1 = 'page_view' AND blob2 = 'knowledge' AND blob13 = '0' AND timestamp >= toDateTime('${startSql}') AND timestamp < toDateTime('${endSql}') GROUP BY blob4`;
+
+  const [q1Rows, q1UniqueRows, q2Rows, q3Rows, knowledgeRows] = await Promise.all([
     queryWaeSql(waeConfig, q1DimSql),
     queryWaeSql(waeConfig, q1UniqueSql),
     queryWaeSql(waeConfig, q2Sql),
     queryWaeSql(waeConfig, q3Sql),
+    queryWaeSql(waeConfig, knowledgeSql),
   ]);
 
   const metricMap = new Map<string, number>();
@@ -154,9 +159,15 @@ export async function rollupSiteDay(
     setMetric('section_pv', sec, cnt);
   }
 
+  for (const r of knowledgeRows) {
+    const path = String(r.path ?? '');
+    const count = Number(r.cnt ?? 0);
+    if (path.startsWith('/knowledge/') && Number.isFinite(count) && count > 0) pathCounts.set(path, count);
+  }
+
   const topPaths = [...pathCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 50);
   const topPathSet = new Set(topPaths.map(([p]) => p));
-  for (const [p, cnt] of topPaths) {
+  for (const [p, cnt] of pathCounts) {
     setMetric('path_pv', p, cnt);
   }
 
@@ -330,6 +341,7 @@ export interface DashboardSummaryData {
   dailySeries: Array<{ day: string; pageviews: number; visits: number; visitors: number }>;
   sections: Array<{ section: string; pageviews: number; p50Ms: number }>;
   topPaths: Array<{ path: string; pageviews: number; p50Ms: number }>;
+  viewedPaths: string[];
   referrers: Array<{ ref: string; count: number }>;
   utms: Array<{ utm: string; count: number }>;
   devices: Array<{ device: string; count: number }>;
@@ -540,6 +552,7 @@ export async function loadDashboardSummary(
     dailySeries,
     sections,
     topPaths,
+    viewedPaths: [...pathPv.keys()],
     referrers,
     utms,
     devices,

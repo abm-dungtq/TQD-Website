@@ -1,6 +1,7 @@
 // Phone home screen: icon taps open the section in a sheet that can be dragged down to close.
 // Each sheet is a history entry, so the Back button closes it. Wide screens keep plain links.
 import { EASE, play, reducedMotion, SPRING } from './motion';
+import { enhanceProseCodeBlocks, initPageActions } from './page-actions';
 
 const NARROW = window.matchMedia('(max-width: 1023px)');
 const CLOSE_DISTANCE = 110;
@@ -39,6 +40,7 @@ if (home && sheet && scrim && title && body && pageLink && fallback) {
   });
   let current: string | null = null;
   let loadToken = 0;
+  let actionController: AbortController | undefined;
 
   const clock = home.querySelector<HTMLElement>('[data-m-clock]');
   const date = home.querySelector<HTMLElement>('[data-m-date]');
@@ -54,6 +56,7 @@ if (home && sheet && scrim && title && body && pageLink && fallback) {
 
   const load = async (id: string) => {
     const token = ++loadToken;
+    actionController?.abort();
     body.innerHTML = '<p class="m-loading">Đang tải…</p>';
     try {
       const res = await fetch(`/${id}`);
@@ -66,6 +69,9 @@ if (home && sheet && scrim && title && body && pageLink && fallback) {
       (h1?.closest('header') ?? h1)?.remove();
       body.replaceChildren();
       while (main.firstChild) body.appendChild(main.firstChild);
+      actionController = new AbortController();
+      initPageActions(body, actionController.signal);
+      enhanceProseCodeBlocks(body);
       body.scrollTop = 0;
     } catch {
       if (token === loadToken) location.href = `/${id}`;

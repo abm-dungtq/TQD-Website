@@ -57,6 +57,7 @@ let summary = await loadDashboardSummary(env.DB, site, rangeDays).catch(() => ({
   dailySeries: [],
   sections: [],
   topPaths: [],
+  viewedPaths: [],
   referrers: [],
   utms: [],
   devices: [],
@@ -154,13 +155,13 @@ const TOPICS_13 = [
   'overview', 'personality', 'career', 'wealth', 'love', 'health', 'family',
   'friends', 'study', 'property', 'travel', 'karma', 'yearly',
 ];
-const pathPvLookup = new Map(summary.topPaths.map((p) => [p.path, p.pageviews]));
+const viewedPaths = new Set(summary.viewedPaths);
 let zeroViewCount = 0;
 const zeroViewSample: string[] = [];
 for (const st of STARS_14) {
   for (const tp of TOPICS_13) {
     const p = `/knowledge/${st}/${tp}`;
-    if (!pathPvLookup.get(p)) {
+    if (!viewedPaths.has(p)) {
       zeroViewCount += 1;
       if (zeroViewSample.length < 12) zeroViewSample.push(p);
     }
@@ -471,7 +472,7 @@ for (const st of STARS_14) {
           Độ phủ 182 trang Bách Khoa (14 Chính Tinh × 13 Chủ đề)
         </h3>
         <p class="text-xs text-muted mb-2">
-          Số trang chưa có lượt xem trong Top 50 đường dẫn: <strong>{zeroViewCount} / 182</strong> trang.
+          Số trang chưa có lượt xem trong khoảng ngày đã chọn: <strong>{zeroViewCount} / 182</strong> trang.
           {zeroViewSample.length > 0 && ` Ví dụ: ${zeroViewSample.slice(0, 6).join(', ')}...`}
         </p>
       </div>

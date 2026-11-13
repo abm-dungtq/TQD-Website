@@ -36,8 +36,8 @@ async function writeFetchedTextToClipboard(url: string): Promise<boolean> {
   }
 }
 
-function initPageActions() {
-  document.querySelectorAll<HTMLElement>('[data-page-actions]').forEach((bar) => {
+export function initPageActions(root: Document | HTMLElement = document, signal?: AbortSignal) {
+  root.querySelectorAll<HTMLElement>('[data-page-actions]').forEach((bar) => {
     if (bar.dataset.bound === '1') return;
     bar.dataset.bound = '1';
 
@@ -101,14 +101,14 @@ function initPageActions() {
       if (dropdown && ev.target instanceof Node && !dropdown.contains(ev.target)) {
         closeDropdown(false);
       }
-    });
+    }, { signal });
 
     document.addEventListener('keydown', (ev) => {
       if (ev.key === 'Escape' && panel && !panel.hidden) {
         ev.stopPropagation();
         closeDropdown(true);
       }
-    });
+    }, { signal });
 
     // Share / Copy canonical URL
     const shareBtn = bar.querySelector<HTMLButtonElement>('[data-share-page]');
@@ -134,8 +134,8 @@ function initPageActions() {
   });
 }
 
-function enhanceProseCodeBlocks() {
-  document.querySelectorAll<HTMLPreElement>('.prose-article pre').forEach((pre) => {
+export function enhanceProseCodeBlocks(root: Document | HTMLElement = document) {
+  root.querySelectorAll<HTMLPreElement>('.prose-article pre').forEach((pre) => {
     if (pre.dataset.copyEnhanced === '1') return;
     pre.dataset.copyEnhanced = '1';
 

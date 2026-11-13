@@ -149,12 +149,16 @@ function setupAnalyticsBeacon() {
     false,
   );
 
+  const accumulate = (now: number) => {
+    if (isVisible) {
+      accMs += Math.max(0, Math.min(now, lastAct + 30_000) - activeStart);
+    }
+    activeStart = now;
+  };
+
   const onAct = () => {
     const now = Date.now();
-    if (isVisible) {
-      if (now - lastAct <= 30_000) accMs += now - activeStart;
-      activeStart = now;
-    }
+    accumulate(now);
     lastAct = now;
   };
 
@@ -173,10 +177,7 @@ function setupAnalyticsBeacon() {
 
   const flush = () => {
     const now = Date.now();
-    if (isVisible && now - lastAct <= 30_000) {
-      accMs += now - activeStart;
-    }
-    activeStart = now;
+    accumulate(now);
     const ms = Math.min(1_800_000, Math.max(0, Math.round(accMs)));
     accMs = 0;
     // Skip empty duplicate flushes (e.g. pagehide immediately following visibilitychange -> hidden)
