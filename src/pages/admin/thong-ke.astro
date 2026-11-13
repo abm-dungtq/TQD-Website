@@ -614,7 +614,7 @@ for (const st of STARS_14) {
   <div class="mt-8 rounded-lg border border-line bg-panel p-5">
     <h2 class="mb-2 text-lg font-bold">Tổng hợp lại dữ liệu từ WAE sang D1 (Backfill)</h2>
     <p class="mb-4 text-xs text-muted">
-      Mỗi lần bấm xử lý tối đa 2 ngày (8 truy vấn WAE SQL) để đảm bảo an toàn dưới hạn mức subrequest của Cloudflare Worker.
+      Mỗi lần bấm xử lý tối đa 2 ngày (10 truy vấn WAE SQL) để đảm bảo an toàn dưới hạn mức subrequest của Cloudflare Worker.
     </p>
     <form method="post" action="/admin/api/analytics-rollup" class="flex flex-wrap items-end gap-4">
       <input type="hidden" name="range" value={String(rangeDays)} />

@@ -19,6 +19,7 @@ Production và preview dùng **chung dữ liệu**: binding `DB` → D1 `tqd_db`
 | `ADMIN_EMAIL` | `vars` trong `wrangler.jsonc` | Email đăng nhập `/admin` (khai báo ở cả gốc và `env.preview`) |
 | `ADMIN_PASSWORD_HASH` | secret | Chuỗi `pbkdf2-sha256$<vòng>$<salt>$<hash>`; không bao giờ lưu mật khẩu gốc |
 | `GOCLAW_BASE_URL`, `GOCLAW_AGENT`, `CHAT_DAILY_CAP`, `GOCLAW_API_KEY` | `vars` + secret | Chatbot; xem [chatbot.md](chatbot.md) |
+| `CF_ANALYTICS_TOKEN` | secret | Token có quyền đọc Account Analytics để truy vấn WAE SQL và tổng hợp dữ liệu cho `/admin/thong-ke`; xem [analytics-event-spec.md](analytics-event-spec.md) |
 
 Đặt hoặc đổi mật khẩu admin (chỉ hash đi qua pipe, không in ra màn hình):
 
@@ -28,6 +29,8 @@ node scripts/admin-password.mjs --generate .secrets/admin-next.txt | npx wrangle
 ```
 
 `--from <file>` băm mật khẩu đã lưu trong file. Chạy local cần `.dev.vars` chứa `ADMIN_PASSWORD_HASH='<hash>'` (dấu nháy đơn để `$` không bị hiểu là biến); `.dev.vars` và `.secrets/` đã nằm trong `.gitignore`.
+
+Secret cho WAE phải được đặt trên từng Worker cần tổng hợp dữ liệu; bản build không tự đưa secret từ `.dev.vars` lên production. Nếu thiếu `CF_ANALYTICS_TOKEN`, cron bỏ qua bước rollup và nút tổng hợp trong admin trả trạng thái `missing_token`. Đặt token qua đầu vào ẩn của `npx wrangler secret put CF_ANALYTICS_TOKEN --name tqd-website`, rồi tổng hợp lại các ngày còn truy vấn được theo [hướng dẫn quản trị](admin-agent-operations.md#cách-đọc-thống-kê-truy-cập).
 
 ## Deploy
 
