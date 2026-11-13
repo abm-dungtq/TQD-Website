@@ -32,6 +32,10 @@ node scripts/admin-password.mjs --generate .secrets/admin-next.txt | npx wrangle
 
 Secret cho WAE phải được đặt trên từng Worker cần tổng hợp dữ liệu; bản build không tự đưa secret từ `.dev.vars` lên production. Nếu thiếu `CF_ANALYTICS_TOKEN`, cron bỏ qua bước rollup và nút tổng hợp trong admin trả trạng thái `missing_token`. Đặt token qua đầu vào ẩn của `npx wrangler secret put CF_ANALYTICS_TOKEN --name tqd-website`, rồi tổng hợp lại các ngày còn truy vấn được theo [hướng dẫn quản trị](admin-agent-operations.md#cách-đọc-thống-kê-truy-cập).
 
+Để đọc dữ liệu WAE, Worker production dùng token `tqd-analytics-read` của tài khoản chứa `tqd-website`. Token chỉ có quyền **Account Analytics: Read** và được quản lý tại Cloudflare **My Profile → API Tokens**. Giá trị được lưu mã hóa trong secret `CF_ANALYTICS_TOKEN` của Worker.
+
+Người dùng đã duyệt cấu hình không hết hạn và không giới hạn IP cho production; preview được cấu hình riêng. Khi thay token, cần cập nhật secret của Worker trước, xác minh truy vấn hoạt động rồi mới thu hồi token cũ. Giữ giá trị token ngoài Git, tài liệu và log.
+
 ## Deploy
 
 ```bash

@@ -113,7 +113,7 @@ No Git push was requested or performed.
   reset and agent-created verification tabs closed; the user's session was not
   logged out. No production data restore or real AI generation was performed.
 
-Final state: **healthy**, with live WAE data/coverage validation blocked by the
+State before credential installation: **healthy**, with live WAE data/coverage validation blocked by the
 missing analytics token and empty rollup table. The user-visible missing-token
 behavior and the coverage label were verified. Full non-empty coverage computation
 remains covered by the passing regression suite, rather than a live WAE query.
@@ -121,3 +121,58 @@ remains covered by the passing regression suite, rather than a live WAE query.
 For a rollback to the immediately preceding deployment, use
 `npx wrangler rollback 5e1c5305-dd7c-44a0-8f2d-0b639dd4f4cb --name tqd-website`.
 The pre-task rollback version remains `4661b6e7-2558-46f3-880e-fa648162bd0e`.
+
+## Analytics credential follow-up
+
+After explicit confirmation at the token-creation step, created the user API token
+`tqd-analytics-read` with Account Analytics Read permission scoped to the account
+containing `tqd-website`. The approved settings are no expiration and no client-IP
+filter. The value was transferred within the browser session into the production
+secret `CF_ANALYTICS_TOKEN`; the dashboard confirmed `Secret / Value encrypted`.
+No raw value was printed, written to the repository, or saved in a local file.
+Temporary credential variables and clipboard contents were cleared afterwards.
+
+- Secret-update version: `d65a1186-881e-4134-8a04-07b17ee86c8b`.
+- Deployment: `29a1cc3c-44be-4b2a-9f61-05a91b2fbf88`, created
+  `2026-11-13T10:38:56.894352Z` (17:38:56 Vietnam time), 100% traffic.
+- Provider metadata confirms an encrypted `CF_ANALYTICS_TOKEN` binding.
+- Public live/cache checks still pass (`OK live`, three `HIT@104` responses).
+- After the user renewed the admin browser sign-in, live rollups succeeded for
+  both sites. No application-code change was needed for credential installation.
+
+## Credential and live rollup acceptance — completed
+
+The deployed Worker successfully queried WAE with the new encrypted secret. Admin
+refresh returned `rollup=ok` for both `tqd.me` and `tuvi.tqd.me`. A bounded two-day
+backfill (November 12–13, 2026, Vietnam time) also returned `rollup=ok` for each site.
+All five production SQL queries per site/day therefore executed successfully.
+
+Independent readback from remote D1 confirmed four site/day groups:
+
+| Site | Vietnam day | Pageviews | Visits | Visitor-days | Metric rows |
+|---|---|---:|---:|---:|---:|
+| tqd.me | 2026-11-12 | 51 | 37 | 30 | 54 |
+| tqd.me | 2026-11-13 | 24 | 13 | 11 | 71 |
+| tuvi.tqd.me | 2026-11-12 | 68 | 41 | 36 | 102 |
+| tuvi.tqd.me | 2026-11-13 | 26 | 18 | 16 | 61 |
+
+These are snapshots at verification time, not complete-day forecasts. Only those
+two days have been backfilled; the seven-day filter is not a full historical import.
+
+The `tuvi.tqd.me` admin view showed 94 pageviews, 59 visits and 52 visitor-days for
+the stored two days. Knowledge coverage matched an independent D1 query restricted
+to the exact 14-star × 13-topic URL set: one topic page had a view, so the UI correctly
+reported 181/182 topic pages without views. The two additional viewed star landing
+pages are not members of that 182-page topic set. High-cardinality 20/50-path cases
+remain covered by regression tests rather than artificial production traffic.
+
+The missing-token blocker is resolved. Final credential/rollup state: **healthy and
+verified with real production data**. The token is account-scoped, read-only,
+non-expiring and stored only as the encrypted production Worker secret. Preview
+was not changed. The final admin dashboard was retained for the user to inspect.
+
+Documentation QA: the added Vietnamese credential instructions pass lint. After
+two targeted revisions, the editorial gate returned rhythm 2.25/3 and still flagged
+`artificial_dialogue`. The verified configuration facts were preserved; no gate
+pass is claimed for this documentation paragraph. This editorial result does not
+change the successful live credential and rollup verification above.
