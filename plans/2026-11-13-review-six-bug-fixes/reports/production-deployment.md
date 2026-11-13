@@ -1,6 +1,6 @@
 # Production deployment — 2026-11-13
 
-## Revision and provider state
+## Initial deployment and provider state
 
 - Application revision: `d880e98` on `main`.
 - Commits: `ae142af` (Viral quota/cache), `7d71c1d` (mobile/analytics),
@@ -90,3 +90,34 @@ AI generation was requested; the transcribe limit test reached daemon health onl
 
 No schema migration was performed. Rollback changes Worker code, not D1/R2 data.
 No Git push was requested or performed.
+
+## Final deployment and repeated verification
+
+- Final application revision: `62ae6f6` (adds the corrected 10-query admin hint and
+  operational documentation to the three initial commits).
+- Worker version: `11615ce3-14b7-4a21-8da6-4013f9d0b826`.
+- Deployment: `efa0b2d1-08a7-4a73-8fe7-53dd04e933cf`, created
+  `2026-11-13T08:39:12.742448Z` (15:39:12 Vietnam time), 100% traffic.
+- Provider metadata confirmed tag `62ae6f6`; no `CF_ANALYTICS_TOKEN` is configured.
+- Final deploy command used the same production route with `--tag 62ae6f6`.
+  Privacy gate, Astro checks (180 files; zero diagnostics) and build passed.
+- Repeated `npm test`: 232/232 tests, 39/39 files passed.
+- Repeated site, live, cache and production privacy checks all passed; cache remained
+  `HIT@104`, privacy checked 672 fingerprints over 55 targets.
+- Repeated all eight bounded Viral API checks on the final deployment: passed;
+  daily quota stayed zero for rejected/cache requests, a valid share charged once,
+  and temporary rows/counters were cleaned up again.
+- Reloaded the authenticated production admin page and observed the corrected
+  text: two days require 10 WAE SQL queries.
+- Admin login handoff completed successfully. Temporary browser overrides were
+  reset and agent-created verification tabs closed; the user's session was not
+  logged out. No production data restore or real AI generation was performed.
+
+Final state: **healthy**, with live WAE data/coverage validation blocked by the
+missing analytics token and empty rollup table. The user-visible missing-token
+behavior and the coverage label were verified. Full non-empty coverage computation
+remains covered by the passing regression suite, rather than a live WAE query.
+
+For a rollback to the immediately preceding deployment, use
+`npx wrangler rollback 5e1c5305-dd7c-44a0-8f2d-0b639dd4f4cb --name tqd-website`.
+The pre-task rollback version remains `4661b6e7-2558-46f3-880e-fa648162bd0e`.
