@@ -40,6 +40,10 @@ trình duyệt (/tai-video Tab 2)
 | **Public** (Khách) | `1080p Full HD` · `200 MB` · Batch `25` | Tối đa `5 phút` (`300s`) | Tải: 15/giờ/visitor · Bóc băng mới: 8/giờ/visitor (trần ngày `VIRAL_DAILY_CAP` = 150; Cache Hit không tính lượt) · Sinh kịch bản: 20/giờ/visitor |
 | **Admin** (Chủ web / API Key) | `2160p 4K Ultra HD` · `2000 MB` · Batch `100` | Tối đa `30 phút` (`1800s`) | Mở khóa toàn bộ hạn mức khách vãng lai |
 
+Giới hạn thời lượng áp dụng cả khi transcript đã có trong cache, kể cả bản do admin tạo. Các endpoint bóc băng, sinh kịch bản và chia sẻ trả lỗi `400 video_too_long` nếu transcript vượt thời lượng của người gọi. Cache hit hợp lệ vẫn không tính lượt bóc băng. Nếu cần gọi daemon để phân giải URL rút gọn, hệ thống đặt trước một lượt quota ngày và hoàn lại khi tìm thấy cache; kết quả daemon bị từ chối vì quá thời lượng cũng được hoàn lượt này.
+
+Bóc băng mới và chia sẻ kiểm tra hạn mức visitor/IP trước khi tính quota ngày dùng chung. Request đã bị chặn theo visitor/IP không làm tăng quota ngày; chia sẻ chỉ tính quota ngày sau khi kiểm tra transcript và nội dung hợp lệ.
+
 Cron hằng đêm trong `src/worker.ts` gọi `cleanupDlLimits(env.DB)` và `cleanupViralCache(env.DB)` để dọn các dòng `rate_limits` cũ hơn 2 ngày cùng dữ liệu đệm `viral_transcripts`, `viral_shares` cũ hơn 30 ngày.
 
 ## 4. Cấu hình biến môi trường & Bindings

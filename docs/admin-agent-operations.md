@@ -133,7 +133,7 @@ Những dữ liệu sau chưa có JSON, agent phải đọc HTML:
 | Danh sách sản phẩm/video kèm id | `GET /admin/muc/{loại}` | id nằm trong liên kết `href="/admin/muc/{loại}/{id}"` của mỗi dòng bảng |
 | Chi tiết một mục | `GET /admin/muc/{loại}/{id}` | Giá trị nằm trong `value`/nội dung của các ô form (`title`, `date`, `summary`, `tags`, `links`, `sort`, `visible`, `tiktokUrl`, `coverKey`) |
 | Danh sách media | `GET /admin/media` | Mỗi dòng có `<code class="text-xs">{key}</code>`, cột loại tệp và dung lượng |
-| Bản sao lưu | `GET /admin/sao-luu` | Mỗi dòng có `<code>backups/....json</code>` |
+| Bản sao lưu | `GET /admin/sao-luu` | Mỗi dòng có `<code>backups/....json.gz</code>` hoặc đuôi `.json.gz.enc` |
 | Thống kê chat | `GET /admin/chat` | Bảng "Tổng hợp" và "Theo ngày" (90 ngày) |
 | Tổng quan | `GET /admin` | Số sản phẩm, số mục thư viện, số video, lượt chat hôm nay, phiên bản nội dung |
 
@@ -274,7 +274,7 @@ Form admin vẫn dùng được khi cần đăng bài mà key không có quyền
 
 ### Sao lưu — `POST /admin/sao-luu`
 
-Không cần trường nào. Phản hồi là HTML 200 (không chuyển hướng) có `<code data-backup-key>backups/YYYY-MM-DD.json</code>`. Site tự sao lưu lúc 02:00 giờ Việt Nam và giữ 30 bản mới nhất. Sao lưu cùng ngày ghi đè bản của ngày đó. Cách khôi phục: [backup-restore.md](backup-restore.md).
+Không cần trường nào. Phản hồi là HTML 200 (không chuyển hướng) có `<code data-backup-key>backups/YYYY-MM-DD.json.gz</code>` (đuôi `.json.gz.enc` nếu mã hóa). Site tự sao lưu lúc 02:00 giờ Việt Nam và giữ 30 bản mới nhất. Sao lưu cùng ngày và cùng định dạng ghi đè cùng object. Nếu đổi chế độ mã hóa trong ngày, cả hai object `.json.gz` và `.json.gz.enc` có thể cùng tồn tại. Cách khôi phục: [backup-restore.md](backup-restore.md).
 
 Agent nên sao lưu ngay trước mọi thay đổi lớn: sửa hàng loạt, thay cả thư viện, xoá mục hoặc xoá media.
 
@@ -301,3 +301,13 @@ Chỉ tạo key khi người dùng yêu cầu. Không tự cấp quyền `publis
 - Thử trên bản preview `tqd-next` trước khi làm trên `tqd.me` (cách lấy địa chỉ và mật khẩu preview: [deployment.md](deployment.md)).
 - Sau khi đăng hoặc sửa nội dung chatbot cần biết, đồng bộ kiến thức cho chatbot theo [chatbot.md](chatbot.md).
 - Kiểm tra đầu-cuối luồng phiên admin: `TQD_ADMIN_PASSWORD=... node scripts/verify/admin.mjs <base-url>`. Kịch bản này thử đăng nhập, sửa hồ sơ, chặn sai `Origin`, đăng xuất và khoá sau 5 lần sai, nên sau khi chạy phải chờ 15 phút mới đăng nhập lại được từ cùng IP.
+
+## Cách đọc thống kê truy cập
+
+Bảng đường dẫn phổ biến ở `/admin/thong-ke` hiển thị top 20. Độ phủ 182 trang Bách Khoa được tính từ toàn bộ đường dẫn có lượt xem trong dữ liệu tổng hợp của khoảng ngày đã chọn, không dùng danh sách top 20. Rollup truy vấn riêng từng đường dẫn thuộc `knowledge`, nên số tổ hợp nguồn truy cập không làm mất trang khỏi phép đếm độ phủ.
+
+Các bản tổng hợp cũ từng chỉ giữ top 50; cần tổng hợp lại các ngày còn truy vấn được từ WAE bằng `POST /admin/api/analytics-rollup` (`site`, `fromDay`, `toDay`, `range`) để khôi phục phần đường dẫn đã bị bỏ trước đây.
+
+Mỗi lần xử lý tối đa hai ngày; làm tiếp theo `nextFrom` khi nhận trạng thái `partial`.
+
+Trên `tqd.me`, thời gian đọc chỉ tính lúc tab hiện và tối đa 30 giây sau thao tác cuối. Khi qua ngưỡng nghỉ, phần thời gian trước ngưỡng vẫn được giữ; thời gian tab ẩn không được cộng. Hợp đồng cột sự kiện dùng chung vẫn theo [analytics-event-spec.md](analytics-event-spec.md).
