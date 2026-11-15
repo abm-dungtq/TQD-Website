@@ -5,9 +5,15 @@ export const SPRING = 'cubic-bezier(.2,1.15,.3,1)';
 
 export const reducedMotion = (): boolean => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-/** Runs a Web Animation and resolves when it ends or is cancelled; resolves at once under reduced motion. */
+/** True when reduced motion, headless automation (`navigator.webdriver`), or `?reduced=1` requests low-power playback. */
+export const lowPowerMotion = (): boolean =>
+  reducedMotion() ||
+  navigator.webdriver === true ||
+  new URLSearchParams(window.location.search).get('reduced') === '1';
+
+/** Runs a Web Animation and resolves when it ends or is cancelled; resolves at once under low-power motion. */
 export async function play(el: Element, keyframes: Keyframe[], options: KeyframeAnimationOptions): Promise<void> {
-  if (reducedMotion()) return;
+  if (lowPowerMotion()) return;
   try {
     await el.animate(keyframes, options).finished;
   } catch (e) {

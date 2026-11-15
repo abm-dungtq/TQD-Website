@@ -3,7 +3,7 @@ import { env } from 'cloudflare:workers';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Icon from '../../components/Icon.astro';
 import PageActions from '../../components/PageActions.astro';
-import { getArticle, getSite, listArticles, mediaUrl } from '../../lib/content';
+import { clampMetaDescription, getArticle, getSite, listArticles, mediaUrl } from '../../lib/content';
 import { articleNode, breadcrumbNode, personNode, toIsoUtc } from '../../lib/structured-data';
 import { estimateReadingMinutes, injectHeadingIdsAndToc } from '../../lib/toc';
 
@@ -46,7 +46,7 @@ const formatDateShort = (iso?: string) => (iso ? iso.slice(0, 10).split('-').rev
 <BaseLayout
   site={site}
   title={article.title}
-  description={article.summary || article.title}
+  description={clampMetaDescription(article.summary || article.title, 158)}
   path={`/bai-viet/${article.slug}`}
   ogType="article"
   markdownPath={`/bai-viet/${article.slug}.md`}

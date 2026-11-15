@@ -230,17 +230,40 @@ export const toArticle = (r: ArticleRow): Article => ({
 const LIST_COLUMNS =
   "id, slug, title, summary, '' AS body_md, '' AS body_html, cover_key, tags, status, source, fb_overlap, version, published_at, updated_at";
 
+const FULL_ARTICLE_COLUMNS =
+  'id, slug, title, summary, body_md, body_html, cover_key, tags, status, source, fb_overlap, version, published_at, updated_at';
+
+async function queryArticles(
+  db: D1Database,
+  opts: { columns: string; where: string; order: string; limit: number },
+): Promise<Article[]> {
+  const { results } = await db
+    .prepare(`SELECT ${opts.columns} FROM articles ${opts.where} ORDER BY ${opts.order}, id DESC LIMIT ?1`)
+    .bind(opts.limit)
+    .all<ArticleRow>();
+  return results.map(toArticle);
+}
+
 export async function listArticles(
   db: D1Database,
   opts: { includeDrafts?: boolean; limit?: number } = {},
 ): Promise<Article[]> {
-  const where = opts.includeDrafts ? '' : "WHERE status = 'published'";
-  const order = opts.includeDrafts ? 'updated_at DESC' : 'published_at DESC';
-  const { results } = await db
-    .prepare(`SELECT ${LIST_COLUMNS} FROM articles ${where} ORDER BY ${order}, id DESC LIMIT ?`)
-    .bind(opts.limit ?? 200)
-    .all<ArticleRow>();
-  return results.map(toArticle);
+  return queryArticles(db, {
+    columns: LIST_COLUMNS,
+    where: opts.includeDrafts ? '' : "WHERE status = 'published'",
+    order: opts.includeDrafts ? 'updated_at DESC' : 'published_at DESC',
+    limit: opts.limit ?? 200,
+  });
+}
+
+/** Load newest published articles including full body_md and body_html (for llms-full.txt & feeds). */
+export async function listRecentArticlesWithBody(db: D1Database, limit = 12): Promise<Article[]> {
+  return queryArticles(db, {
+    columns: FULL_ARTICLE_COLUMNS,
+    where: "WHERE status = 'published'",
+    order: 'published_at DESC',
+    limit,
+  });
 }
 
 export async function getArticle(db: D1Database, slug: string, opts: { includeDrafts?: boolean } = {}): Promise<Article | null> {
@@ -277,10 +300,80 @@ export const introParagraphs = (intro: string): string[] =>
     .map((p) => p.trim())
     .filter(Boolean);
 
-/** Most recent update date (YYYY-MM-DD) across content, for sitemaps. */
-export async function lastModified(db: D1Database): Promise<string> {
+const FALLBACK_LASTMOD = '2026-10-12';
+const FALLBACK_ISO_UTC = `${FALLBACK_LASTMOD}T00:00:00.000Z`;
+
+/** Normalize SQLite `YYYY-MM-DD HH:MM:SS`, date-only, or ISO strings into full ISO 8601 UTC (`...Z`). */
+export function toIsoUtc(dateLike: string): string {
+  const raw = dateLike.trim();
+  if (!raw) return FALLBACK_ISO_UTC;
+  const normalized = /^\d{4}-\d{2}-\d{2}$/.test(raw)
+    ? `${raw}T00:00:00Z`
+    : /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(raw)
+      ? `${raw.replace(' ', 'T')}Z`
+      : raw;
+  const parsed = new Date(normalized);
+  return Number.isNaN(parsed.getTime()) ? FALLBACK_ISO_UTC : parsed.toISOString();
+}
+
+/** Clamp a meta description cleanly on a word boundary, appending `…` when truncated. */
+export function clampMetaDescription(text: string, max = 158): string {
+  const clean = text.replace(/\s+/g, ' ').trim();
+  if (!clean || max <= 0) return '';
+  if (clean.length <= max) return clean;
+  if (max === 1) return '…';
+  const slice = clean.slice(0, max - 1);
+  const lastSpace = slice.lastIndexOf(' ');
+  const boundary = lastSpace >= Math.floor((max - 1) * 0.5) ? slice.slice(0, lastSpace) : slice;
+  return `${boundary.replace(/[\s,;:.·-]+$/, '')}…`;
+}
+
+export const SECTION_SEO: Record<SectionId, { title: string; description: string }> = {
+  'ho-so': {
+    title: 'Hồ sơ năng lực đào tạo và triển khai AI thực tế',
+    description:
+      'Kinh nghiệm đào tạo AI nội bộ tại BSR, Agribank, ABIC, Hanoitourist và thiết kế AI Agent, Skill vận hành doanh nghiệp của Trịnh Quang Dũng.',
+  },
+  'san-pham': {
+    title: 'Sản phẩm phần mềm, Skill và công cụ AI thực chiến',
+    description:
+      'Bộ công cụ AI và phần mềm của Trịnh Quang Dũng gồm Viết Pro, Tải Video và Mổ xẻ Viral, TQD-Clean Your Mac, Tử Vi Đầu Số và các ứng dụng.',
+  },
+  'thu-vien': {
+    title: 'Thư viện hình ảnh và video đào tạo AI doanh nghiệp',
+    description:
+      'Tư liệu hình ảnh và video các buổi huấn luyện AI cho doanh nghiệp, lớp thực hành xây dựng Agent và quy trình vận hành cùng Trịnh Quang Dũng.',
+  },
+  'video-ai': {
+    title: 'Video AI, phim ngắn và thử nghiệm kịch bản thực tế',
+    description:
+      'Tuyển tập video sản xuất bằng AI, phim ngắn thử nghiệm và chia sẻ quy trình dựng kịch bản từ kênh TikTok @abmdungtq của Trịnh Quang Dũng.',
+  },
+  'bai-viet': {
+    title: 'Bài viết kỹ thuật AI Agent, Skill và vận hành SME',
+    description:
+      'Ghi chép thực chiến về thiết kế AI Agent, đóng gói Skill chống văn mẫu Viết Pro, tối ưu chi phí và đưa AI vào công việc hằng ngày tại Việt Nam.',
+  },
+  'lien-he': {
+    title: 'Liên hệ đặt lịch đào tạo và tư vấn triển khai AI',
+    description:
+      'Kết nối trực tiếp với Trịnh Quang Dũng qua Zalo, email công việc hoặc GitHub để trao đổi đào tạo AI nội bộ và thiết kế Agent cho doanh nghiệp.',
+  },
+};
+
+async function rawLastModified(db: D1Database): Promise<string | null> {
   const row = await db
     .prepare('SELECT MAX(m) AS m FROM (SELECT MAX(updated_at) AS m FROM items UNION ALL SELECT MAX(updated_at) FROM articles)')
     .first<{ m: string | null }>();
-  return (row?.m ?? '2026-10-12').slice(0, 10);
+  return row?.m ?? null;
+}
+
+/** Most recent update date (YYYY-MM-DD) across content, for sitemaps. */
+export async function lastModified(db: D1Database): Promise<string> {
+  return ((await rawLastModified(db)) ?? FALLBACK_LASTMOD).slice(0, 10);
+}
+
+/** Most recent update timestamp in full ISO 8601 UTC format across content. */
+export async function lastModifiedIso(db: D1Database): Promise<string> {
+  return toIsoUtc((await rawLastModified(db)) ?? FALLBACK_LASTMOD);
 }

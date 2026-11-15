@@ -1,22 +1,58 @@
 // Markdown versions of the site content, for /index.md, /{section}.md, /llms.txt and /llms-full.txt readers.
-import { isVideoKey, mediaUrl, type Item, type SectionId, type SiteData } from './content';
+import { isVideoKey, mediaUrl, toIsoUtc, type Article, type Item, type SectionId, type Site, type SiteData } from './content';
 
 const DEFAULT_SITE = 'https://tqd.me';
+const MAX_LLMS_FULL_CHARS = 120_000;
+const MAX_LLMS_FULL_ARTICLES = 12;
+
+export interface MarkdownFrontmatter {
+  source: string;
+  title: string;
+  author?: string;
+  updated?: string;
+  summary?: string;
+  tags?: string[];
+  curated?: boolean;
+  robots?: string;
+}
+
+/** Serialize Markdown YAML frontmatter safely using JSON string escaping. */
+export function renderFrontmatter(meta: MarkdownFrontmatter): string {
+  const lines = ['---', `source: ${JSON.stringify(meta.source)}`, `title: ${JSON.stringify(meta.title)}`];
+  if (meta.author) lines.push(`author: ${JSON.stringify(meta.author)}`);
+  if (meta.updated) lines.push(`updated: ${JSON.stringify(toIsoUtc(meta.updated))}`);
+  if (meta.summary) lines.push(`summary: ${JSON.stringify(meta.summary)}`);
+  if (meta.tags && meta.tags.length > 0) {
+    lines.push(`tags: [${meta.tags.map((tag) => JSON.stringify(tag)).join(', ')}]`);
+  }
+  if (typeof meta.curated === 'boolean') lines.push(`curated: ${meta.curated}`);
+  if (meta.robots) lines.push(`robots: ${JSON.stringify(meta.robots)}`);
+  lines.push('---');
+  return lines.join('\n');
+}
+
+function stripFrontmatter(md: string): string {
+  return md.replace(/^---\n[\s\S]*?\n---\n+/, '');
+}
+
+const cleanSite = (site = DEFAULT_SITE) => site.replace(/\/+$/, '');
 
 const itemMarkdown = (item: Item, site = DEFAULT_SITE): string => {
+  const base = cleanSite(site);
   const lines = [`### ${item.title}`, ''];
   if (item.date) lines.push(`_${item.date}_`, '');
-  if (item.coverKey && item.kind === 'product') lines.push(`![${item.title}](${site}${mediaUrl(item.coverKey)})`, '');
+  if (item.coverKey && item.kind === 'product') lines.push(`![${item.title}](${base}${mediaUrl(item.coverKey)})`, '');
   lines.push(item.summary, '', `Nhãn: ${item.tags.join(', ')}`);
   if (item.tiktokId) lines.push('', `Video: https://www.tiktok.com/player/v1/${item.tiktokId}`);
   // Links to the site's own pages are stored relative; markdown readers need them absolute.
-  if (item.links?.length) lines.push('', item.links.map((l) => `[${l.label}](${l.href.startsWith('/') ? site + l.href : l.href})`).join(' · '));
+  if (item.links?.length) lines.push('', item.links.map((l) => `[${l.label}](${l.href.startsWith('/') ? base + l.href : l.href})`).join(' · '));
   return lines.join('\n');
 };
 
 const list = (items: string[]) => items.map((i) => `- ${i}`).join('\n');
 
 function sectionBody(id: SectionId, data: SiteData, site = DEFAULT_SITE): string {
+  const base = cleanSite(site);
   const person = data.site.person;
   const links = data.site.links ?? [];
   const topics = data.site.topics ?? { howTo: [], marketWatch: [] };
@@ -31,15 +67,28 @@ function sectionBody(id: SectionId, data: SiteData, site = DEFAULT_SITE): string
         '',
         list(person?.focus ?? []),
       ].join('\n');
-    case 'san-pham':
-      return data.products.map((p) => itemMarkdown(p, site)).join('\n\n');
+    case 'san-pham': {
+      const items = data.products.map((p) => itemMarkdown(p, base));
+      items.push(
+        [
+          '### Tải Video & Mổ Xẻ Kịch Bản Viral AI',
+          '',
+          'Công cụ web tải video đa nền tảng chuẩn H.264, tách MP3 320kbps, bóc băng lời thoại AI (SRT) và viết lại kịch bản chuẩn chống văn mẫu **Viết Pro**.',
+          '',
+          'Nhãn: Công cụ web, Viral AI, Viết Pro',
+          '',
+          `[Mở công cụ](${base}/tai-video) · [Bản Markdown](${base}/tai-video.md)`,
+        ].join('\n'),
+      );
+      return items.join('\n\n');
+    }
     case 'thu-vien':
-      return list((data.site.gallery ?? []).map((g) => `${isVideoKey(g.key) ? 'Video' : 'Ảnh'}: [${g.caption}](${site}${mediaUrl(g.key)})`));
+      return list((data.site.gallery ?? []).map((g) => `${isVideoKey(g.key) ? 'Video' : 'Ảnh'}: [${g.caption}](${base}${mediaUrl(g.key)})`));
     case 'video-ai':
-      return data.videos.map((v) => itemMarkdown(v, site)).join('\n\n');
+      return data.videos.map((v) => itemMarkdown(v, base)).join('\n\n');
     case 'bai-viet':
       return data.articles.length
-        ? list(data.articles.map((a) => `[${a.title}](${site}/bai-viet/${a.slug}.md)${a.summary ? `: ${a.summary}` : ''}`))
+        ? list(data.articles.map((a) => `[${a.title}](${base}/bai-viet/${a.slug}.md)${a.summary ? `: ${a.summary}` : ''}`))
         : ['Chưa có bài viết.', '', '### Chủ đề thường viết', '', list([...topics.howTo, ...topics.marketWatch])].join('\n');
     case 'lien-he':
       return list(links.map((l) => `${l.label}: [${l.href.replace(/^mailto:/, '')}](${l.href})`));
@@ -47,44 +96,93 @@ function sectionBody(id: SectionId, data: SiteData, site = DEFAULT_SITE): string
 }
 
 export function sectionMarkdown(id: SectionId, data: SiteData, site = DEFAULT_SITE, lastmod?: string): string | null {
+  const base = cleanSite(site);
   const section = data.site.sections.find((s) => s.id === id);
   if (!section) return null;
   const personName = data.site.person?.name ?? 'Trịnh Quang Dũng';
   const personHandle = data.site.person?.handle ?? 'DũngTQ';
-  const metaParts = [`Nguồn: ${site}/${id}`, `Tác giả: ${personName} (${personHandle})`];
-  if (lastmod) metaParts.push(`Cập nhật: ${lastmod}`);
+  const title = `${section.title} · ${personHandle}`;
+  const frontmatter = renderFrontmatter({
+    source: `${base}/${id}`,
+    title,
+    author: `${personName} (${personHandle})`,
+    updated: lastmod,
+    summary: section.short || undefined,
+  });
 
-  const lines = [
-    `# ${section.title} · ${personHandle}`,
-    '',
-    `> ${metaParts.join(' · ')}`,
-  ];
+  const lines = [frontmatter, '', `# ${title}`];
   if (section.short) {
     lines.push('', section.short);
   }
-  lines.push('', sectionBody(id, data, site), '');
+  lines.push('', sectionBody(id, data, base), '');
   return lines.join('\n');
 }
 
-export function profileMarkdown(data: SiteData, site = DEFAULT_SITE): string {
+export function profileMarkdown(data: SiteData, site = DEFAULT_SITE, lastmod?: string): string {
+  const base = cleanSite(site);
   const { person, sections } = data.site;
-  const parts = sections.map((s) => `## ${s.title}\n\n${sectionBody(s.id, data, site)}\n`);
+  const parts = sections.map((s) => `## ${s.title}\n\n${sectionBody(s.id, data, base)}\n`);
+  const title = `${person.name} (${person.handle})`;
+  const frontmatter = renderFrontmatter({
+    source: `${base}/`,
+    title,
+    author: title,
+    updated: lastmod,
+    summary: person.role,
+  });
+
   return [
-    `# ${person.name} (${person.handle})`,
+    frontmatter,
+    '',
+    `# ${title}`,
     '',
     `> ${person.role}`,
     '',
-    `Website: ${site} · Đặt lịch tư vấn AI Doanh nghiệp: https://zalo.me/trinhquangdung`,
+    `Website: ${base} · Đặt lịch tư vấn AI Doanh nghiệp: https://zalo.me/trinhquangdung`,
     '',
     ...parts,
   ].join('\n');
 }
 
-export function taiVideoMarkdown(site = DEFAULT_SITE): string {
+export function articleMarkdown(article: Article, site: Site, origin = DEFAULT_SITE): string {
+  const base = cleanSite(origin);
+  const author = `${site.person.name} (${site.person.handle})`;
+  const frontmatter = renderFrontmatter({
+    source: `${base}/bai-viet/${article.slug}`,
+    title: article.title,
+    author,
+    updated: article.updatedAt,
+    summary: article.summary || undefined,
+    tags: article.tags,
+  });
+
+  const lines = [frontmatter, '', `# ${article.title}`, ''];
+  if (article.publishedAt) {
+    lines.push(`Đăng ngày: ${toIsoUtc(article.publishedAt)}`, '');
+  }
+  if (article.summary) {
+    lines.push(`_${article.summary}_`, '');
+  }
+  lines.push(article.bodyMd.trim(), '');
+  return lines.join('\n');
+}
+
+export function taiVideoMarkdown(site = DEFAULT_SITE, lastmod?: string): string {
+  const base = cleanSite(site);
+  const title = 'Tải Video Đa Nền Tảng & Xưởng Mổ Xẻ Kịch Bản Viral AI (Viết Pro)';
+  const frontmatter = renderFrontmatter({
+    source: `${base}/tai-video`,
+    title,
+    author: 'Trịnh Quang Dũng (DũngTQ)',
+    updated: lastmod,
+    summary: 'Công cụ tải video MP4 chuẩn H.264, tách nhạc MP3 320kbps, bóc băng lời thoại AI (SRT) và viết lại kịch bản chuẩn chống văn mẫu Viết Pro.',
+    tags: ['Tải video', 'Viral AI', 'Viết Pro', 'SRT'],
+  });
+
   return [
-    '# Tải Video Đa Nền Tảng & Xưởng Mổ Xẻ Kịch Bản Viral AI (Viết Pro)',
+    frontmatter,
     '',
-    `> Nguồn: ${site}/tai-video · Tác giả: Trịnh Quang Dũng (DũngTQ)`,
+    `# ${title}`,
     '',
     '## Tính năng chính',
     '',
@@ -100,11 +198,21 @@ export function taiVideoMarkdown(site = DEFAULT_SITE): string {
   ].join('\n');
 }
 
-export function privacyMarkdown(site = DEFAULT_SITE, email = 'dungtq.ceo@gmail.com'): string {
+export function privacyMarkdown(site = DEFAULT_SITE, email = 'dungtq.ceo@gmail.com', lastmod?: string): string {
+  const base = cleanSite(site);
+  const title = 'Chính sách Quyền riêng tư · DũngTQ';
+  const frontmatter = renderFrontmatter({
+    source: `${base}/quyen-rieng-tu`,
+    title,
+    author: 'Trịnh Quang Dũng (DũngTQ)',
+    updated: lastmod,
+    summary: `Nguyên tắc bảo mật dữ liệu tại ${base}: không quảng cáo, không theo dõi chéo trang. Liên hệ ${email}.`,
+  });
+
   return [
-    '# Chính sách Quyền riêng tư · DũngTQ',
+    frontmatter,
     '',
-    `> Nguồn: ${site}/quyen-rieng-tu · Chủ sở hữu dữ liệu: Trịnh Quang Dũng (DũngTQ) · Liên hệ: ${email}`,
+    `# ${title}`,
     '',
     'Trang web này được vận hành với nguyên tắc tôn trọng tuyệt đối quyền riêng tư của người đọc: không quảng cáo, không theo dõi chéo trang (cross-site tracking), và không bán hay chia sẻ dữ liệu cho bên thứ ba.',
     '',
@@ -128,7 +236,14 @@ export function privacyMarkdown(site = DEFAULT_SITE, email = 'dungtq.ceo@gmail.c
   ].join('\n');
 }
 
+function resolveProductUrl(item: Item, base: string): string {
+  const firstHref = item.links?.[0]?.href;
+  if (!firstHref) return `${base}/san-pham`;
+  return firstHref.startsWith('/') ? `${base}${firstHref}` : firstHref;
+}
+
 export function llmsText(data: SiteData, site = DEFAULT_SITE): string {
+  const base = cleanSite(site);
   const { person, sections } = data.site;
   const lines = [
     `# ${person.name} (${person.handle})`,
@@ -140,66 +255,184 @@ export function llmsText(data: SiteData, site = DEFAULT_SITE): string {
     `- Tư vấn & Đào tạo AI Doanh nghiệp (Zalo trực tiếp): https://zalo.me/trinhquangdung`,
     `- Email công việc: mailto:${person.email || 'dungtq.ceo@gmail.com'}`,
     '',
+    '## Sản phẩm & Công cụ AI nổi bật',
+    '',
+    ...data.products.map((p) => `- [${p.title}](${resolveProductUrl(p, base)}): ${p.summary}`),
+    `- [Tải Video & Xưởng Mổ Xẻ Kịch Bản Viral AI](${base}/tai-video): Công cụ web tải MP4 H.264, tách MP3 320kbps, bóc băng lời thoại (SRT) và viết lại kịch bản chuẩn chống văn mẫu Viết Pro (bản Markdown tại ${base}/tai-video.md)`,
+    '',
     '## Pages',
     '',
-    ...sections.map((s) => `- [${s.title}](${site}/${s.id}.md): ${s.short}`),
-    `- [Tải Video & Xưởng Mổ Xẻ Kịch Bản Viral AI](${site}/tai-video.md): Tải video MP4 chuẩn H.264, tách nhạc MP3 320kbps, bóc băng lời thoại AI (Transcript/SRT) và viết lại kịch bản chuẩn chống văn mẫu Viết Pro`,
-    `- [Chính sách Quyền riêng tư](${site}/quyen-rieng-tu.md): Nguyên tắc bảo mật dữ liệu, không quảng cáo, không theo dõi chéo trang và tự động xóa file tạm`,
+    ...sections.map((s) => `- [${s.title}](${base}/${s.id}.md): ${s.short}`),
+    `- [Tải Video & Xưởng Mổ Xẻ Kịch Bản Viral AI](${base}/tai-video.md): Tài liệu Markdown đầy đủ về tính năng tải video, X-Quang Viral và kiểm định Viết Pro`,
+    `- [Chính sách Quyền riêng tư](${base}/quyen-rieng-tu.md): Nguyên tắc bảo mật dữ liệu, không quảng cáo, không theo dõi chéo trang và tự động xóa file tạm`,
   ];
   if (data.articles.length) {
     lines.push(
       '',
       '## Bài viết',
       '',
-      ...data.articles.map((a) => `- [${a.title}](${site}/bai-viet/${a.slug}.md)${a.summary ? `: ${a.summary}` : ''}`),
+      ...data.articles.map((a) => `- [${a.title}](${base}/bai-viet/${a.slug}.md)${a.summary ? `: ${a.summary}` : ''}`),
     );
   }
   lines.push(
     '',
+    '## Danh mục máy đọc (Machine Discovery)',
+    '',
+    `- [Agent Card (A2A)](${base}/.well-known/agent.json): Mô tả năng lực, công cụ WebMCP và endpoint máy đọc của ${base}`,
+    `- [Catalog JSON](${base}/catalog.json): Danh mục có cấu trúc gồm sản phẩm, video AI, bài viết và mẫu X-Quang Viral tiêu biểu`,
+    `- [RSS 2.0 Feed](${base}/rss.xml): Nguồn cấp RSS bài viết mới nhất`,
+    `- [JSON Feed 1.1](${base}/feed.json): Nguồn cấp bài viết định dạng JSON Feed`,
+    `- [XML Sitemap](${base}/sitemap.xml): Toàn bộ URL được lập chỉ mục kèm dấu thời gian ISO 8601 UTC`,
+    `- [Kho tri thức đầy đủ (Full Context)](${base}/llms-full.txt): Gom trọn hồ sơ, sản phẩm, công cụ và toàn văn tối đa 12 bài viết mới nhất`,
+    '',
     '## Optional',
     '',
-    `- [Toàn bộ hồ sơ tóm tắt](${site}/index.md): Bản tổng hợp các mục chính trên trang chủ`,
-    `- [Toàn bộ kho tri thức đầy đủ (Full Context)](${site}/llms-full.txt): Gom trọn hồ sơ, sản phẩm, công cụ và toàn văn mọi bài viết trong 1 tệp Markdown duy nhất cho AI Agent`,
+    `- [Toàn bộ hồ sơ tóm tắt](${base}/index.md): Bản tổng hợp các mục chính trên trang chủ`,
+    `- [Bản sao chuẩn RFC 8615](${base}/.well-known/llms.txt): Điểm truy cập thay thế tại thư mục well-known`,
     '',
   );
   return lines.join('\n');
 }
 
-export function llmsFullText(data: SiteData, site = DEFAULT_SITE, lastmod?: string): string {
-  const { person } = data.site;
-  const header = [
-    `# Kho Tri Thức Đầy Đủ — ${person.name} (${person.handle})`,
+const formatArticleSummaryLine = (a: Article, base: string): string =>
+  `- [${a.title}](${base}/bai-viet/${a.slug}.md)${a.summary ? `: ${a.summary}` : ''}`;
+
+const formatArticleFullBlock = (a: Article, base: string, author: string): string => {
+  const published = a.publishedAt ? toIsoUtc(a.publishedAt) : '';
+  const updated = a.updatedAt ? toIsoUtc(a.updatedAt) : '';
+  const lines = [
+    `### ${a.title}`,
     '',
-    `> Nguồn gốc: ${site}/llms-full.txt${lastmod ? ` · Cập nhật: ${lastmod}` : ''} · Tác giả: ${person.name} (${person.handle})`,
+    `> URL: ${base}/bai-viet/${a.slug} · Bản Markdown: ${base}/bai-viet/${a.slug}.md · Tác giả: ${author}${published ? ` · Đăng ngày: ${published}` : ''}${updated ? ` · Cập nhật: ${updated}` : ''}`,
     '',
-    profileMarkdown(data, site).replace(/^# .*\n+/, ''),
-    '---',
-    '',
-    taiVideoMarkdown(site),
-    '---',
-    '',
-    privacyMarkdown(site, person.email),
+  ];
+  if (a.summary) lines.push(`_${a.summary}_`, '');
+  if (a.tags?.length) lines.push(`Chủ đề: ${a.tags.join(', ')}`, '');
+  if (a.bodyMd) lines.push(a.bodyMd.trim(), '');
+  lines.push('---', '');
+  return lines.join('\n');
+};
+
+export function llmsFullText(
+  data: SiteData,
+  site = DEFAULT_SITE,
+  recentArticlesOrLastmod: Article[] | string = [],
+  maybeLastmod?: string,
+): string {
+  const base = cleanSite(site);
+  const { person, sections } = data.site;
+  const author = `${person.name} (${person.handle})`;
+  const lastmod = Array.isArray(recentArticlesOrLastmod) ? maybeLastmod : recentArticlesOrLastmod;
+  const passedArticles = Array.isArray(recentArticlesOrLastmod) ? recentArticlesOrLastmod : [];
+
+  const sourceArticles = passedArticles.length > 0 ? passedArticles : data.articles;
+  const fullCandidates = sourceArticles.slice(0, MAX_LLMS_FULL_ARTICLES);
+  const candidateSlugs = new Set(fullCandidates.map((a) => a.slug));
+  const olderArticles = [
+    ...sourceArticles.slice(MAX_LLMS_FULL_ARTICLES),
+    ...data.articles.filter((a) => !candidateSlugs.has(a.slug)),
   ];
 
-  if (data.articles.length > 0) {
-    header.push('---', '', '## Toàn văn Bài viết chuyên sâu', '');
-    for (const a of data.articles) {
-      const published = a.publishedAt ? a.publishedAt.slice(0, 10) : '';
-      const updated = a.updatedAt ? a.updatedAt.slice(0, 10) : '';
-      header.push(
-        `### ${a.title}`,
-        '',
-        `> URL: ${site}/bai-viet/${a.slug} · Tác giả: ${person.name} (${person.handle})${published ? ` · Đăng ngày: ${published}` : ''}${updated ? ` · Cập nhật: ${updated}` : ''}`,
-        '',
-      );
-      if (a.summary) header.push(`_${a.summary}_`, '');
-      if (a.tags?.length) header.push(`Chủ đề: ${a.tags.join(', ')}`, '');
-      if (a.bodyMd) header.push(a.bodyMd.trim(), '');
-      header.push('---', '');
+  const tocLines = [
+    '## Mục lục',
+    '',
+    ...sections.map((s) => `- [${s.title}](${base}/${s.id}.md)${s.short ? `: ${s.short}` : ''}`),
+    `- [Tải Video & Xưởng Mổ Xẻ Kịch Bản Viral AI](${base}/tai-video.md)`,
+    `- [Chính sách Quyền riêng tư](${base}/quyen-rieng-tu.md)`,
+  ];
+  if (fullCandidates.length > 0 || olderArticles.length > 0) {
+    tocLines.push(
+      '',
+      '### Danh sách bài viết',
+      '',
+      ...[...fullCandidates, ...olderArticles].map((a) => formatArticleSummaryLine(a, base)),
+    );
+  }
+
+  const profileBody = stripFrontmatter(profileMarkdown(data, base, lastmod)).replace(/^# .*\n+/, '');
+  const taiVideoBody = stripFrontmatter(taiVideoMarkdown(base, lastmod));
+  const privacyBody = stripFrontmatter(privacyMarkdown(base, person.email, lastmod));
+
+  const preamble = [
+    `# Kho Tri Thức Đầy Đủ — ${author}`,
+    '',
+    `> Nguồn gốc: ${base}/llms-full.txt${lastmod ? ` · Cập nhật: ${toIsoUtc(lastmod)}` : ''} · Tác giả: ${author}`,
+    '',
+    ...tocLines,
+    '',
+    '---',
+    '',
+    profileBody.trimEnd(),
+    '',
+    '---',
+    '',
+    taiVideoBody.trimEnd(),
+    '',
+    '---',
+    '',
+    privacyBody.trimEnd(),
+    '',
+  ].join('\n');
+
+  const chunks: string[] = [preamble];
+  let currentLength = preamble.length;
+  const overflowArticles: Article[] = [];
+  const overflowHeader = '---\n\n## Bài viết khác (Tóm tắt & liên kết Markdown)\n\n';
+
+  if (fullCandidates.length > 0) {
+    const articlesHeader = '---\n\n## Toàn văn Bài viết chuyên sâu\n\n';
+    if (currentLength + articlesHeader.length <= MAX_LLMS_FULL_CHARS) {
+      let bodyChunk = articlesHeader;
+      currentLength += articlesHeader.length;
+      const includedBlocks: string[] = [];
+
+      for (let i = 0; i < fullCandidates.length; i += 1) {
+        const a = fullCandidates[i];
+        const block = formatArticleFullBlock(a, base, author);
+        const remainingTail = [...overflowArticles, ...fullCandidates.slice(i + 1), ...olderArticles];
+        const remainingOverflowReserve =
+          remainingTail.length > 0
+            ? overflowHeader.length +
+              remainingTail.reduce((sum, item) => sum + formatArticleSummaryLine(item, base).length + 1, 1)
+            : 0;
+
+        if (currentLength + block.length + remainingOverflowReserve <= MAX_LLMS_FULL_CHARS) {
+          includedBlocks.push(block);
+          currentLength += block.length;
+        } else {
+          overflowArticles.push(...fullCandidates.slice(i));
+          break;
+        }
+      }
+
+      if (includedBlocks.length > 0) {
+        bodyChunk += includedBlocks.join('');
+        chunks.push(bodyChunk);
+      } else {
+        currentLength -= articlesHeader.length;
+      }
+    } else {
+      overflowArticles.push(...fullCandidates);
     }
   }
 
-  return header.join('\n');
+  const tailSummaryItems = [...overflowArticles, ...olderArticles];
+  if (tailSummaryItems.length > 0) {
+    const summaryLines = ['---', '', '## Bài viết khác (Tóm tắt & liên kết Markdown)', ''];
+    let running = currentLength + `${summaryLines.join('\n')}\n`.length;
+    for (const item of tailSummaryItems) {
+      const line = formatArticleSummaryLine(item, base);
+      if (running + line.length + 1 > MAX_LLMS_FULL_CHARS) break;
+      summaryLines.push(line);
+      running += line.length + 1;
+    }
+    if (summaryLines.length > 4) {
+      chunks.push(`${summaryLines.join('\n')}\n`);
+    }
+  }
+
+  const out = chunks.join('');
+  return out.length <= MAX_LLMS_FULL_CHARS ? out : out.slice(0, MAX_LLMS_FULL_CHARS);
 }
 
 export const markdownResponse = (body: string, type = 'text/markdown') =>

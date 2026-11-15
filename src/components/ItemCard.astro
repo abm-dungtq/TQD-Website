@@ -4,9 +4,11 @@ import { mediaUrl, type Item } from '../lib/content';
 
 interface Props {
   item: Item;
+  headingLevel?: 2 | 3;
 }
 
-const { item } = Astro.props;
+const { item, headingLevel = 3 } = Astro.props;
+const HeadingTag = headingLevel === 2 ? 'h2' : 'h3';
 const hasCover = item.coverKey
   ? Boolean(await env.MEDIA?.head?.(item.coverKey).catch(() => null))
   : false;
@@ -34,7 +36,7 @@ const hasCover = item.coverKey
   }
   <div>
     {item.date && <p class="font-mono text-xs text-muted">{item.date}</p>}
-    <h3 class="display mt-1 text-2xl">{item.title}</h3>
+    <HeadingTag class="display mt-1 text-2xl">{item.title}</HeadingTag>
   </div>
   <p class="text-sm leading-relaxed">{item.summary}</p>
   <ul class="mt-auto flex flex-wrap gap-1.5" aria-label="Nhãn">

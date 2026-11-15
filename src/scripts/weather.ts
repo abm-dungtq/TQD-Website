@@ -3,7 +3,7 @@
 // `?weather=rain|snow|clear` overrides the effect for testing.
 import { effectFor, labelFor, type WeatherEffect } from '../lib/weather-code';
 import { onPref, prefOn } from './prefs';
-import { reducedMotion } from './motion';
+import { lowPowerMotion } from './motion';
 
 const API =
   'https://api.open-meteo.com/v1/forecast?latitude=21.0285&longitude=105.8542&current=temperature_2m,weather_code,is_day&timezone=Asia%2FBangkok';
@@ -152,6 +152,7 @@ const startEffect = (host: HTMLElement, effect: Exclude<WeatherEffect, 'none'>) 
 };
 
 export const startWeather = async (desktop: HTMLElement) => {
+  if (lowPowerMotion()) return;
   const label = desktop.querySelector<HTMLElement>('[data-weather]');
   const forced = new URLSearchParams(location.search).get('weather');
   const current = await fetchCurrent();
@@ -168,7 +169,7 @@ export const startWeather = async (desktop: HTMLElement) => {
 
   let stop: (() => void) | null = null;
   const sync = (on: boolean) => {
-    if (on && !stop && !reducedMotion()) stop = startEffect(desktop, effect);
+    if (on && !stop && !lowPowerMotion()) stop = startEffect(desktop, effect);
     else if (!on && stop) {
       stop();
       stop = null;

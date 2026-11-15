@@ -78,7 +78,7 @@ async function sha256CspToken(text: string): Promise<string> {
  * Resolves the `.md` twin endpoint path for public HTML routes that support `Accept: text/markdown`.
  * Returns `null` for API, admin, media, static assets, or `.md` endpoints themselves.
  */
-function markdownTwinPath(rawPath: string): string | null {
+export function markdownTwinPath(rawPath: string): string | null {
   const path = rawPath !== '/' && rawPath.endsWith('/') ? rawPath.slice(0, -1) : rawPath;
   if (path === '/') return '/index.md';
   if (
@@ -100,7 +100,7 @@ function markdownTwinPath(rawPath: string): string | null {
 }
 
 /** Returns `true` when the `Accept` header explicitly prefers `text/markdown` over `text/html`. */
-function prefersMarkdown(acceptHeader: string | null): boolean {
+export function prefersMarkdown(acceptHeader: string | null): boolean {
   if (!acceptHeader) return false;
   const lower = acceptHeader.toLowerCase();
   if (!lower.includes('text/markdown') && !lower.includes('text/x-markdown')) return false;
@@ -151,6 +151,132 @@ function appendVaryAccept(headers: Headers): void {
   }
 }
 
+export const PUBLIC_DISCOVERY_PATHS = new Set<string>([
+  '/llms.txt',
+  '/llms-full.txt',
+  '/.well-known/llms.txt',
+  '/.well-known/agent.json',
+  '/rss.xml',
+  '/feed.json',
+  '/catalog.json',
+  '/sitemap.xml',
+]);
+
+interface ParsedLinkEntry {
+  raw: string;
+  normalizedUrl: string;
+  rels: string[];
+  mediaType: string;
+}
+
+/** Splits an HTTP `Link` header into individual entries without splitting inside `<...>` or `"..."`. */
+function splitLinkEntries(headerValue: string): string[] {
+  const entries: string[] = [];
+  let current = '';
+  let inAngles = false;
+  let inQuotes = false;
+  for (let i = 0; i < headerValue.length; i++) {
+    const ch = headerValue[i];
+    if (ch === '<' && !inQuotes) inAngles = true;
+    else if (ch === '>' && !inQuotes) inAngles = false;
+    else if (ch === '"') inQuotes = !inQuotes;
+    if (ch === ',' && !inAngles && !inQuotes) {
+      const trimmed = current.trim();
+      if (trimmed) entries.push(trimmed);
+      current = '';
+      continue;
+    }
+    current += ch;
+  }
+  const tail = current.trim();
+  if (tail) entries.push(tail);
+  return entries;
+}
+
+function parseLinkEntry(rawEntry: string, origin: string): ParsedLinkEntry {
+  const hrefMatch = /^<\s*([^>]+)\s*>/.exec(rawEntry);
+  const rawHref = hrefMatch?.[1]?.trim() ?? '';
+  let normalizedUrl = rawHref;
+  if (rawHref) {
+    try {
+      const u = new URL(rawHref, `${origin}/`);
+      normalizedUrl = u.origin === origin ? u.pathname : u.href;
+    } catch {
+      normalizedUrl = rawHref;
+    }
+  }
+  const relMatch = /;\s*rel\s*=\s*(?:"([^"]*)"|([^\s;,]+))/i.exec(rawEntry);
+  const rels = (relMatch?.[1] ?? relMatch?.[2] ?? '')
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean);
+  const typeMatch = /;\s*type\s*=\s*(?:"([^"]*)"|([^\s;,]+))/i.exec(rawEntry);
+  const mediaType = (typeMatch?.[1] ?? typeMatch?.[2] ?? '').trim().toLowerCase();
+  return { raw: rawEntry, normalizedUrl, rels, mediaType };
+}
+
+function isDuplicateLink(candidate: ParsedLinkEntry, existing: ParsedLinkEntry[]): boolean {
+  for (const item of existing) {
+    if (item.normalizedUrl === candidate.normalizedUrl && candidate.rels.every((r) => item.rels.includes(r))) {
+      return true;
+    }
+    if (candidate.rels.includes('llms-txt') && item.rels.includes('llms-txt')) {
+      return true;
+    }
+    if (
+      candidate.rels.includes('alternate') &&
+      candidate.mediaType &&
+      item.rels.includes('alternate') &&
+      item.mediaType === candidate.mediaType
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Builds discovery `Link` header entries for public 200 responses only.
+ * Never emits `type="text/markdown"` (or any discovery links) on 404/301/500 or private routes.
+ */
+export function buildDiscoveryLinks(url: URL, status: number, isPrivate: boolean): string[] {
+  if (isPrivate || status !== 200) return [];
+  const path = url.pathname;
+  if (path.startsWith('/media/') || path === '/media' || path.startsWith('/_')) return [];
+  const links = [
+    '</llms.txt>; rel="llms-txt"',
+    '</rss.xml>; rel="alternate"; type="application/rss+xml"; title="RSS Feed"',
+    '</feed.json>; rel="alternate"; type="application/feed+json"; title="JSON Feed"',
+  ];
+  const mdTwin = markdownTwinPath(path);
+  if (mdTwin) {
+    links.push(`<${url.origin}${mdTwin}>; rel="alternate"; type="text/markdown"`);
+  }
+  return links;
+}
+
+/** Appends discovery `Link` headers onto `headers` without duplicating existing links (e.g. `rel="canonical"`). */
+export function appendDiscoveryLinkHeaders(headers: Headers, url: URL, status: number, isPrivate: boolean): void {
+  const candidates = buildDiscoveryLinks(url, status, isPrivate);
+  if (candidates.length === 0) return;
+  const existingRaw = headers.get('Link');
+  const existingEntries = existingRaw ? splitLinkEntries(existingRaw) : [];
+  const parsedExisting = existingEntries.map((raw) => parseLinkEntry(raw, url.origin));
+  const toAdd: string[] = [];
+
+  for (const rawCandidate of candidates) {
+    const parsedCandidate = parseLinkEntry(rawCandidate, url.origin);
+    if (!isDuplicateLink(parsedCandidate, parsedExisting)) {
+      toAdd.push(rawCandidate);
+      parsedExisting.push(parsedCandidate);
+    }
+  }
+
+  if (toAdd.length > 0) {
+    headers.set('Link', [...existingEntries, ...toAdd].join(', '));
+  }
+}
+
 /** Returns a response whose headers can be changed. */
 const mutable = (res: Response): Response => {
   try {
@@ -161,14 +287,15 @@ const mutable = (res: Response): Response => {
   }
 };
 
-interface HeaderSecurityOptions {
+export interface HeaderSecurityOptions {
   isPrivate: boolean;
   isAdmin: boolean;
   isHttps: boolean;
   varyAccept?: boolean;
+  requestUrl?: URL;
 }
 
-const withSecurityHeaders = (res: Response, opts: HeaderSecurityOptions): Response => {
+export const withSecurityHeaders = (res: Response, opts: HeaderSecurityOptions): Response => {
   const out = mutable(res);
   out.headers.set('X-Content-Type-Options', 'nosniff');
   out.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
@@ -183,6 +310,9 @@ const withSecurityHeaders = (res: Response, opts: HeaderSecurityOptions): Respon
   if (opts.varyAccept) {
     appendVaryAccept(out.headers);
   }
+  if (opts.requestUrl && !opts.isPrivate && out.status === 200) {
+    appendDiscoveryLinkHeaders(out.headers, opts.requestUrl, out.status, opts.isPrivate);
+  }
   if (opts.isPrivate) {
     out.headers.set('Cache-Control', 'no-store');
     out.headers.set('X-Robots-Tag', 'noindex');
@@ -194,8 +324,8 @@ const withSecurityHeaders = (res: Response, opts: HeaderSecurityOptions): Respon
  * Computes W3C CSP3 `'sha256-...'` hashes for any Astro-bundled inline `<script>` tags on SSR HTML responses
  * in production so `script-src 'self'` remains strict without `'unsafe-inline'`.
  */
-async function withHtmlInlineScriptHashes(res: Response, isAdmin: boolean): Promise<Response> {
-  if (import.meta.env.DEV) return res;
+export async function withHtmlInlineScriptHashes(res: Response, isAdmin: boolean, force = false): Promise<Response> {
+  if (import.meta.env.DEV && !force) return res;
   const ct = res.headers.get('Content-Type') ?? '';
   if (!ct.toLowerCase().includes('text/html')) return res;
 
@@ -226,13 +356,16 @@ async function withHtmlInlineScriptHashes(res: Response, isAdmin: boolean): Prom
   }
 
   const headers = new Headers(res.headers);
+  // Always derive from the clean baseline CSP so internal rewrites (e.g. Astro.rewrite('/404')) never double-append hashes.
+  const baseCsp = isAdmin ? ADMIN_CSP : PUBLIC_CSP;
   if (tokens.size > 0) {
-    const baseCsp = headers.get('Content-Security-Policy') ?? (isAdmin ? ADMIN_CSP : PUBLIC_CSP);
     const extra = [...(needUnsafeHashes ? ["'unsafe-hashes'"] : []), ...tokens].join(' ');
     headers.set(
       'Content-Security-Policy',
       baseCsp.replace("script-src 'self'", `script-src 'self' ${extra}`),
     );
+  } else {
+    headers.set('Content-Security-Policy', baseCsp);
   }
 
   return new Response(html, {
@@ -381,15 +514,18 @@ export const onRequest = defineMiddleware(async (context, next) => {
       isAdmin: false,
       isHttps,
       varyAccept: true,
+      requestUrl: url,
     });
   }
 
-  // Public HTML pages ignore marketing query params (`?utm_source=...`, `?fbclid=...`) via normalized path cache key.
-  const cacheable = method === 'GET' && !isPrivate && !path.startsWith('/media/');
+  // Public HTML & discovery endpoints ignore marketing query params via normalized path cache key.
+  const isCacheablePath =
+    PUBLIC_DISCOVERY_PATHS.has(path) || (!path.startsWith('/media/') && path !== '/media' && !path.startsWith('/_'));
+  const cacheable = method === 'GET' && !isPrivate && isCacheablePath;
 
   // The build ID is fixed for a whole dev session, so caching there would hide template edits.
   if (!cacheable || import.meta.env.DEV) {
-    let res = withSecurityHeaders(await next(), { isPrivate, isAdmin, isHttps, varyAccept });
+    let res = withSecurityHeaders(await next(), { isPrivate, isAdmin, isHttps, varyAccept, requestUrl: url });
     res = await withHtmlInlineScriptHashes(res, isAdmin);
     recordHtmlHitIfPublicHtml(context, res);
     return res;
@@ -405,6 +541,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     out.headers.set('X-Cache', 'HIT');
     out.headers.set('X-Content-Version', String(version));
     if (varyAccept) appendVaryAccept(out.headers);
+    if (hit.status === 200) appendDiscoveryLinkHeaders(out.headers, url, hit.status, false);
     if (isHttps) out.headers.set('Strict-Transport-Security', HSTS_HEADER);
     recordHtmlHitIfPublicHtml(context, out);
     return out;
@@ -415,6 +552,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     isAdmin: false,
     isHttps,
     varyAccept,
+    requestUrl: url,
   });
   res = await withHtmlInlineScriptHashes(res, false);
 

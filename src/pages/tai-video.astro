@@ -55,7 +55,7 @@ const stripLeadingEmoji = (raw: string) => raw.replace(/^[^\p{L}\p{N}]+\s*/u, ''
       <div class="flex flex-wrap items-center gap-2.5">
         <span id="dl-status-badge" class="lux-chip inline-flex items-center gap-2 px-3 py-1 font-medium">
           <span id="dl-status-dot" class="inline-block h-2 w-2 rounded-full bg-accent" aria-hidden="true"></span>
-          <span id="dl-status-text">Đang kiểm tra lõi yt-dlp…</span>
+          <span id="dl-status-text" aria-live="polite" aria-atomic="true">Đang kiểm tra lõi yt-dlp…</span>
         </span>
         <span id="dl-speed-pill" class="lux-chip px-3 py-1 text-xs font-medium tabular-nums" hidden>
           Tốc độ: -- MB/s
@@ -146,6 +146,9 @@ const stripLeadingEmoji = (raw: string) => raw.replace(/^[^\p{L}\p{N}]+\s*/u, ''
 
         <!-- Batch Multi-URL Textarea (Hidden by default) -->
         <div id="dl-batch-wrap" class="flex flex-col gap-3" hidden>
+          <label for="dl-input-batch" class="text-sm font-semibold text-ink">
+            Danh sách đường dẫn (mỗi dòng 1 link)
+          </label>
           <textarea
             id="dl-input-batch"
             rows="4"
@@ -154,7 +157,7 @@ const stripLeadingEmoji = (raw: string) => raw.replace(/^[^\p{L}\p{N}]+\s*/u, ''
             class="dl-input w-full rounded-xl p-4 font-mono text-sm leading-relaxed"
           ></textarea>
           <div class="flex flex-wrap items-center justify-between gap-3">
-            <p id="dl-batch-count" class="text-xs font-medium tabular-nums text-muted">
+            <p id="dl-batch-count" class="text-xs font-medium tabular-nums text-muted" aria-live="polite" aria-atomic="true">
               Đã nhận diện 0 đường dẫn hợp lệ
             </p>
             <div class="flex flex-wrap items-center gap-2">
@@ -337,7 +340,7 @@ const stripLeadingEmoji = (raw: string) => raw.replace(/^[^\p{L}\p{N}]+\s*/u, ''
               <!-- Progress Section -->
               <div class="mt-2 flex flex-col gap-2">
                 <div class="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold">
-                  <span id="dl-progress-status" class="text-accent-ink">Sẵn sàng tải</span>
+                  <span id="dl-progress-status" class="text-accent-ink" aria-live="polite" aria-atomic="true">Sẵn sàng tải</span>
                   <div class="flex items-center gap-3 font-mono text-muted">
                     <span id="dl-progress-percent">0%</span>
                     <span id="dl-progress-speed">-- MB/s</span>
@@ -347,6 +350,11 @@ const stripLeadingEmoji = (raw: string) => raw.replace(/^[^\p{L}\p{N}]+\s*/u, ''
                 <div class="h-2.5 w-full overflow-hidden rounded-full bg-tint p-0.5">
                   <div
                     id="dl-progress-bar"
+                    role="progressbar"
+                    aria-label="Tiến độ tải tệp"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                    aria-valuenow="0"
                     class="h-full rounded-full bg-accent transition-all duration-300"
                     style="width: 0%"
                   ></div>
@@ -564,7 +572,7 @@ const stripLeadingEmoji = (raw: string) => raw.replace(/^[^\p{L}\p{N}]+\s*/u, ''
                   <span>Phân tích lại</span>
                 </button>
               </div>
-              <div id="viral-xray-status" class="text-xs font-medium text-accent-ink" hidden>
+              <div id="viral-xray-status" role="status" aria-live="polite" aria-atomic="true" class="text-xs font-medium text-accent-ink" hidden>
                 Đang mổ xẻ cấu trúc Hook 3 giây &amp; nhịp giữ chân…
               </div>
               <div id="viral-xray-body" class="viral-prose space-y-3 text-sm leading-relaxed text-ink">
@@ -644,7 +652,7 @@ const stripLeadingEmoji = (raw: string) => raw.replace(/^[^\p{L}\p{N}]+\s*/u, ''
                   <Icon name="sparkles" size={16} />
                   <span>TẠO KỊCH BẢN CHUẨN VIẾT PRO</span>
                 </button>
-                <span id="viral-gen-status" class="text-xs font-medium text-accent-ink" hidden>
+                <span id="viral-gen-status" role="status" aria-live="polite" aria-atomic="true" class="text-xs font-medium text-accent-ink" hidden>
                   DeepSeek Flash đang viết theo chuẩn Viết Pro…
                 </span>
               </div>

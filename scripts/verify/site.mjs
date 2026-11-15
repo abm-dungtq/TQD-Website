@@ -7,7 +7,8 @@ const get = (p) => fetch(base + p, { redirect: 'manual' });
 const ok = [
   '/', '/ho-so', '/san-pham', '/thu-vien', '/video-ai', '/bai-viet', '/lien-he', '/tai-video', '/quyen-rieng-tu',
   '/index.md', '/ho-so.md', '/san-pham.md', '/thu-vien.md', '/video-ai.md', '/bai-viet.md', '/lien-he.md', '/tai-video.md', '/quyen-rieng-tu.md',
-  '/llms.txt', '/sitemap.xml', '/robots.txt', '/og.png', '/img/portrait-480.webp',
+  '/llms.txt', '/llms-full.txt', '/.well-known/llms.txt', '/.well-known/agent.json', '/catalog.json', '/feed.json', '/rss.xml',
+  '/sitemap.xml', '/robots.txt', '/og.png', '/img/portrait-480.webp',
 ];
 for (const p of ok) {
   const res = await get(p);
@@ -16,12 +17,28 @@ for (const p of ok) {
 
 const missing = await get('/khong-co-trang-nay');
 const missingHtml = await missing.text();
+const missingLink = missing.headers.get('link') ?? '';
+const missingCsp = missing.headers.get('content-security-policy') ?? '';
 if (missing.status !== 404) fails.push(`/khong-co-trang-nay ${missing.status}`);
 if (missingHtml.includes('type="text/markdown"')) {
-  fails.push('/khong-co-trang-nay must not advertise alternate type="text/markdown"');
+  fails.push('/khong-co-trang-nay must not advertise alternate type="text/markdown" in HTML');
+}
+if (missingLink.includes('type="text/markdown"')) {
+  fails.push('/khong-co-trang-nay must not advertise alternate type="text/markdown" in HTTP Link header');
+}
+const missingCspHashes = [...missingCsp.matchAll(/'sha256-[^']+'/g)].map((m) => m[0]);
+if (new Set(missingCspHashes).size !== missingCspHashes.length) {
+  fails.push(`/khong-co-trang-nay duplicated CSP sha256 hash: ${missingCsp}`);
 }
 
-const redirects = { '/chuyen-mon': '/bai-viet', '/so-lieu': '/', '/dao-tao': '/thu-vien', '/dao-tao.md': '/thu-vien.md' };
+const redirects = {
+  '/chuyen-mon': '/bai-viet',
+  '/so-lieu': '/',
+  '/dao-tao': '/thu-vien',
+  '/dao-tao.md': '/thu-vien.md',
+  '/video': '/video-ai',
+  '/video.md': '/video-ai.md',
+};
 for (const [from, to] of Object.entries(redirects)) {
   const moved = await get(from);
   const location = moved.headers.get('location') ?? '';
@@ -101,7 +118,7 @@ async function checkJsonLdGraph(pagePath) {
       collectJsonLdReferences(parsed, definedIds, refs, true);
     }
     for (const ref of refs) {
-      if ((ref.includes('#') && (ref.startsWith('#') || ref.includes('tqd.me/'))) && !definedIds.has(ref)) {
+      if ((ref.includes('#') && (ref.startsWith('#') || ref.startsWith(base) || ref.includes('tqd.me/'))) && !definedIds.has(ref)) {
         fails.push(`${pagePath} dangling JSON-LD @id reference: ${ref}`);
       }
     }
@@ -111,7 +128,7 @@ async function checkJsonLdGraph(pagePath) {
 for (const p of ['/', '/san-pham', '/tai-video', '/quyen-rieng-tu']) {
   await checkMarkdownTwinLink(p);
 }
-for (const p of ['/', '/tai-video']) {
+for (const p of ['/', '/ho-so', '/san-pham', '/thu-vien', '/video-ai', '/bai-viet', '/lien-he', '/tai-video', '/quyen-rieng-tu']) {
   await checkJsonLdGraph(p);
 }
 
@@ -121,6 +138,86 @@ if (firstArticleMatch) {
   const articlePath = firstArticleMatch[1];
   await checkMarkdownTwinLink(articlePath);
   await checkJsonLdGraph(articlePath);
+
+  const [llmsTxtRes, llmsFullRes] = await Promise.all([get('/llms.txt'), get('/llms-full.txt')]);
+  const [llmsTxtBody, llmsFullBody] = await Promise.all([llmsTxtRes.text(), llmsFullRes.text()]);
+  if (llmsTxtRes.status !== 200 || llmsFullRes.status !== 200 || llmsFullBody.length <= llmsTxtBody.length) {
+    fails.push(`/llms-full.txt (${llmsFullBody.length}) should be longer than /llms.txt (${llmsTxtBody.length})`);
+  }
+}
+
+// Verify discovery schemas: agent.json, catalog.json, feed.json, rss.xml
+const [agentRes, catalogRes, feedJsonRes, rssRes] = await Promise.all([
+  get('/.well-known/agent.json'),
+  get('/catalog.json'),
+  get('/feed.json'),
+  get('/rss.xml'),
+]);
+
+const agentText = await agentRes.text();
+try {
+  const agentBody = JSON.parse(agentText);
+  const robotsTag = (agentRes.headers.get('x-robots-tag') ?? '').toLowerCase();
+  if (
+    agentRes.status !== 200
+    || !robotsTag.includes('noindex')
+    || agentRes.headers.get('access-control-allow-origin') !== '*'
+    || agentBody?.capabilities?.webmcp_browser_tools?.webOnlyExecution !== true
+    || !agentBody?.capabilities?.sameOriginPublicApis
+    || !agentBody?.policies
+    || /127\.0\.0\.1|CHAT_UPSTREAM_URL|DL_DAEMON_URL/.test(agentText)
+  ) {
+    fails.push(`/.well-known/agent.json schema or security headers invalid`);
+  }
+} catch {
+  fails.push(`/.well-known/agent.json invalid JSON`);
+}
+
+try {
+  const catalogBody = await catalogRes.json();
+  if (
+    catalogRes.status !== 200
+    || catalogRes.headers.get('access-control-allow-origin') !== '*'
+    || catalogBody?.schemaVersion !== '1.0'
+    || !Array.isArray(catalogBody?.items)
+    || catalogBody.items.length === 0
+    || !catalogBody?.owner
+    || !catalogBody?.endpoints
+  ) {
+    fails.push(`/catalog.json schema invalid`);
+  }
+} catch {
+  fails.push(`/catalog.json invalid JSON`);
+}
+
+try {
+  const feedBody = await feedJsonRes.json();
+  const feedCt = (feedJsonRes.headers.get('content-type') ?? '').toLowerCase();
+  if (
+    feedJsonRes.status !== 200
+    || !feedCt.includes('application/feed+json')
+    || feedJsonRes.headers.get('access-control-allow-origin') !== '*'
+    || feedBody?.version !== 'https://jsonfeed.org/version/1.1'
+    || !Array.isArray(feedBody?.items)
+  ) {
+    fails.push(`/feed.json schema invalid`);
+  }
+} catch {
+  fails.push(`/feed.json invalid JSON`);
+}
+
+const rssText = await rssRes.text();
+const rssCt = (rssRes.headers.get('content-type') ?? '').toLowerCase();
+if (
+  rssRes.status !== 200
+  || !rssCt.includes('application/rss+xml')
+  || rssRes.headers.get('access-control-allow-origin') !== '*'
+  || !rssText.includes('<rss version="2.0"')
+  || !rssText.includes('xmlns:atom="http://www.w3.org/2005/Atom"')
+  || !rssText.includes('<language>vi</language>')
+  || !rssText.includes('<channel>')
+) {
+  fails.push(`/rss.xml schema invalid`);
 }
 
 // Chat: status answers either way (the agent runs on a home server); a cross-site post is refused.
@@ -148,7 +245,12 @@ const dlCrossSite = await fetch(base + '/api/dl/resolve', {
 });
 if (dlCrossSite.status !== 403) fails.push(`/api/dl/resolve cross-site ${dlCrossSite.status}`);
 
-const csp = (await get('/')).headers.get('content-security-policy') ?? '';
+const homeRes = await get('/');
+const homeLink = homeRes.headers.get('link') ?? '';
+for (const expected of ['rel="llms-txt"', 'type="text/markdown"', 'application/rss+xml', 'application/feed+json']) {
+  if (!homeLink.includes(expected)) fails.push(`/ Link header missing ${expected}: ${homeLink}`);
+}
+const csp = homeRes.headers.get('content-security-policy') ?? '';
 if (!csp.includes('frame-src https://www.tiktok.com')) fails.push(`csp ${csp}`);
 
 for (const f of fails) console.log('FAIL', f);

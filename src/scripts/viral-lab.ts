@@ -387,7 +387,10 @@ export function initViralLab(deps: ViralLabDeps) {
     generatingXray = true;
     if (btnRerunXray) btnRerunXray.disabled = true;
     if (xrayStatus) xrayStatus.hidden = false;
-    if (xrayBody) xrayBody.replaceChildren();
+    if (xrayBody) {
+      xrayBody.setAttribute('aria-busy', 'true');
+      xrayBody.replaceChildren();
+    }
 
     try {
       const res = await fetch('/api/viral/generate', {
@@ -416,6 +419,7 @@ export function initViralLab(deps: ViralLabDeps) {
       generatingXray = false;
       if (btnRerunXray) btnRerunXray.disabled = false;
       if (xrayStatus) xrayStatus.hidden = true;
+      if (xrayBody) xrayBody.removeAttribute('aria-busy');
     }
   }
 
@@ -434,6 +438,7 @@ export function initViralLab(deps: ViralLabDeps) {
           : 'DeepSeek Flash đang viết kịch bản theo chuẩn Viết Pro…';
     }
     if (outputWrap) outputWrap.hidden = false;
+    if (scriptBody) scriptBody.setAttribute('aria-busy', 'true');
     if (shareBox) shareBox.hidden = true;
 
     const findingsPayload =
@@ -472,6 +477,7 @@ export function initViralLab(deps: ViralLabDeps) {
       if (btnGenerate) btnGenerate.disabled = false;
       if (btnPolish) btnPolish.disabled = false;
       if (genStatus) genStatus.hidden = true;
+      if (scriptBody) scriptBody.removeAttribute('aria-busy');
     }
   }
 

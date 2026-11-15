@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
-import { getSite, lastModified, listArticles } from '../lib/content';
+import { getSite, lastModifiedIso, listArticles, toIsoUtc } from '../lib/content';
 
 const escapeXml = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -10,7 +10,7 @@ export const GET: APIRoute = async ({ request }) => {
   const [site, articles, lastmod, curatedShares] = await Promise.all([
     getSite(env.DB),
     listArticles(env.DB),
-    lastModified(env.DB),
+    lastModifiedIso(env.DB),
     env.DB.prepare(
       "SELECT share_id, created_at FROM viral_shares WHERE share_id LIKE 'c-%' ORDER BY created_at DESC LIMIT 100",
     )
@@ -24,10 +24,10 @@ export const GET: APIRoute = async ({ request }) => {
     { loc: `${siteOrigin}/tai-video`, lastmod },
     { loc: `${siteOrigin}/quyen-rieng-tu`, lastmod },
     ...site.sections.map((s) => ({ loc: `${siteOrigin}/${s.id}`, lastmod })),
-    ...articles.map((a) => ({ loc: `${siteOrigin}/bai-viet/${a.slug}`, lastmod: a.updatedAt.slice(0, 10) })),
+    ...articles.map((a) => ({ loc: `${siteOrigin}/bai-viet/${a.slug}`, lastmod: toIsoUtc(a.updatedAt) })),
     ...curatedShares.map((sh) => ({
       loc: `${siteOrigin}/xray/${encodeURIComponent(sh.share_id)}`,
-      lastmod: sh.created_at ? new Date(sh.created_at * 1000).toISOString().slice(0, 10) : lastmod,
+      lastmod: sh.created_at ? new Date(sh.created_at * 1000).toISOString() : lastmod,
     })),
   ];
 

@@ -4,7 +4,7 @@
 // It is also the way into the chat with the website agent: a speech bubble introduces it, a click opens
 // the panel (src/scripts/chat-panel.ts, loaded then), and it thinks and types while the agent answers.
 import type { ChatSignal } from './chat-panel';
-import { play, reducedMotion } from './motion';
+import { lowPowerMotion, play } from './motion';
 import { onPref, prefOn } from './prefs';
 
 type Pose = 'idle' | 'wave' | 'think' | 'type' | 'point' | 'sleep';
@@ -41,6 +41,10 @@ const dismissIntro = () => {
 const poseUrl = (pose: Pose) => `/mascot/${pose}.webp`;
 
 export const startMascot = (desktop: HTMLElement) => {
+  if (lowPowerMotion()) {
+    document.documentElement.dataset.mascot = 'off';
+    return;
+  }
   const wrap = desktop.querySelector<HTMLElement>('[data-mascot-wrap]');
   const button = wrap?.querySelector<HTMLButtonElement>('[data-mascot]');
   const tip = wrap?.querySelector<HTMLElement>('[data-mascot-tip]');
@@ -146,7 +150,7 @@ export const startMascot = (desktop: HTMLElement) => {
   };
 
   const walk = async () => {
-    if (!running || reducedMotion() || state.asleep || state.dragging || chatOpen() || document.hidden) return;
+    if (!running || lowPowerMotion() || state.asleep || state.dragging || chatOpen() || document.hidden) return;
     const stroll = STROLL_MIN + Math.random() * (STROLL_MAX - STROLL_MIN);
     // Turn back near either edge so short strolls stay on screen.
     const dir = offset - stroll < -range() ? 1 : offset + stroll > 0 ? -1 : Math.random() < 0.5 ? -1 : 1;
@@ -155,7 +159,7 @@ export const startMascot = (desktop: HTMLElement) => {
 
   const scheduleWalk = () => {
     clearTimeout(walkTimer);
-    if (!running || document.hidden || reducedMotion()) return;
+    if (!running || document.hidden || lowPowerMotion()) return;
     walkTimer = window.setTimeout(async () => {
       await walk();
       scheduleWalk();

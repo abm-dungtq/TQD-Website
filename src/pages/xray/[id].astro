@@ -3,9 +3,9 @@ import { env } from 'cloudflare:workers';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Icon from '../../components/Icon.astro';
 import PageActions from '../../components/PageActions.astro';
-import { getSite } from '../../lib/content';
+import { clampMetaDescription, getSite } from '../../lib/content';
 import { renderMarkdown } from '../../lib/markdown';
-import { breadcrumbNode, personNode } from '../../lib/structured-data';
+import { breadcrumbNode, personNode, xrayArticleNode } from '../../lib/structured-data';
 import { getViralShare, VIRAL_FORMATS } from '../../lib/viral';
 
 const id = Astro.params.id ?? '';
@@ -47,13 +47,38 @@ const durationLabel =
     : '';
 
 const pageTitle = `Mổ xẻ Viral: ${share.title}`;
-const pageDesc = share.industry
-  ? `Bóc tách công thức video "${share.title}" (${share.platformLabel}) & chuyển thể kịch bản sang ngành ${share.industry} chuẩn Viết Pro (${share.vietProScore}/100) tại tqd.me.`
-  : `Bóc tách X-Quang công thức viral & kịch bản nhân bản từ video "${share.title}" (${share.platformLabel}) chuẩn Viết Pro (${share.vietProScore}/100) tại tqd.me.`;
+const pageDesc = clampMetaDescription(
+  share.industry
+    ? `Bóc tách công thức video "${share.title}" (${share.platformLabel}) & chuyển thể kịch bản sang ngành ${share.industry} chuẩn Viết Pro (${share.vietProScore}/100) tại tqd.me.`
+    : `Bóc tách X-Quang công thức viral & kịch bản nhân bản từ video "${share.title}" (${share.platformLabel}) chuẩn Viết Pro (${share.vietProScore}/100) tại tqd.me.`,
+  158,
+);
 
 const origin = new URL('/', Astro.url.origin).href;
 const canonicalUrl = new URL(`/xray/${share.shareId}`, Astro.url.origin).href;
 const primaryZalo = site.person.zalo || 'https://zalo.me/trinhquangdung';
+const breadcrumb = breadcrumbNode(
+  [
+    { name: 'Trang chủ', url: origin },
+    { name: 'Xưởng Mổ Xẻ Video', url: `${origin}tai-video` },
+    { name: share.title, url: canonicalUrl },
+  ],
+  canonicalUrl,
+);
+const jsonLd = isCurated
+  ? [
+      personNode(site, Astro.url.origin),
+      xrayArticleNode({
+        url: canonicalUrl,
+        origin: Astro.url.origin,
+        headline: pageTitle,
+        description: pageDesc,
+        createdAt: share.createdAt,
+        keywords: [formatLabel, share.platformLabel, share.industry, 'Viết Pro'].filter(Boolean),
+      }),
+      breadcrumb,
+    ]
+  : [personNode(site, Astro.url.origin), breadcrumb];
 ---
 
 <BaseLayout
@@ -64,17 +89,7 @@ const primaryZalo = site.person.zalo || 'https://zalo.me/trinhquangdung';
   ogType="article"
   markdownPath={`/xray/${share.shareId}.md`}
   ogImagePath="/og/xray.png"
-  jsonLd={[
-    personNode(site, Astro.url.origin),
-    breadcrumbNode(
-      [
-        { name: 'Trang chủ', url: origin },
-        { name: 'Xưởng Mổ Xẻ Video', url: `${origin}tai-video` },
-        { name: share.title, url: canonicalUrl },
-      ],
-      canonicalUrl,
-    ),
-  ]}
+  jsonLd={jsonLd}
 >
   <article class="mx-auto flex max-w-4xl flex-col gap-6">
     <p class="eyebrow flex-wrap">

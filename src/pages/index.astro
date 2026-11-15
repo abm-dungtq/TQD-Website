@@ -3,28 +3,50 @@ import { env } from 'cloudflare:workers';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import DesktopShell from '../components/DesktopShell.astro';
 import MobileShell from '../components/MobileShell.astro';
+import PageActions from '../components/PageActions.astro';
 import SectionBody from '../components/SectionBody.astro';
 import { introParagraphs, loadSiteData } from '../lib/content';
-import { personNode } from '../lib/structured-data';
+import { personNode, profilePageNode } from '../lib/structured-data';
 
 const data = await loadSiteData(env.DB);
 const { person, sections } = data.site;
+const canonicalUrl = new URL('/', Astro.url.origin).href;
+const pageTitle = `${person.name} (${person.handle})`;
+
+const rawSummary = `${person.role}. ${introParagraphs(person.intro)[0] ?? ''}`.replace(/\s+/g, ' ').trim();
+const candidateSummary =
+  rawSummary.length >= 135
+    ? rawSummary
+    : `${rawSummary} Khám phá hồ sơ ${pageTitle}, bộ Skill Viết Pro và công cụ AI thực chiến trên tqd.me.`;
+const homeDescription = (() => {
+  if (candidateSummary.length <= 155) return candidateSummary;
+  const cut = candidateSummary.slice(0, 154);
+  const lastSpace = cut.lastIndexOf(' ');
+  const head = lastSpace >= 134 ? cut.slice(0, lastSpace) : cut;
+  return `${head.replace(/[,.;:–—-]+$/, '').trimEnd()}…`;
+})();
 ---
 
 <BaseLayout
   site={data.site}
-  description={`${person.role}. ${introParagraphs(person.intro)[0] ?? ''}`}
+  description={homeDescription}
   path="/"
   markdownPath="/index.md"
+  srOnlyH1={`${pageTitle} — ${person.role}`}
   ogImagePath="/og.png"
-  jsonLd={[personNode(data.site, Astro.url.origin)]}
+  jsonLd={[personNode(data.site, Astro.url.origin), profilePageNode(canonicalUrl)]}
 >
   <DesktopShell slot="before" data={data} />
   {/* Phones get the OS home screen with above-the-fold B2B value prop; wide screens without JS get the profile and section list. */}
   <div class="lg:hidden">
-    <MobileShell site={data.site} />
+    <MobileShell site={data.site}>
+      <div class="mt-5">
+        <PageActions markdownPath="/index.md" canonicalUrl={canonicalUrl} title={pageTitle} />
+      </div>
+    </MobileShell>
   </div>
   <div class="hidden lg:block">
+    <PageActions markdownPath="/index.md" canonicalUrl={canonicalUrl} title={pageTitle} class="mb-6" />
     <SectionBody id="ho-so" data={data} eager />
     <h2 class="display mb-6 mt-16 text-3xl">Các mục</h2>
     <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

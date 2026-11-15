@@ -10,9 +10,12 @@ interface Props {
   data: SiteData;
   /** Loads the portrait eagerly when it is above the fold. */
   eager?: boolean;
+  /** Heading level for child cards: 2 under subpage H1, 3 inside window/sheet H2. */
+  headingLevel?: 2 | 3;
 }
 
-const { id, data, eager = false } = Astro.props;
+const { id, data, eager = false, headingLevel = 3 } = Astro.props;
+const HeadingTag = headingLevel === 2 ? 'h2' : 'h3';
 const { person, links, topics, gallery } = data.site;
 const { products, videos, articles } = data;
 const gridClass = 'grid gap-4 sm:grid-cols-2';
@@ -119,7 +122,7 @@ const tiktokCovers =
             <span class="text-xs font-semibold uppercase tracking-wider text-accent">Công cụ trực tuyến miễn phí</span>
             <span class="lux-chip px-2.5 py-0.5 text-xs font-semibold">yt-dlp · Whisper · Viết Pro</span>
           </div>
-          <h3 class="display text-2xl sm:text-3xl">Tải Video &amp; Xưởng Mổ Xẻ Kịch Bản Viral AI</h3>
+          <HeadingTag class="display text-2xl sm:text-3xl">Tải Video &amp; Xưởng Mổ Xẻ Kịch Bản Viral AI</HeadingTag>
           <p class="max-w-2xl text-sm leading-relaxed text-ink/90">
             Tải video MP4 chuẩn H.264, Shorts/Reels 9:16, tách nhạc MP3 320kbps, kết hợp bóc băng lời thoại AI và nhân bản kịch bản sang 5 định dạng theo chuẩn chống văn mẫu AI <strong>Viết Pro</strong>.
           </p>
@@ -132,7 +135,7 @@ const tiktokCovers =
         </div>
       </article>
       {products.map((item) => (
-        <ItemCard item={item} />
+        <ItemCard item={item} headingLevel={headingLevel} />
       ))}
     </div>
   )
@@ -195,7 +198,7 @@ const tiktokCovers =
               <TikTokPlayer id={item.tiktokId} title={item.title} coverUrl={tiktokCovers.get(item.id)} />
               <div>
                 {item.date && <p class="font-mono text-xs text-muted">{item.date}</p>}
-                <h3 class="display mt-1 text-2xl">{item.title}</h3>
+                <HeadingTag class="display mt-1 text-2xl">{item.title}</HeadingTag>
               </div>
               <p class="text-sm leading-relaxed">{item.summary}</p>
               {item.tags.length > 0 && (
@@ -207,7 +210,7 @@ const tiktokCovers =
               )}
             </article>
           ) : (
-            <ItemCard item={item} />
+            <ItemCard item={item} headingLevel={headingLevel} />
           ),
         )}
       </div>
@@ -221,11 +224,11 @@ const tiktokCovers =
       {articles.map((a) => (
         <li class="lux-card relative p-6">
           <p class="font-mono text-xs text-muted">{formatDate(a.publishedAt)}</p>
-          <h3 class="display mt-2 text-2xl">
+          <HeadingTag class="display mt-2 text-2xl">
             <a href={`/bai-viet/${a.slug}`} class="text-ink no-underline after:absolute after:inset-0 hover:text-accent-ink">
               {a.title}
             </a>
-          </h3>
+          </HeadingTag>
           {a.summary && <p class="mt-2 text-sm leading-relaxed">{a.summary}</p>}
           {a.tags.length > 0 && (
             <ul class="mt-3 flex flex-wrap gap-1.5" aria-label="Nhãn">

@@ -2,6 +2,7 @@
 import { Font } from 'astro:assets';
 import '../styles/global.css';
 import type { Site } from '../lib/content';
+import { personNode } from '../lib/structured-data';
 import CommandPalette from '../components/CommandPalette.astro';
 import ChatPanel from '../components/ChatPanel.astro';
 
@@ -20,6 +21,8 @@ interface Props {
   ogType?: 'website' | 'article';
   /** Only set when a real 1:1 Markdown twin exists for this page (omitted on /404, etc.). */
   markdownPath?: string;
+  /** Optional screen-reader H1 rendered once outside #desktop and [data-fallback] (used on /). */
+  srOnlyH1?: string;
   ogImagePath?: string;
   ogImageWidth?: number;
   ogImageHeight?: number;
@@ -36,6 +39,7 @@ const {
   path,
   ogType = 'website',
   markdownPath,
+  srOnlyH1,
   ogImagePath = '/og.png',
   ogImageWidth = 1200,
   ogImageHeight = 630,
@@ -69,13 +73,37 @@ const webPageNode: Record<string, unknown> = {
   ...(breadcrumbEntry ? { breadcrumb: { '@id': breadcrumbEntry['@id'] } } : {}),
 };
 
+const rawGraph: Record<string, unknown>[] = [
+  { '@type': 'WebSite', '@id': `${origin}#website`, url: origin, name: person.handle, inLanguage: 'vi' },
+  webPageNode,
+  ...jsonLd,
+];
+
+const seenGraphIds = new Set<string>();
+const dedupedGraph: Record<string, unknown>[] = [];
+for (const node of rawGraph) {
+  const nodeId = typeof node['@id'] === 'string' ? node['@id'] : null;
+  if (nodeId) {
+    if (seenGraphIds.has(nodeId)) continue;
+    seenGraphIds.add(nodeId);
+  }
+  dedupedGraph.push(node);
+}
+
+const hasPersonNode = dedupedGraph.some(
+  (node) => node['@type'] === 'Person' || (typeof node['@id'] === 'string' && node['@id'].endsWith('#person')),
+);
+if (JSON.stringify(dedupedGraph).includes('#person') && !hasPersonNode) {
+  const autoPerson = personNode(site, origin);
+  dedupedGraph.push(autoPerson);
+  if (typeof autoPerson['@id'] === 'string') {
+    seenGraphIds.add(autoPerson['@id']);
+  }
+}
+
 const structured = {
   '@context': 'https://schema.org',
-  '@graph': [
-    { '@type': 'WebSite', '@id': `${origin}#website`, url: origin, name: person.handle, inLanguage: 'vi' },
-    webPageNode,
-    ...jsonLd,
-  ],
+  '@graph': dedupedGraph,
 };
 // Escape "<" so no title or summary can close the script element.
 const structuredJson = JSON.stringify(structured).replace(/</g, '\\u003c');
@@ -92,6 +120,15 @@ const structuredJson = JSON.stringify(structured).replace(/</g, '\\u003c');
     <link rel="canonical" href={canonical} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     {markdownHref && <link rel="alternate" type="text/markdown" href={markdownHref} />}
+    {
+      path !== '/404' && (
+        <>
+          <link rel="llms-txt" href="/llms.txt" />
+          <link rel="alternate" type="application/rss+xml" title={`${person.name} — RSS`} href="/rss.xml" />
+          <link rel="alternate" type="application/feed+json" title={`${person.name} — JSON Feed`} href="/feed.json" />
+        </>
+      )
+    }
     <meta property="og:type" content={ogType} />
     <meta property="og:locale" content="vi_VN" />
     <meta property="og:site_name" content={`${person.name} (${person.handle})`} />
@@ -150,6 +187,7 @@ const structuredJson = JSON.stringify(structured).replace(/</g, '\\u003c');
       class="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[2000] focus:rounded focus:bg-panel focus:px-3 focus:py-2"
       >Bỏ qua tới nội dung</a
     >
+    {srOnlyH1 && <h1 class="sr-only">{srOnlyH1}</h1>}
     <slot name="before" />
     <div data-fallback>
       <header class="site-header">
@@ -220,6 +258,7 @@ const structuredJson = JSON.stringify(structured).replace(/</g, '\\u003c');
     <CommandPalette />
     <script>
       import '../scripts/analytics-beacon.ts';
+      import '../scripts/webmcp.ts';
     </script>
   </body>
 </html>

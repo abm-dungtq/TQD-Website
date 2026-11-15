@@ -32,7 +32,7 @@ const hasFeaturedPoster =
     <div class="flex items-center gap-3.5">
       <img src={person.portraitSmall} alt={person.name} width="56" height="56" class="m-avatar" />
       <div class="min-w-0">
-        <h1 class="display text-2xl leading-tight">{person.name}</h1>
+        <p class="display text-2xl leading-tight">{person.name}</p>
         <p class="mt-0.5 text-xs font-medium text-accent-ink">{person.role}</p>
       </div>
     </div>
@@ -111,6 +111,7 @@ const hasFeaturedPoster =
       </figure>
     )
   }
+  <slot />
 </div>
 
 <div class="m-scrim" data-m-scrim hidden></div>

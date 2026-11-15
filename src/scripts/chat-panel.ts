@@ -14,11 +14,11 @@ const STALL_MS = 45_000;
 const STATUS_TTL = 60_000;
 const NARROW = window.matchMedia('(max-width: 1023px)');
 const GREETING =
-  'Chào bạn! Mình là Agent AI của DũngTQ — chuyên giải đáp về lộ trình đào tạo AI doanh nghiệp, hệ Skill (Viết Pro, Opus Video) và cách triển khai Agent thực chiến. Bạn cần tìm hiểu nội dung nào?';
+  'Chào bạn! Mình là Agent AI của DũngTQ — chuyên giải đáp về lộ trình đào tạo AI doanh nghiệp, hệ Skill (Viết Pro, Tử Vi AI, Tải Video) và cách triển khai Agent thực chiến. Bạn cần tìm hiểu nội dung nào?';
 
 const STARTER_PROMPTS = [
   'Chương trình đào tạo AI thực chiến cho doanh nghiệp gồm những gì?',
-  'Giới thiệu bộ Skill Viết Pro và Opus Video của DũngTQ',
+  'Giới thiệu bộ Skill Viết Pro, Tử Vi AI và các công cụ AI của DũngTQ',
   'Cách dùng công cụ Tải Video & Mổ xẻ kịch bản Viral AI',
 ];
 
@@ -267,8 +267,8 @@ const send = async (message: string) => {
   const pending = document.createElement('div');
   pending.className = 'chat-msg';
   pending.dataset.role = 'agent';
-  pending.setAttribute('aria-hidden', 'true');
-  pending.innerHTML = '<span class="chat-dots"><span></span><span></span><span></span></span>';
+  pending.setAttribute('aria-busy', 'true');
+  pending.innerHTML = '<span class="chat-dots" aria-hidden="true"><span></span><span></span><span></span></span>';
   log.appendChild(pending);
   log.setAttribute('aria-busy', 'true');
   scrollDown();
@@ -302,6 +302,7 @@ const send = async (message: string) => {
       latest = t;
       if (!started) {
         started = true;
+        pending.removeAttribute('aria-hidden');
         emit('stream');
       }
       if (latest.startsWith('Error: ')) return;
@@ -317,6 +318,7 @@ const send = async (message: string) => {
       fail('Agent gặp lỗi khi trả lời. Bạn thử hỏi lại nhé.');
       return;
     }
+    pending.removeAttribute('aria-busy');
     pending.remove();
     add({ role: 'agent', text });
     if (!done) add({ role: 'error', text: 'Câu trả lời bị ngắt giữa chừng. Bạn thử hỏi lại nhé.' });

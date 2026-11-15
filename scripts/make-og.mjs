@@ -51,7 +51,7 @@ const CARDS = [
     slug: 'san-pham',
     eyebrow: '02 — TQD.ME/SAN-PHAM',
     title: 'Sản phẩm & Skill AI',
-    subtitle: 'Viết Pro · Opus Video · Tử Vi AI · Tải Video',
+    subtitle: 'Viết Pro · Studio Hub · Tử Vi AI · Tải Video',
     detail: 'Hệ Agent, Skill & Công cụ chạy thực tế mỗi ngày',
   },
   {
@@ -66,7 +66,7 @@ const CARDS = [
     eyebrow: '04 — TQD.ME/VIDEO-AI',
     title: 'Video AI & Kể chuyện',
     subtitle: 'Phim ngắn AI, Motion Video & Kịch bản Viral',
-    detail: 'TikTok @abmdungtq · Xưởng sản xuất Opus Video',
+    detail: 'TikTok @abmdungtq · Xưởng sản xuất Video AI',
   },
   {
     slug: 'bai-viet',

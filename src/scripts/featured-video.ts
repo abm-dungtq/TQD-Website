@@ -2,7 +2,7 @@
 // It loops muted while it is on screen and mostly uncovered by windows. "Bật tiếng" plays it once from the
 // start with sound, then it returns to the silent loop. Under reduced motion or Save-Data nothing plays until
 // the visitor presses the button.
-import { reducedMotion } from './motion';
+import { lowPowerMotion } from './motion';
 
 const CHECK_MS = 1000;
 
@@ -15,7 +15,7 @@ export const startFeaturedVideo = (desktop: HTMLElement) => {
   const label = feature?.querySelector<HTMLElement>('[data-feature-label]');
   if (!feature || !video || !sound || !label) return;
 
-  const autoplay = !reducedMotion() && !saveData();
+  const autoplay = !lowPowerMotion() && !saveData();
   let withSound = false;
 
   /** True when a visible window covers half of the video or more. */

@@ -86,6 +86,19 @@ export const PUBLIC_SHARE_IP_PER_HOUR = 30;
 export const DEFAULT_VIRAL_DAILY_CAP = 150;
 export const MAX_VIRAL_BODY_BYTES = 48 * 1024;
 
+/** Public rate-limit & duration metadata exported for discovery feeds and API docs. */
+export const PUBLIC_VIRAL_LIMITS = {
+  maxVideoSec: PUBLIC_MAX_VIDEO_SEC,
+  maxWhisperAudioSec: MAX_WHISPER_AUDIO_SEC,
+  transcribeVisitorPerHour: PUBLIC_TRANSCRIBE_VISITOR_PER_HOUR,
+  transcribeIpPerHour: PUBLIC_TRANSCRIBE_IP_PER_HOUR,
+  generateVisitorPerHour: PUBLIC_GENERATE_VISITOR_PER_HOUR,
+  generateIpPerHour: PUBLIC_GENERATE_IP_PER_HOUR,
+  shareVisitorPerHour: PUBLIC_SHARE_VISITOR_PER_HOUR,
+  shareIpPerHour: PUBLIC_SHARE_IP_PER_HOUR,
+  dailyCap: DEFAULT_VIRAL_DAILY_CAP,
+} as const;
+
 /** Accepts legacy 12-hex shares, new 16-hex public shares, and `c-<hex>` admin-curated showcase shares. */
 export const VIRAL_SHARE_ID_RE = /^(?:c-)?[a-f0-9]{12,24}$/;
 
@@ -705,7 +718,7 @@ export async function cleanupViralCache(db: D1Database): Promise<void> {
   await Promise.all([
     db.prepare("DELETE FROM rate_limits WHERE bucket LIKE 'viral:%' AND window_start < ?1").bind(limitCutoff).run(),
     db.prepare('DELETE FROM viral_transcripts WHERE created_at < ?1').bind(cacheCutoff).run(),
-    db.prepare('DELETE FROM viral_shares WHERE created_at < ?1').bind(cacheCutoff).run(),
+    db.prepare("DELETE FROM viral_shares WHERE created_at < ?1 AND share_id NOT LIKE 'c-%'").bind(cacheCutoff).run(),
   ]);
 }
 

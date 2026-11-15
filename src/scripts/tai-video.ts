@@ -283,6 +283,25 @@ function switchTab(tab: TabKey, focusBtn = false) {
   }
 }
 
+function updateProgressBar(percent: number, minVisualWidth = percent) {
+  const clampedValue = Math.max(0, Math.min(100, Math.round(percent)));
+  const clampedVisual = Math.max(0, Math.min(100, minVisualWidth));
+  if (!progressBar) return;
+  progressBar.style.width = `${clampedVisual}%`;
+  progressBar.setAttribute('aria-valuenow', String(clampedValue));
+}
+
+function setBatchMode(enabled: boolean) {
+  isBatchMode = enabled;
+  if (btnBatchToggle) btnBatchToggle.setAttribute('aria-pressed', String(isBatchMode));
+  if (batchToggleLabel) {
+    batchToggleLabel.textContent = isBatchMode ? 'Chế độ 1 link' : 'Tải nhiều link';
+  }
+  if (singleWrap) singleWrap.hidden = isBatchMode;
+  if (batchWrap) batchWrap.hidden = !isBatchMode;
+  updatePlatformBadgeFromInput();
+}
+
 function getSelectedPreset(): 'best' | '720' | 'audio' | 'pick' {
   const checked = document.querySelector<HTMLInputElement>('input[name="dl-preset"]:checked');
   const val = checked?.value;
@@ -580,7 +599,7 @@ function showSinglePreview(data: ResolveResponse) {
   if (progressPercent) progressPercent.textContent = '0%';
   if (progressSpeed) progressSpeed.textContent = '-- MB/s';
   if (progressEta) progressEta.textContent = 'ETA --';
-  if (progressBar) progressBar.style.width = '0%';
+  updateProgressBar(0);
   if (directLink) directLink.hidden = true;
 }
 
@@ -599,7 +618,7 @@ async function startDownloadFlow(opts: {
   }
   if (directLink) directLink.hidden = true;
   if (progressStatus) progressStatus.textContent = `Đang khởi tạo tải (${opts.formatLabel})…`;
-  if (progressBar) progressBar.style.width = '5%';
+  updateProgressBar(5);
   opts.onRowStatus?.('Đang chuẩn bị…');
 
   let prepRes: Response;
@@ -662,7 +681,7 @@ async function startDownloadFlow(opts: {
     if (progressPercent) progressPercent.textContent = `${pct}%`;
     if (progressSpeed) progressSpeed.textContent = formatMBps(speed);
     if (progressEta) progressEta.textContent = eta !== undefined ? `ETA ${Math.ceil(eta)}s` : 'ETA --';
-    if (progressBar) progressBar.style.width = `${Math.max(8, pct)}%`;
+    updateProgressBar(pct, Math.max(8, pct));
 
     if (taskData.status === 'queued') {
       if (progressStatus) progressStatus.textContent = 'Đang xếp hàng chờ xử lý…';
@@ -672,12 +691,12 @@ async function startDownloadFlow(opts: {
       opts.onRowStatus?.(`Đang tải ${pct}%`);
     } else if (taskData.status === 'processing') {
       if (progressStatus) progressStatus.textContent = 'Đang ghép H.264 + AAC (ffmpeg faststart)…';
-      if (progressBar) progressBar.style.width = '96%';
+      updateProgressBar(96);
       opts.onRowStatus?.('Đang ghép MP4…');
     } else if (taskData.status === 'completed' && taskData.streamUrl) {
       if (progressStatus) progressStatus.textContent = 'Hoàn tất! Đang truyền file về máy của bạn…';
       if (progressPercent) progressPercent.textContent = '100%';
-      if (progressBar) progressBar.style.width = '100%';
+      updateProgressBar(100);
       opts.onRowStatus?.('Đã tải xong');
 
       if (directLink) {
@@ -991,14 +1010,7 @@ btnClear?.addEventListener('click', () => {
 });
 
 btnBatchToggle?.addEventListener('click', () => {
-  isBatchMode = !isBatchMode;
-  btnBatchToggle.setAttribute('aria-pressed', String(isBatchMode));
-  if (batchToggleLabel) {
-    batchToggleLabel.textContent = isBatchMode ? 'Chế độ 1 link' : 'Tải nhiều link';
-  }
-  if (singleWrap) singleWrap.hidden = isBatchMode;
-  if (batchWrap) batchWrap.hidden = !isBatchMode;
-  updatePlatformBadgeFromInput();
+  setBatchMode(!isBatchMode);
 });
 
 btnBatchClear?.addEventListener('click', () => {
@@ -1169,20 +1181,43 @@ const viralLab = initViralLab({
   switchToViralTab: () => switchTab('viral'),
 });
 
-// Handle deep-links such as /tai-video?url=...&tab=viral from /xray/[id] share cards
+// Handle deep-links such as /tai-video?url=...&tab=viral&format=720&mode=batch
 try {
   const params = new URLSearchParams(window.location.search);
   const queryUrl = params.get('url');
   const queryTab = params.get('tab');
-  if (queryUrl && inputUrl) {
+  const queryFormat = params.get('format');
+  const queryMode = params.get('mode');
+
+  if (queryFormat === 'best' || queryFormat === '720' || queryFormat === 'audio' || queryFormat === 'pick') {
+    const presetInput = document.querySelector<HTMLInputElement>(
+      `input[name="dl-preset"][value="${queryFormat}"]`,
+    );
+    if (presetInput) {
+      presetInput.checked = true;
+      updateMainButtonLabel();
+    }
+  }
+
+  if (queryMode === 'batch') {
+    setBatchMode(true);
+    if (queryUrl && inputBatch) {
+      const urls = extractUrlsFromInput(queryUrl);
+      if (urls.length > 0) {
+        inputBatch.value = urls.join('\n');
+        updatePlatformBadgeFromInput();
+      }
+    }
+  } else if (queryUrl && inputUrl) {
     const safe = validateSafeMediaUrl(queryUrl);
     if (safe.ok) {
       inputUrl.value = safe.url;
       updatePlatformBadgeFromInput();
     }
   }
-  if (queryTab === 'viral') {
-    switchTab('viral');
+
+  if (queryTab === 'queue' || queryTab === 'viral' || queryTab === 'formats' || queryTab === 'history') {
+    switchTab(queryTab);
   }
 } catch {
   // ignore URL parsing error

@@ -1,6 +1,7 @@
 // Window manager for the home-page desktop (src/components/DesktopShell.astro).
 // The desktop only runs on wide screens; elsewhere the plain page stays visible.
 import { createExpose } from './expose';
+import { lowPowerMotion } from './motion';
 import { typing } from './typing';
 
 const WIDE_QUERY = '(min-width: 1024px)';
@@ -31,6 +32,9 @@ const skipLink = document.querySelector<HTMLAnchorElement>('[data-skip]');
 
 if (desktop && fallback) {
   const wide = window.matchMedia(WIDE_QUERY);
+  const searchParams = new URLSearchParams(window.location.search);
+  const requestedWindow = searchParams.get('window')?.trim() ?? '';
+  const focusLayout = searchParams.get('layout') === 'focus' || navigator.webdriver === true;
   const windows = new Map<string, HTMLElement>();
   const openers = new Map<string, HTMLElement>();
   const snapPreview = desktop.querySelector<HTMLElement>('[data-snap-preview]');
@@ -53,19 +57,36 @@ if (desktop && fallback) {
     windows.forEach((win, id) => dockItem(id)?.classList.toggle('is-open', !win.hidden || isMinimized(win)));
   };
 
+  const visibleWindows = () => [...windows.values()].filter((w) => !w.hidden);
+
+  const normalizeWindowZIndices = () => {
+    const sorted = visibleWindows().sort(
+      (a, b) => Number(a.style.zIndex || 0) - Number(b.style.zIndex || 0),
+    );
+    sorted.forEach((w, idx) => {
+      w.style.zIndex = String(10 + idx);
+    });
+    zTop = 10 + sorted.length;
+  };
+
   const focusWindow = (win: HTMLElement) => {
+    if (zTop >= 890) {
+      normalizeWindowZIndices();
+    }
     zTop += 1;
     win.style.zIndex = String(zTop);
   };
-
-  const visibleWindows = () => [...windows.values()].filter((w) => !w.hidden);
 
   const topWindow = (): HTMLElement | undefined =>
     visibleWindows().sort((a, b) => Number(b.style.zIndex) - Number(a.style.zIndex))[0];
 
   const syncHash = () => {
     const top = topWindow();
-    history.replaceState(null, '', top?.dataset.window ? `#${top.dataset.window}` : location.pathname);
+    history.replaceState(
+      null,
+      '',
+      top?.dataset.window ? `#${top.dataset.window}` : `${location.pathname}${location.search}`,
+    );
   };
 
   const expose = createExpose(
@@ -96,7 +117,7 @@ if (desktop && fallback) {
     const width = window.innerWidth - CANVAS_LEFT - GUTTER;
     const height = window.innerHeight - CANVAS_TOP - 92;
     const count = width < 1264 ? 1 : width < 2268 ? 2 : 3;
-    const withFeature = Boolean(feature) && window.innerWidth >= FEATURE_MIN_WIDTH;
+    const withFeature = !focusLayout && Boolean(feature) && window.innerWidth >= FEATURE_MIN_WIDTH;
     const shared = count === 1 && withFeature;
     const winWidth = shared
       ? Math.floor((width - GUTTER) * 0.6)
@@ -258,12 +279,16 @@ if (desktop && fallback) {
     // Animations are only needed on the desktop, so they load with it.
     import('./window-motion').then((m) => (motion = m)).catch(() => {});
     // Extras wait until the page has loaded and the browser is idle, so they never delay first paint.
-    whenIdle(() => {
-      import('./wallpaper').then((m) => m.startWallpaper(desktop)).catch(() => {});
-      if (feature) import('./featured-video').then((m) => m.startFeaturedVideo(desktop)).catch(() => {});
-      import('./weather').then((m) => m.startWeather(desktop)).catch(() => {});
-      import('./mascot').then((m) => m.startMascot(desktop)).catch(() => {});
-    });
+    if (lowPowerMotion()) {
+      document.documentElement.dataset.mascot = 'off';
+    } else {
+      whenIdle(() => {
+        import('./wallpaper').then((m) => m.startWallpaper(desktop)).catch(() => {});
+        if (feature && !focusLayout) import('./featured-video').then((m) => m.startFeaturedVideo(desktop)).catch(() => {});
+        import('./weather').then((m) => m.startWeather(desktop)).catch(() => {});
+        import('./mascot').then((m) => m.startMascot(desktop)).catch(() => {});
+      });
+    }
 
     windows.forEach((win, id) => {
       enableDrag(win);
@@ -317,10 +342,23 @@ if (desktop && fallback) {
       windows.forEach(clampWindow);
     });
 
-    // A shared link to one section opens just that window; otherwise fill the screen with a few.
+    // A specific window (`?window=` or `#hash`) or focus/webdriver mode opens one clean window.
     const fromHash = location.hash.slice(1);
-    if (windows.has(fromHash)) {
-      open(fromHash);
+    const singleTarget =
+      requestedWindow && windows.has(requestedWindow)
+        ? requestedWindow
+        : windows.has(fromHash)
+          ? fromHash
+          : focusLayout
+            ? DEFAULT_WINDOW
+            : null;
+    if (singleTarget) {
+      const targetWin = windows.get(singleTarget);
+      if (targetWin) {
+        targetWin.style.left = `${CANVAS_LEFT}px`;
+        targetWin.style.top = `${CANVAS_TOP}px`;
+      }
+      open(singleTarget);
       return;
     }
     const slots = BOOT_WINDOWS.filter((id) => windows.has(id)).slice(0, withFeature ? Math.max(1, count - 1) : count);

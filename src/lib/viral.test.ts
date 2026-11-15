@@ -11,12 +11,15 @@ import {
 } from './viet-pro-lint';
 import {
   buildViralMessages,
+  cleanupViralCache,
   createViralShare,
   getViralShare,
   normalizeWhisperOutput,
   parseGenerateBody,
   parseTranscribeBody,
+  PUBLIC_VIRAL_LIMITS,
   sanitizePublicShareMarkdown,
+  TRANSCRIPT_CACHE_TTL_SEC,
   VIRAL_SHARE_ID_RE,
   type ViralTranscriptRecord,
 } from './viral';
@@ -363,5 +366,50 @@ describe('Viral Prompt Security, Anti-Phishing /xray/[id] Shares & Markdown Poli
     expect(safeHtml).toContain('href="https://tqd.me/bai-viet/demo"');
     expect(safeHtml).not.toContain('untrusted.example.com');
     expect(safeHtml).toContain('Trang lạ');
+  });
+
+  it('cleanupViralCache preserves curated c-* shares and deletes only stale public shares', async () => {
+    const queries: Array<{ sql: string; args: unknown[] }> = [];
+    const rows = [
+      { share_id: 'c-curated00000001', created_at: 100 },
+      { share_id: 'aabbccddeeff0011', created_at: 100 },
+      { share_id: 'aabbccddeeff0022', created_at: Math.floor(Date.now() / 1000) },
+    ];
+
+    const mockDb = {
+      prepare(sql: string) {
+        return {
+          bind(...args: unknown[]) {
+            return {
+              async run() {
+                queries.push({ sql, args });
+                if (sql.includes('DELETE FROM viral_shares')) {
+                  const cutoff = Number(args[0]);
+                  const guardCurated = sql.includes("share_id NOT LIKE 'c-%'");
+                  for (let i = rows.length - 1; i >= 0; i -= 1) {
+                    const row = rows[i];
+                    if (row.created_at < cutoff && (!guardCurated || !row.share_id.startsWith('c-'))) {
+                      rows.splice(i, 1);
+                    }
+                  }
+                }
+                return { success: true };
+              },
+            };
+          },
+        };
+      },
+    } as unknown as D1Database;
+
+    await cleanupViralCache(mockDb);
+
+    const shareCleanup = queries.find((q) => q.sql.includes('DELETE FROM viral_shares'));
+    expect(shareCleanup).toBeDefined();
+    expect(shareCleanup!.sql).toBe("DELETE FROM viral_shares WHERE created_at < ?1 AND share_id NOT LIKE 'c-%'");
+    expect(rows.map((r) => r.share_id)).toEqual(['c-curated00000001', 'aabbccddeeff0022']);
+    expect(PUBLIC_VIRAL_LIMITS.maxVideoSec).toBe(300);
+    expect(PUBLIC_VIRAL_LIMITS.transcribeVisitorPerHour).toBe(8);
+    expect(PUBLIC_VIRAL_LIMITS.transcribeIpPerHour).toBe(16);
+    expect(TRANSCRIPT_CACHE_TTL_SEC).toBe(30 * 86_400);
   });
 });
