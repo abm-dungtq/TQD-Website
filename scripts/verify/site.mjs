@@ -54,6 +54,15 @@ await contains('/', ['Trịnh Quang Dũng', 'dungtq.ceo@gmail.com', 'zalo.me/tri
 await contains('/san-pham', ['Viết Pro']);
 await contains('/robots.txt', ['Disallow: /admin']);
 
+// Curated homepage & showcase verification: top repos present, legacy discontinued apps absent.
+for (const p of ['/', '/ho-so', '/san-pham', '/index.md', '/llms.txt']) {
+  const body = await contains(p, ['github.com/abm-dungtq/viet-pro', 'github.com/abm-dungtq/china-sourcing']);
+  const lower = body.toLowerCase();
+  for (const banned of ['opus video', 'opus-video', 'clean your mac', 'tqd-clean-your-mac', 'viet-pro-codex']) {
+    if (lower.includes(banned)) fails.push(`${p} unexpectedly contains deprecated token "${banned}"`);
+  }
+}
+
 // Verify <link rel="alternate" type="text/markdown"> advertises a reachable 200 Markdown twin.
 async function checkMarkdownTwinLink(pagePath) {
   const html = await (await get(pagePath)).text();

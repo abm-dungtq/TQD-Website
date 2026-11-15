@@ -337,7 +337,7 @@ export const SECTION_SEO: Record<SectionId, { title: string; description: string
   'san-pham': {
     title: 'Sản phẩm phần mềm, Skill và công cụ AI thực chiến',
     description:
-      'Bộ công cụ AI và phần mềm của Trịnh Quang Dũng gồm Viết Pro, Tải Video và Mổ xẻ Viral, TQD-Clean Your Mac, Tử Vi Đầu Số và các ứng dụng.',
+      'Hệ sinh thái sản phẩm AI và mã nguồn mở của Trịnh Quang Dũng: Viết Pro v6, China Sourcing, Tải Video Viral, Tử Vi Thiên Kỷ, TQD KidGuard và TQD Browser.',
   },
   'thu-vien': {
     title: 'Thư viện hình ảnh và video đào tạo AI doanh nghiệp',

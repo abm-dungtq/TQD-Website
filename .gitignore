@@ -22,6 +22,7 @@ pnpm-debug.log*
 # local tooling & scratch media
 .wrangler/
 .cache/
+.viet-pro/
 .lighthouse-*.json
 paseo.json
 assets/

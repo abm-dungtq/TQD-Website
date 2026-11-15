@@ -29,7 +29,7 @@ const item: Item = {
   summary: 's',
   tags: ['Skill'],
   links: [
-    { label: 'GitHub', href: 'https://github.com/abm-dungtq/viet-pro-codex' },
+    { label: 'GitHub', href: 'https://github.com/abm-dungtq/viet-pro' },
     { label: 'Bài giới thiệu', href: '/bai-viet/viet-pro' },
   ],
   sort: 10,
@@ -107,10 +107,22 @@ describe('sectionMarkdown, frontmatter & llms surfaces', () => {
     expect(md!).toContain('\n# Sản phẩm · DũngTQ\n');
     expect(md!).not.toContain('> Nguồn:');
     expect(md!).toContain('[Bài giới thiệu](https://tqd.me/bai-viet/viet-pro)');
-    expect(md!).toContain('[GitHub](https://github.com/abm-dungtq/viet-pro-codex)');
+    expect(md!).toContain('[GitHub](https://github.com/abm-dungtq/viet-pro)');
     expect(md!).toContain('Tải Video & Mổ Xẻ Kịch Bản Viral AI');
     expect(md!).toContain('https://tqd.me/tai-video');
     expect(md!).toContain('https://tqd.me/tai-video.md');
+
+    const withHoSoSection = {
+      ...withPerson,
+      site: {
+        ...withPerson.site,
+        sections: [{ id: 'ho-so', title: 'Hồ sơ', short: 'Hồ sơ năng lực', icon: 'user' }, ...withPerson.site.sections],
+      },
+    } as unknown as SiteData;
+    const hoSoMd = sectionMarkdown('ho-so', withHoSoSection, 'https://tqd.me', '2026-11-15');
+    expect(hoSoMd).toContain('### Sản phẩm & mã nguồn mở tiêu biểu');
+    expect(hoSoMd).toContain('https://tqd.me/tai-video');
+    expect(hoSoMd).toContain('https://github.com/abm-dungtq/viet-pro');
 
     const profileMd = profileMarkdown(withPerson, 'https://tqd.me', '2026-11-12 10:00:00');
     expect(profileMd).toMatch(/^---\nsource: "https:\/\/tqd\.me\/"/);
@@ -217,6 +229,8 @@ describe('content helpers & SEO metadata', () => {
       const lower = `${seo.title} ${seo.description}`.toLowerCase();
       expect(lower).not.toContain(legacyPhrase);
       expect(lower).not.toContain(legacySlug);
+      expect(lower).not.toContain('clean your mac');
+      expect(lower).not.toContain('clean-your-mac');
     }
   });
 

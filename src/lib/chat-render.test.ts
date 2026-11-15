@@ -29,8 +29,8 @@ describe('parseInline', () => {
   });
 
   it('keeps other URLs as plain text', () => {
-    expect(parseInline('Mã nguồn: https://github.com/abm-dungtq/viet-pro-codex')).toEqual([
-      { kind: 'text', text: 'Mã nguồn: https://github.com/abm-dungtq/viet-pro-codex' },
+    expect(parseInline('Mã nguồn: https://github.com/abm-dungtq/viet-pro')).toEqual([
+      { kind: 'text', text: 'Mã nguồn: https://github.com/abm-dungtq/viet-pro' },
     ]);
   });
 

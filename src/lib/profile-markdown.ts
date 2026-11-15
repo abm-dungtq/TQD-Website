@@ -57,16 +57,31 @@ function sectionBody(id: SectionId, data: SiteData, site = DEFAULT_SITE): string
   const links = data.site.links ?? [];
   const topics = data.site.topics ?? { howTo: [], marketWatch: [] };
   switch (id) {
-    case 'ho-so':
+    case 'ho-so': {
+      const featuredProducts = [
+        `- [Tải Video & Xưởng Mổ Xẻ Kịch Bản Viral AI](${base}/tai-video): Công cụ web tải MP4 H.264, tách MP3 320kbps, bóc băng lời thoại AI (SRT) và viết lại kịch bản chuẩn Viết Pro.`,
+        ...data.products.slice(0, 7).map((p) => `- [${p.title}](${resolveProductUrl(p, base)}): ${p.summary}`),
+      ];
       return [
         `**${person?.name ?? 'Trịnh Quang Dũng'}** (${person?.handle ?? 'DũngTQ'}) — ${person?.role ?? ''}`,
         '',
         person?.intro ?? '',
+        ...(data.products.length > 0
+          ? [
+              '',
+              '### Sản phẩm & mã nguồn mở tiêu biểu',
+              '',
+              ...featuredProducts,
+              '',
+              `Xem thêm: [Toàn bộ danh mục sản phẩm](${base}/san-pham.md) · [Kho mã nguồn GitHub @abm-dungtq](https://github.com/abm-dungtq)`,
+            ]
+          : []),
         '',
         'Trọng tâm:',
         '',
         list(person?.focus ?? []),
       ].join('\n');
+    }
     case 'san-pham': {
       const items = data.products.map((p) => itemMarkdown(p, base));
       items.push(

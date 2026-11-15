@@ -103,6 +103,65 @@ const tiktokCovers =
         {introParagraphs(person.intro).map((p) => (
           <p class="max-w-prose text-[1.0625rem] leading-relaxed">{p}</p>
         ))}
+
+        {
+          products.length > 0 && (
+            <div class="mt-2 flex flex-col gap-3 rounded-2xl border border-line bg-tint/55 p-4 sm:p-5">
+              <div class="flex flex-wrap items-baseline justify-between gap-2">
+                <h3 class="display text-xl sm:text-2xl">Sản phẩm &amp; mã nguồn mở tiêu biểu</h3>
+                <span class="text-xs font-medium text-muted">Thực chiến · Tự vận hành</span>
+              </div>
+              <div class="grid gap-2.5 sm:grid-cols-2">
+                <a
+                  href="/tai-video"
+                  class="lux-card flex min-h-11 flex-col justify-between gap-1.5 p-3.5 text-ink no-underline hover:border-accent/60"
+                >
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-sm font-semibold text-ink">Tải Video &amp; Xưởng Viral AI</span>
+                    <span class="shrink-0 text-xs font-medium text-accent-ink">Mở công cụ →</span>
+                  </div>
+                  <span class="line-clamp-2 text-xs leading-relaxed text-muted">
+                    Tải MP4 H.264, tách MP3 320kbps, bóc băng SRT và viết lại kịch bản 5 định dạng theo chuẩn Viết Pro.
+                  </span>
+                </a>
+                {products.slice(0, 7).map((item) => {
+                  const primaryLink = item.links?.[0];
+                  const href = primaryLink?.href ?? '/san-pham';
+                  const external = !href.startsWith('/');
+                  return (
+                    <a
+                      href={href}
+                      class="lux-card flex min-h-11 flex-col justify-between gap-1.5 p-3.5 text-ink no-underline hover:border-accent/60"
+                      {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                    >
+                      <div class="flex items-center justify-between gap-2">
+                        <span class="text-sm font-semibold text-ink">{item.title}</span>
+                        <span class="shrink-0 text-xs font-medium text-accent-ink">
+                          {primaryLink?.label ?? (item.tags[0] || 'Chi tiết')} →
+                        </span>
+                      </div>
+                      <span class="line-clamp-2 text-xs leading-relaxed text-muted">{item.summary}</span>
+                    </a>
+                  );
+                })}
+              </div>
+              <div class="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm font-semibold">
+                <a href="/san-pham" class="inline-flex min-h-11 items-center text-accent-ink hover:underline">
+                  Xem đầy đủ danh mục sản phẩm →
+                </a>
+                <a
+                  href="https://github.com/abm-dungtq"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex min-h-11 items-center text-ink hover:underline"
+                >
+                  Kho mã nguồn GitHub @abm-dungtq →
+                </a>
+              </div>
+            </div>
+          )
+        }
+
         <ul class="flex flex-wrap gap-2" aria-label="Lĩnh vực trọng tâm">
           {person.focus.map((f) => (
             <li class="lux-chip px-3.5 py-1.5 text-sm">{f}</li>

@@ -8,7 +8,7 @@ export class InputError extends Error {}
 export const KIND_BY_SLUG: Record<string, ItemKind> = { 'san-pham': 'product', video: 'video' };
 export const KIND_LABEL: Record<ItemKind, string> = { product: 'Sản phẩm', video: 'Video' };
 
-export const LIMITS = { title: 200, summary: 1000, intro: 2000 } as const;
+export const LIMITS = { title: 200, summary: 1000, intro: 4000 } as const;
 
 export function checkLength(label: string, value: string, max: number): string {
   if (value.length > max) throw new InputError(`${label} dài quá ${max} ký tự.`);
