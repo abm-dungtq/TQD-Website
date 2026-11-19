@@ -1,7 +1,7 @@
 // Agent API keys: `tqd_` + 32 random bytes in base64url, only the SHA-256 stored in D1.
 import { randomToken, sha256Hex } from './auth';
 
-export const SCOPES = ['articles:write', 'media:write', 'publish'] as const;
+export const SCOPES = ['articles:write', 'media:write', 'publish', 'seo:write'] as const;
 export type Scope = (typeof SCOPES)[number];
 
 export interface ApiKey {

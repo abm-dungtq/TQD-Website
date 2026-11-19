@@ -22,6 +22,7 @@ Giao diện chỉ có một bảng màu sáng: nền ngà `#faf7f1`, chữ mực
 - Nội dung nằm trong D1 (`tqd_db`) và được sửa tại **`/admin`** (đăng nhập bằng email + mật khẩu admin). Không còn sửa nội dung trong mã nguồn.
 - Site **không** chứa văn bản bài Facebook nào; `npm run check:privacy -- <url>` quét toàn bộ trang công khai để chặn việc này.
 - Bản cho máy đọc: `/llms.txt`, `/index.md`, `/{mục}.md`, `/sitemap.xml`.
+- Quản trị từ khóa và Google Search Console (`/admin/seo`, `/api/v1/seo`): tích hợp quy trình `/ak-seo` qua `npm run seo:status`, `npm run seo:keywords`, `npm run seo:gsc:sync` và `npm run seo:audit`. Hướng dẫn sử dụng cho chủ trang: [HUONG-DAN-SUA-WEB.md](HUONG-DAN-SUA-WEB.md).
 - Sao lưu D1 → R2 hằng đêm và cách khôi phục: [docs/backup-restore.md](docs/backup-restore.md).
 
 ## Đăng bài từ agent

@@ -7,6 +7,8 @@ import path from 'node:path';
 
 const USAGE = `Usage: tqd-publish.mjs <command> [options] [--key-file <path>]
   whoami
+  next-brief [--pillar <pillar>] [--claim] [--release <slug>] [--skip <slug>]
+  queue [--pillar <pillar>] [--status <status>]
   upload <file> [--alt "..."]
   put <slug> --title "..." --body-file <file.md> [--summary "..."] [--tags a,b] [--cover <mediaKey>] [--publish]
   get <slug>
@@ -20,7 +22,7 @@ const positional = [];
 for (let i = 0; i < argv.length; i += 1) {
   const a = argv[i];
   if (!a.startsWith('--')) positional.push(a);
-  else if (a === '--publish') flags.publish = true;
+  else if (a === '--publish' || a === '--claim') flags[a.slice(2)] = true;
   else flags[a.slice(2)] = argv[(i += 1)];
 }
 const [command, target] = positional;
@@ -68,6 +70,29 @@ async function main() {
     case 'whoami':
       out((await call('GET', '/api/v1/me')).data);
       break;
+
+    case 'next-brief': {
+      if (flags.release || flags.skip) {
+        const slug = flags.release || flags.skip;
+        const action = flags.release ? 'release' : 'skip';
+        out((await call('POST', '/api/v1/seo/next-brief', { json: { slug, action } })).data);
+      } else if (flags.claim) {
+        const body = flags.pillar ? { pillar: flags.pillar } : {};
+        out((await call('POST', '/api/v1/seo/next-brief', { json: body })).data);
+      } else {
+        const qs = flags.pillar ? `?pillar=${encodeURIComponent(flags.pillar)}` : '';
+        out((await call('GET', `/api/v1/seo/next-brief${qs}`)).data);
+      }
+      break;
+    }
+
+    case 'queue': {
+      const sp = new URLSearchParams({ list: '1' });
+      if (flags.pillar) sp.set('pillar', flags.pillar);
+      if (flags.status) sp.set('status', flags.status);
+      out((await call('GET', `/api/v1/seo/next-brief?${sp.toString()}`)).data);
+      break;
+    }
 
     case 'upload': {
       const file = need(target, 'đường dẫn tệp');

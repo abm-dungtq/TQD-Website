@@ -29,6 +29,7 @@ Nguyên tắc: việc gì API `/api/v1` làm được thì dùng API, vì nó h�
 | `/admin/api-keys` | Tạo, thu hồi API key | `POST /admin/api-keys` |
 | `/admin/chat` | Xem thống kê chat | `GET /admin/chat` (HTML) |
 | `/admin/thong-ke` | Xem thống kê truy cập đa site (`tuvi.tqd.me` & `tqd.me`), phễu sản phẩm, doanh thu 2027 và tổng hợp lại dữ liệu | `GET /admin/thong-ke?site=tuvi.tqd.me&range=7` (HTML), `POST /admin/api/analytics-rollup` |
+| `/admin/seo` | Nghiên cứu từ khóa Việt Nam (`/ak-seo`), quản lý giỏ từ khóa (`seo_keywords`), xem và đồng bộ Google Search Console | `GET /admin/seo?q=...` (HTML), `POST /admin/seo`, hoặc API `GET/POST /api/v1/seo` |
 
 ## Phiên admin
 
@@ -280,7 +281,7 @@ Agent nên sao lưu ngay trước mọi thay đổi lớn: sửa hàng loạt, t
 
 ### API key — `POST /admin/api-keys`
 
-- **Tạo:** trường `name` (1–60 ký tự) và `scopes` lặp lại cho mỗi quyền (`articles:write`, `media:write`, `publish`). Phản hồi 200 HTML có key trong `<input ... value="tqd_..." data-new-key>`; key chỉ hiện một lần.
+- **Tạo:** trường `name` (1–60 ký tự) và `scopes` lặp lại cho mỗi quyền (`articles:write`, `media:write`, `publish`, `seo:write`). Phản hồi 200 HTML có key trong `<input ... value="tqd_..." data-new-key>`; key chỉ hiện một lần.
 - **Thu hồi:** `_action=revoke` và `id` (số). id lấy từ `name="id" value="..."` trong bảng ở `GET /admin/api-keys`.
 
 ```js
