@@ -44,6 +44,8 @@ describe('resolveAllowedMarkdownPath', () => {
     expect(resolveAllowedMarkdownPath('/video-ai.md')).toBe('/video-ai.md');
     expect(resolveAllowedMarkdownPath('/bai-viet.md')).toBe('/bai-viet.md');
     expect(resolveAllowedMarkdownPath('/lien-he.md')).toBe('/lien-he.md');
+    expect(resolveAllowedMarkdownPath('/shop.md')).toBe('/shop.md');
+    expect(resolveAllowedMarkdownPath('/shop')).toBe('/shop.md');
     expect(resolveAllowedMarkdownPath('/tai-video.md')).toBe('/tai-video.md');
     expect(resolveAllowedMarkdownPath('/quyen-rieng-tu.md')).toBe('/quyen-rieng-tu.md');
   });

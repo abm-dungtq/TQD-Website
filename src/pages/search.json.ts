@@ -17,6 +17,12 @@ export const GET: APIRoute = async () => {
     },
     ...site.sections.map((s) => ({ title: s.title, url: `/${s.id}`, kind: 'section', hint: s.short, id: s.id })),
     {
+      title: 'Cửa hàng Google AI Ultra & Veo Flow (Shop)',
+      url: '/shop',
+      kind: 'product',
+      hint: '30 gói Google AI Ultra 5x/20x & Veo: Slot Family, Full Family và Trực tiếp chính chủ',
+    },
+    {
       title: 'Tải Video & Xưởng Mổ Xẻ Kịch Bản Viral AI (Viết Pro)',
       url: '/tai-video',
       kind: 'product',

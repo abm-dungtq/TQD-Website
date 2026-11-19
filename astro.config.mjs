@@ -45,6 +45,9 @@ export default defineConfig({
   ],
   vite: {
     plugins: [tailwindcss()],
+    server: {
+      allowedHosts: ['tqd.tail496c36.ts.net'],
+    },
     // Part of the page cache key, so a deploy never serves HTML rendered by the previous build.
     define: { __BUILD_ID__: JSON.stringify(Date.now().toString(36)) },
   },

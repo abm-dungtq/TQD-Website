@@ -17,6 +17,12 @@ declare namespace Cloudflare {
     ANALYTICS_SALT?: string;
     CF_ANALYTICS_TOKEN?: string;
     BACKUP_ENCRYPTION_KEY?: string;
+    REVIEWWEB_API_KEY?: string;
+    GSC_SERVICE_ACCOUNT_JSON?: string;
+    GSC_CLIENT_ID?: string;
+    GSC_CLIENT_SECRET?: string;
+    GSC_REFRESH_TOKEN?: string;
+    GSC_SITE_URL?: string;
   }
 }
 

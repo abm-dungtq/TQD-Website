@@ -38,6 +38,7 @@ describe('normalizeTqdPath & sanitizePayload (tqd.me)', () => {
         },
       },
       { input: '/lien-he', expected: { section: 'other', pathTpl: '/lien-he', path: '/lien-he' } },
+      { input: '/shop?sku=veo-25k-1m-ultra-20x', expected: { section: 'tools', pathTpl: '/shop', path: '/shop' } },
       { input: '/tai-video#test', expected: { section: 'tools', pathTpl: '/tai-video', path: '/tai-video' } },
       { input: '/quyen-rieng-tu', expected: { section: 'legal', pathTpl: '/quyen-rieng-tu', path: '/quyen-rieng-tu' } },
       // Excluded admin, API, media, and static/markdown routes:

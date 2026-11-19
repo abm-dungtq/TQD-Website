@@ -116,6 +116,8 @@ describe('buildAgentCard', () => {
     expect(card.provider.contact.zaloUrl).toBe('https://zalo.me/trinhquangdung');
     expect(card.endpoints.agentCard).toBe('https://tqd.me/.well-known/agent.json');
     expect(card.endpoints.catalogJson).toBe('https://tqd.me/catalog.json');
+    expect(card.endpoints.shop).toBe('https://tqd.me/shop');
+    expect(card.endpoints.shopMarkdown).toBe('https://tqd.me/shop.md');
 
     expect(card.capabilities.webmcp_browser_tools.webOnlyExecution).toBe(true);
     expect(card.capabilities.webmcp_browser_tools.entryApi).toBe('document.modelContext');

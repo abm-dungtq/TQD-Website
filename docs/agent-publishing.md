@@ -4,11 +4,15 @@ Agent (Claude Code, Codex hoặc script bất kỳ) đăng bài lên tqd.me qua 
 
 ## Hợp đồng API
 
-Xác thực bằng header `Authorization: Bearer tqd_<43 ký tự base64url>`; API không đọc cookie. Có ba quyền (scope): `articles:write`, `media:write` và `publish`. Mọi lỗi trả JSON dạng `{ "error": "<mã>", "message": "<tiếng Việt>" }`. Mỗi key được tối đa 60 request mỗi phút; vượt mức thì nhận 429 kèm `Retry-After`.
+Xác thực bằng header `Authorization: Bearer tqd_<43 ký tự base64url>`; API không đọc cookie. Có bốn quyền (scope): `articles:write`, `media:write`, `publish` và `seo:write`. Mọi lỗi trả JSON dạng `{ "error": "<mã>", "message": "<tiếng Việt>" }`. Mỗi key được tối đa 60 request mỗi phút; vượt mức thì nhận 429 kèm `Retry-After`.
 
 | Method & path | Scope | Thành công | Lỗi |
 |---|---|---|---|
 | `GET /api/v1/me` | bất kỳ key hợp lệ | 200 `{ name, scopes }` | 401 `unauthorized` |
+| `GET /api/v1/seo` | bất kỳ key hợp lệ | 200 `{ siteUrl, countsByStatus, priorityKeywords, lowCtrOpportunities }` | 401 |
+| `POST /api/v1/seo` | `seo:write` | 200 `{ ok, keywordsUpserted, gscRowsUpserted }` | 400, 403, 413 |
+| `GET /api/v1/seo/next-brief[?pillar=&list=1]` | `articles:write` | 200 đề bài SEO+GEO tiếp theo kèm `liveInternalLinks` hoặc danh sách hàng đợi | 401, 403 |
+| `POST /api/v1/seo/next-brief` | `articles:write` | 200 nhận giữ chỗ (`claim`) đề bài tiếp theo hoặc `{ slug, action: 'release'\|'skip' }` | 400, 401, 403 |
 | `GET /api/v1/articles?status=draft\|published` | `articles:write` | 200 `[{ slug, title, status, version, updatedAt }]` (≤ 50, mới nhất trước) | 401, 403 `forbidden` |
 | `GET /api/v1/articles/{slug}` | `articles:write` | 200 bài đầy đủ + `ETag: "v{version}"` | 404 `not_found` |
 | `PUT /api/v1/articles/{slug}` body JSON `{ title, bodyMd, summary?, coverKey?, tags?, publish? }`, tối đa 200 KB | `articles:write` | 201 (tạo) / 200 (sửa) `{ slug, url, status, version, fbOverlap, warning? }` + `ETag` | 400 `invalid` (kèm `errors`), 403, 412 `version_mismatch`, 413 `too_large`, 428 `if_match_required` |

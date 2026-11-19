@@ -53,12 +53,36 @@ if (Astro.request.method === 'POST') {
   }
 }
 
+const prefillTitle = isNew ? String(Astro.url.searchParams.get('title') ?? '').trim().slice(0, 200) : '';
+const prefillKw = isNew ? String(Astro.url.searchParams.get('kw') ?? '').trim().slice(0, 160) : '';
+const prefillSlug = isNew
+  ? (String(Astro.url.searchParams.get('slug') ?? '').trim().slice(0, 80) || (prefillTitle || prefillKw ? slugify(prefillTitle || prefillKw) : ''))
+  : '';
+const prefillSummary = isNew ? String(Astro.url.searchParams.get('summary') ?? '').trim().slice(0, 500) : '';
+const prefillTagsRaw = isNew ? String(Astro.url.searchParams.get('tags') ?? '').trim() : '';
+const prefillTags = prefillTagsRaw
+  ? prefillTagsRaw.split(',').map((t) => t.trim()).filter(Boolean).slice(0, 10)
+  : prefillKw
+    ? [prefillKw.slice(0, 40)]
+    : [];
+const prefillSectionsRaw = isNew ? String(Astro.url.searchParams.get('sections') ?? '').trim() : '';
+const prefillSections = prefillSectionsRaw
+  ? prefillSectionsRaw.split('||').map((s) => s.trim()).filter(Boolean).slice(0, 8)
+  : [];
+const prefillBody =
+  isNew && (prefillKw || prefillTitle || prefillSections.length > 0)
+    ? prefillSections.length > 0
+      ? `[Viết đoạn mở đầu Answer Capsule 40–60 từ trả lời thẳng câu hỏi cho từ khóa: ${prefillKw || prefillTitle}]\n\n` +
+        prefillSections.map((h2) => `## ${h2}\n`).join('\n')
+      : `> Từ khóa mục tiêu: ${prefillKw || prefillTitle}\n\n## Vấn đề thực tế\n\n## Cách giải quyết từng bước\n\n## Lưu ý khi áp dụng\n`
+    : '';
+
 const form = draft ?? {
-  slug: existing?.slug ?? '',
-  title: existing?.title ?? '',
-  summary: existing?.summary ?? '',
-  bodyMd: existing?.bodyMd ?? '',
-  tags: existing?.tags ?? [],
+  slug: existing?.slug ?? prefillSlug,
+  title: existing?.title ?? (prefillTitle || prefillKw),
+  summary: existing?.summary ?? prefillSummary,
+  bodyMd: existing?.bodyMd ?? prefillBody,
+  tags: existing?.tags ?? prefillTags,
   coverKey: existing?.coverKey ?? null,
   status: existing?.status ?? 'draft',
   version: existing?.version,
