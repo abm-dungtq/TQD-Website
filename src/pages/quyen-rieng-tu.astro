@@ -9,7 +9,7 @@ import { breadcrumbNode } from '../lib/structured-data';
 const site = await getSite(env.DB);
 const title = 'Chính Sách Quyền Riêng Tư';
 const description =
-  'Chính sách bảo vệ dữ liệu cá nhân và quyền riêng tư tại tqd.me: thống kê truy cập first-party không dùng cookie theo dõi, không lưu địa chỉ IP thô.';
+  'Chính sách quyền riêng tư tại tqd.me: thống kê nội bộ không cookie, không lưu IP thô; Google Analytics chỉ chạy khi bạn đồng ý và tắt được bất kỳ lúc nào.';
 const origin = new URL('/', Astro.url.origin).href;
 const canonicalUrl = new URL('/quyen-rieng-tu', Astro.url.origin).href;
 const primaryZalo = site.person.zalo || 'https://zalo.me/trinhquangdung';
@@ -35,7 +35,7 @@ const primaryZalo = site.person.zalo || 'https://zalo.me/trinhquangdung';
   <PageHeading
     label="Pháp lý & Minh bạch dữ liệu"
     title="Chính Sách Quyền Riêng Tư"
-    lede="Cam kết bảo vệ quyền riêng tư của khách truy cập tại tqd.me theo nguyên tắc tối thiểu hóa dữ liệu, không sử dụng cookie theo dõi và không chia sẻ dữ liệu cho bên thứ ba."
+    lede="tqd.me đo lường theo hai lớp. Thống kê nội bộ không cookie luôn chạy để đếm lượt đọc. Google Analytics chỉ chạy sau khi bạn bấm Đồng ý, và bạn đổi ý được bất kỳ lúc nào."
   />
 
   <PageActions
@@ -47,12 +47,12 @@ const primaryZalo = site.person.zalo || 'https://zalo.me/trinhquangdung';
 
   <article class="lux-card prose-article flex flex-col gap-6 p-6 sm:p-8 text-sm sm:text-base leading-relaxed text-ink">
     <section class="flex flex-col gap-2">
-      <h2 class="display mt-0 text-xl sm:text-2xl font-semibold">1. Thống kê truy cập First-Party không dùng Cookie</h2>
+      <h2 class="display mt-0 text-xl sm:text-2xl font-semibold">1. Thống kê nội bộ không dùng cookie</h2>
       <p>
         Website <strong>tqd.me</strong> sử dụng hệ thống đo lường lưu lượng truy cập nội bộ (first-party) chạy trực tiếp trên hạ tầng Cloudflare Workers Analytics Engine và Cloudflare D1 của chủ sở hữu để đánh giá hiệu quả nội dung và thời gian đọc trang:
       </p>
       <ul class="list-disc pl-6 flex flex-col gap-1.5 text-muted">
-        <li><strong>Không dùng cookie theo dõi:</strong> Hệ thống hoàn toàn không đặt bất kỳ cookie quảng cáo hay cookie định danh lâu dài nào trên trình duyệt của khách truy cập.</li>
+        <li><strong>Không đặt cookie:</strong> Lớp thống kê nội bộ không đặt cookie quảng cáo hay cookie định danh lâu dài nào trên trình duyệt của bạn.</li>
         <li><strong>Không lưu địa chỉ IP thô:</strong> Địa chỉ mạng chỉ được dùng tạm thời trong bộ nhớ kết hợp với khóa muối bí mật xoay theo ngày (<code>vid_day</code>) để đếm số lượng khách duy nhất trong phạm vi 24 giờ, sau đó bị hủy ngay lập tức.</li>
         <li><strong>Cắt bỏ tham số nhạy cảm:</strong> Mọi chuỗi truy vấn (<code>?query</code>) và mã neo (<code>#hash</code>) đều được loại bỏ trước khi ghi nhận đường dẫn trang.</li>
         <li><strong>Thời hạn lưu trữ:</strong> Dữ liệu sự kiện thô trên Workers Analytics Engine tự động hết hạn sau <strong>90 ngày</strong>; dữ liệu tổng hợp ẩn danh theo ngày (tổng lượt xem, phân vị thời gian đọc <code>p50/p75</code>) được lưu trên cơ sở dữ liệu D1 phục vụ báo cáo vận hành dài hạn.</li>
@@ -60,22 +60,41 @@ const primaryZalo = site.person.zalo || 'https://zalo.me/trinhquangdung';
     </section>
 
     <section class="flex flex-col gap-2">
-      <h2 class="display mt-2 text-xl sm:text-2xl font-semibold">2. Công cụ Trợ lý AI &amp; Tải Video</h2>
+      <h2 class="display mt-2 text-xl sm:text-2xl font-semibold">2. Google Analytics chỉ chạy khi bạn đồng ý</h2>
+      <p class="text-muted">
+        Lần đầu ghé trang, bạn sẽ thấy một khung hỏi ý kiến ở góc màn hình. Trước khi bạn bấm <strong>Đồng ý</strong>, trình duyệt không tải mã nào của Google và không có cookie đo lường nào được đặt. Nếu bạn bấm <strong>Từ chối</strong>, mọi thứ giữ nguyên như vậy.
+      </p>
+      <ul class="list-disc pl-6 flex flex-col gap-1.5 text-muted">
+        <li><strong>Dữ liệu được ghi nhận:</strong> Khi bạn đồng ý, Google Analytics 4 đặt cookie <code>_ga</code> và <code>_ga_*</code> (lưu tối đa 2 năm) để phân biệt các lượt truy cập. Công cụ ghi lại trang bạn xem, mức cuộn trang, nguồn dẫn bạn tới trang, loại thiết bị, khu vực ước lượng theo thành phố và lượt bấm vào liên kết Zalo, email, điện thoại.</li>
+        <li><strong>Bên nhận dữ liệu:</strong> Google LLC xử lý phần dữ liệu này trên máy chủ của họ, có thể đặt ngoài Việt Nam. Đây là bên thứ ba duy nhất nhận dữ liệu đo lường từ tqd.me. Dữ liệu không được bán cho ai.</li>
+        <li><strong>Không phục vụ quảng cáo:</strong> Google Signals và tính năng cá nhân hóa quảng cáo đều tắt. Trang không gắn pixel quảng cáo của Meta, TikTok hay nền tảng nào khác.</li>
+        <li><strong>Thời hạn lưu trữ:</strong> Dữ liệu sự kiện trên Google Analytics được giữ tối đa <strong>14 tháng</strong>.</li>
+      </ul>
+      <p class="text-muted">
+        Bạn đổi lựa chọn được bất kỳ lúc nào. Khi bạn rút lại sự đồng ý, trang ngừng gửi dữ liệu cho Google và xóa các cookie <code>_ga</code> trên trình duyệt này.
+      </p>
+      <p>
+        <button type="button" class="btn-outline-gold cursor-pointer" data-consent-open hidden>Thay đổi lựa chọn đo lường</button>
+      </p>
+    </section>
+
+    <section class="flex flex-col gap-2">
+      <h2 class="display mt-2 text-xl sm:text-2xl font-semibold">3. Công cụ Trợ lý AI &amp; Tải Video</h2>
       <p class="text-muted">
         Khi bạn sử dụng khung trò chuyện AI hoặc công cụ tải &amp; mổ xẻ video tại <a href="/tai-video">/tai-video</a>, hệ thống chỉ lưu bộ đếm giới hạn tốc độ (rate-limit) theo mã băm tạm thời nhằm chống lạm dụng tài nguyên máy chủ, và tự động xóa các tệp xử lý tạm thời trong <code>/tmp/tqd-dl</code> ngay sau khi hoàn tất.
       </p>
     </section>
 
     <section class="flex flex-col gap-2">
-      <h2 class="display mt-2 text-xl sm:text-2xl font-semibold">3. Quyền từ chối đo lường (Opt-out)</h2>
+      <h2 class="display mt-2 text-xl sm:text-2xl font-semibold">4. Quyền từ chối đo lường (Opt-out)</h2>
       <p class="text-muted">
-        Bạn có thể tắt hoàn toàn việc gửi tín hiệu đo lường thời gian đọc trên trình duyệt hiện tại bất kỳ lúc nào bằng cách mở Console của trình duyệt và chạy lệnh:
+        Bạn có thể tắt cả hai lớp đo lường trên trình duyệt hiện tại, gồm thống kê nội bộ và Google Analytics, bằng cách mở Console của trình duyệt và chạy lệnh:
       </p>
       <pre><code>localStorage.setItem('tqd_notrack', '1');</code></pre>
     </section>
 
     <section class="flex flex-col gap-2">
-      <h2 class="display mt-2 text-xl sm:text-2xl font-semibold">4. Liên hệ Chủ thể Dữ liệu</h2>
+      <h2 class="display mt-2 text-xl sm:text-2xl font-semibold">5. Liên hệ Chủ thể Dữ liệu</h2>
       <p class="text-muted">
         Mọi thắc mắc hoặc yêu cầu liên quan đến quyền riêng tư và bảo vệ dữ liệu cá nhân, vui lòng liên hệ trực tiếp với <strong>{site.person.name}</strong> qua email{' '}
         <a href={`mailto:${site.person.email}`} class="font-semibold text-ink">

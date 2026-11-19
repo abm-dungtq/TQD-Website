@@ -1,5 +1,6 @@
 ---
 import { Font } from 'astro:assets';
+import { env } from 'cloudflare:workers';
 import '../styles/global.css';
 import type { Site } from '../lib/content';
 import { personNode } from '../lib/structured-data';
@@ -49,7 +50,19 @@ const {
 } = Astro.props;
 
 const { links, person, sections } = site;
-const fullTitle = title ? `${title} · ${person.handle}` : `${person.name} (${person.handle})`;
+// Google shows roughly 60 characters: long article titles drop the brand suffix, and the home title carries the role.
+const brandedTitle = title ? `${title} · ${person.handle}` : `${person.name} (${person.handle})`;
+const homeTitle = `${person.name} (${person.handle}) · ${person.role.split(' · ')[0]}`;
+const fullTitle = title
+  ? brandedTitle.length > 60
+    ? title
+    : brandedTitle
+  : path === '/'
+    ? homeTitle
+    : brandedTitle;
+// Public identifiers; when unset, no Google tag, consent prompt or verification tag is rendered.
+const ga4Id = /^G-[A-Z0-9]+$/.test(env.GA4_MEASUREMENT_ID ?? '') ? env.GA4_MEASUREMENT_ID : undefined;
+const googleSiteVerification = env.GOOGLE_SITE_VERIFICATION || undefined;
 const baseOrigin = Astro.url.origin || Astro.site?.origin || 'https://tqd.me';
 const canonical = new URL(path, baseOrigin).href;
 const origin = new URL('/', baseOrigin).href;
@@ -110,7 +123,7 @@ const structuredJson = JSON.stringify(structured).replace(/</g, '\\u003c');
 ---
 
 <!doctype html>
-<html lang="vi">
+<html lang="vi" data-ga4={ga4Id}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -119,6 +132,7 @@ const structuredJson = JSON.stringify(structured).replace(/</g, '\\u003c');
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    {googleSiteVerification && <meta name="google-site-verification" content={googleSiteVerification} />}
     {markdownHref && <link rel="alternate" type="text/markdown" href={markdownHref} />}
     {
       path !== '/404' && (
@@ -254,16 +268,69 @@ const structuredJson = JSON.stringify(structured).replace(/</g, '\\u003c');
         </div>
       </footer>
     </div>
+    {
+      ga4Id && (
+        <section class="consent-banner" data-consent aria-label="Lựa chọn đo lường truy cập" hidden>
+          <p>
+            tqd.me muốn dùng Google Analytics để biết bài nào hữu ích và bạn tìm thấy trang từ đâu. Công cụ này đặt cookie
+            đo lường và chỉ chạy khi bạn đồng ý. <a href="/quyen-rieng-tu">Chi tiết</a>
+          </p>
+          <div class="consent-actions">
+            <button type="button" class="btn-outline-gold" data-consent-deny>Từ chối</button>
+            <button type="button" class="btn-gold" data-consent-accept>Đồng ý</button>
+          </div>
+        </section>
+      )
+    }
     <ChatPanel zalo={primaryZalo} />
     <CommandPalette />
     <script>
       import '../scripts/analytics-beacon.ts';
+      import '../scripts/consent.ts';
       import '../scripts/webmcp.ts';
     </script>
   </body>
 </html>
 
 <style is:global>
+  .consent-banner {
+    position: fixed;
+    left: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    z-index: 1200;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    width: min(26rem, calc(100vw - 32px));
+    padding: 1rem 1.1rem;
+    border: 1px solid color-mix(in srgb, var(--color-champagne) 55%, var(--color-line));
+    border-radius: 1rem;
+    background: var(--color-panel);
+    box-shadow: var(--shadow-lift);
+    color: var(--color-ink);
+    font-size: 0.875rem;
+    line-height: 1.55;
+  }
+  .consent-banner[hidden] {
+    display: none;
+  }
+  .consent-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+  .consent-actions button {
+    cursor: pointer;
+  }
+  .consent-actions .btn-gold {
+    border: 0;
+  }
+  /* On phones the chat button owns the bottom-right corner, so the prompt sits above it. */
+  @media (width < 40rem) {
+    .consent-banner {
+      bottom: calc(84px + env(safe-area-inset-bottom));
+    }
+  }
   .site-header {
     position: sticky;
     top: 0;

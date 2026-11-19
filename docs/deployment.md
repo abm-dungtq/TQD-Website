@@ -20,6 +20,8 @@ Production và preview dùng **chung dữ liệu**: binding `DB` → D1 `tqd_db`
 | `ADMIN_PASSWORD_HASH` | secret | Chuỗi `pbkdf2-sha256$<vòng>$<salt>$<hash>`; không bao giờ lưu mật khẩu gốc |
 | `GOCLAW_BASE_URL`, `GOCLAW_AGENT`, `CHAT_DAILY_CAP`, `GOCLAW_API_KEY` | `vars` + secret | Chatbot; xem [chatbot.md](chatbot.md) |
 | `CF_ANALYTICS_TOKEN` | secret | Token có quyền đọc Account Analytics để truy vấn WAE SQL và tổng hợp dữ liệu cho `/admin/thong-ke`; xem [analytics-event-spec.md](analytics-event-spec.md) |
+| `GA4_MEASUREMENT_ID` | `vars` trong `wrangler.jsonc` | Measurement ID của Google Analytics 4. Production dùng `G-Z9XEQ6BVXJ` (tài khoản GA `TQD`, property `tqd.me`, luồng web `tqd.me web`, mã luồng `16374995327`); `env.preview` để rỗng để bản preview không ghi vào số liệu thật. Để rỗng thì trang không hiện khung hỏi ý kiến và không tải mã Google. Khi có giá trị, GA4 chỉ tải sau khi khách bấm Đồng ý (`src/scripts/consent.ts`); CSP công khai trong `src/middleware.ts` chỉ mở `www.googletagmanager.com` và `*.google-analytics.com` cho mục đích này |
+| `GOOGLE_SITE_VERIFICATION` | `vars` trong `wrangler.jsonc` | Mã xác minh Google Search Console dạng thẻ HTML cho property tiền tố URL `https://tqd.me/`; để rỗng thì không xuất thẻ `google-site-verification`. Tệp xác minh `/googlec9ec92b28c893b4f.html` do route `src/pages/googlec9ec92b28c893b4f.ts` trả về là phương thức thứ hai; giữ cả hai để quyền sở hữu không bị mất. Sau lần deploy đầu có thẻ này, mở Search Console bấm **Xác minh**, gửi `https://tqd.me/sitemap.xml`, rồi liên kết property với GA4 tại **Quản trị → Các liên kết sản phẩm → Search Console** |
 
 Đặt hoặc đổi mật khẩu admin (chỉ hash đi qua pipe, không in ra màn hình):
 

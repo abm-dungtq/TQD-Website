@@ -161,3 +161,22 @@ describe('CSP inline script hash deduplication on /404 rewrite', () => {
     expect(csp.match(/'sha256-[A-Za-z0-9+/=]+'/g) ?? []).toHaveLength(1);
   });
 });
+
+describe('Google Analytics hosts in the Content-Security-Policy', () => {
+  const cspFor = async (isAdmin: boolean) => {
+    const html = new Response('<p>ok</p>', { headers: { 'Content-Type': 'text/html' } });
+    return (await withHtmlInlineScriptHashes(html, isAdmin, true)).headers.get('Content-Security-Policy') ?? '';
+  };
+
+  it('lets public pages load the opt-in GA4 tag and send its hits', async () => {
+    const csp = await cspFor(false);
+    expect(csp).toMatch(/script-src [^;]*https:\/\/www\.googletagmanager\.com/);
+    expect(csp).toMatch(/connect-src [^;]*https:\/\/\*\.google-analytics\.com/);
+  });
+
+  it('keeps Google hosts out of admin pages', async () => {
+    const csp = await cspFor(true);
+    expect(csp).toContain("script-src 'self'");
+    expect(csp).not.toContain('google');
+  });
+});
