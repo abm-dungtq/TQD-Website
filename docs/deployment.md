@@ -21,7 +21,7 @@ Production và preview dùng **chung dữ liệu**: binding `DB` → D1 `tqd_db`
 | `GOCLAW_BASE_URL`, `GOCLAW_AGENT`, `CHAT_DAILY_CAP`, `GOCLAW_API_KEY` | `vars` + secret | Chatbot; xem [chatbot.md](chatbot.md) |
 | `CF_ANALYTICS_TOKEN` | secret | Token có quyền đọc Account Analytics để truy vấn WAE SQL và tổng hợp dữ liệu cho `/admin/thong-ke`; xem [analytics-event-spec.md](analytics-event-spec.md) |
 | `GA4_MEASUREMENT_ID` | `vars` trong `wrangler.jsonc` | Measurement ID của Google Analytics 4. Production dùng `G-Z9XEQ6BVXJ` (tài khoản GA `TQD`, property `tqd.me`, luồng web `tqd.me web`, mã luồng `16374995327`); `env.preview` để rỗng để bản preview không ghi vào số liệu thật. Để rỗng thì trang không hiện khung hỏi ý kiến và không tải mã Google. Khi có giá trị, GA4 chỉ tải sau khi khách bấm Đồng ý (`src/scripts/consent.ts`); CSP công khai trong `src/middleware.ts` chỉ mở `www.googletagmanager.com` và `*.google-analytics.com` cho mục đích này |
-| `GOOGLE_SITE_VERIFICATION` | `vars` trong `wrangler.jsonc` | Mã xác minh Google Search Console dạng thẻ HTML cho property tiền tố URL `https://tqd.me/`; để rỗng thì không xuất thẻ `google-site-verification`. Tệp xác minh `/googlec9ec92b28c893b4f.html` do route `src/pages/googlec9ec92b28c893b4f.ts` trả về là phương thức thứ hai; giữ cả hai để quyền sở hữu không bị mất. Sau lần deploy đầu có thẻ này, mở Search Console bấm **Xác minh**, gửi `https://tqd.me/sitemap.xml`, rồi liên kết property với GA4 tại **Quản trị → Các liên kết sản phẩm → Search Console** |
+| `GOOGLE_SITE_VERIFICATION` | `vars` trong `wrangler.jsonc` | Mã xác minh Google Search Console dạng thẻ HTML cho property tiền tố URL `https://tqd.me/`; để rỗng thì không xuất thẻ `google-site-verification`. Tệp xác minh `/googlec9ec92b28c893b4f.html` do route `src/pages/googlec9ec92b28c893b4f.ts` trả về là phương thức thứ hai; giữ cả hai để quyền sở hữu không bị mất. Đã xác minh bằng cả hai phương thức, đã gửi `sitemap.xml` và đã liên kết với luồng GA4 `tqd.me web` ngày 2026-11-19 |
 
 Đặt hoặc đổi mật khẩu admin (chỉ hash đi qua pipe, không in ra màn hình):
 
@@ -45,6 +45,8 @@ npx wrangler login          # một lần, đúng tài khoản ở trên
 npm run deploy:preview      # build với CLOUDFLARE_ENV=preview rồi deploy tqd-next
 npm run deploy              # build rồi deploy tqd-website lên tqd.me
 ```
+
+Build cần tệp `plans/seo-aeo-queue.json`: `src/lib/seo/queue-seed.ts` nhập tệp này lúc build, nhưng tệp nằm trong `.gitignore`, nên một bản checkout mới (kể cả worktree) sẽ build lỗi `Cannot find module`. Chép tệp từ thư mục gốc dự án sang trước khi build. Deploy từ một worktree sạch, không deploy từ thư mục làm việc còn thay đổi chưa commit, vì `wrangler deploy` đẩy cả phần chưa commit lên production.
 
 Môi trường được chọn **lúc build** (plugin Vite của Cloudflare ghi cấu hình Wrangler vào bản build), nên deploy preview phải qua `npm run deploy:preview`, không chạy `wrangler deploy --env preview` trên bản build production. Nếu máy đăng nhập nhiều tài khoản, đặt `CLOUDFLARE_ACCOUNT_ID=b243f38bff984ce1741c379547e97a75`.
 
@@ -84,5 +86,7 @@ Từ 2026-11-02 tên miền chính là `tqd.me`. `routes` trong `wrangler.jsonc`
 npx wrangler deployments list --name tqd-website
 npx wrangler rollback <version-id> --name tqd-website
 ```
+
+Bản trước khi bật GA4 và xác minh Search Console (2026-11-19): `69bacd6f-d34c-4029-b691-897ca70e9f78`.
 
 Bản v1 (site tĩnh) trước khi chuyển sang SSR: `8ffa1fd5-3bcd-4b4a-acda-50123781dd8d`. Rollback về bản này chỉ đổi mã; dữ liệu D1/R2 giữ nguyên.
