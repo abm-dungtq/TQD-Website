@@ -23,6 +23,7 @@ const STATIC_TQD_PATHS: Record<string, { section: AnalyticsSection; pathTpl: str
   '/video-ai': { section: 'gallery', pathTpl: '/video-ai' },
   '/bai-viet': { section: 'articles', pathTpl: '/bai-viet' },
   '/lien-he': { section: 'other', pathTpl: '/lien-he' },
+  '/shop': { section: 'tools', pathTpl: '/shop' },
   '/tai-video': { section: 'tools', pathTpl: '/tai-video' },
   '/quyen-rieng-tu': { section: 'legal', pathTpl: '/quyen-rieng-tu' },
 };

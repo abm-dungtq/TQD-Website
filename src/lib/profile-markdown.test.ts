@@ -18,6 +18,7 @@ import {
   profileMarkdown,
   renderFrontmatter,
   sectionMarkdown,
+  shopMarkdown,
   taiVideoMarkdown,
 } from './profile-markdown';
 import { estimateReadingMinutes, injectHeadingIdsAndToc, slugifyVietnamese } from './toc';
@@ -111,6 +112,8 @@ describe('sectionMarkdown, frontmatter & llms surfaces', () => {
     expect(md!).toContain('Tải Video & Mổ Xẻ Kịch Bản Viral AI');
     expect(md!).toContain('https://tqd.me/tai-video');
     expect(md!).toContain('https://tqd.me/tai-video.md');
+    expect(md!).toContain('https://tqd.me/shop');
+    expect(md!).toContain('https://tqd.me/shop.md');
 
     const withHoSoSection = {
       ...withPerson,
@@ -122,6 +125,7 @@ describe('sectionMarkdown, frontmatter & llms surfaces', () => {
     const hoSoMd = sectionMarkdown('ho-so', withHoSoSection, 'https://tqd.me', '2026-11-15');
     expect(hoSoMd).toContain('### Sản phẩm & mã nguồn mở tiêu biểu');
     expect(hoSoMd).toContain('https://tqd.me/tai-video');
+    expect(hoSoMd).toContain('https://tqd.me/shop');
     expect(hoSoMd).toContain('https://github.com/abm-dungtq/viet-pro');
 
     const profileMd = profileMarkdown(withPerson, 'https://tqd.me', '2026-11-12 10:00:00');
@@ -137,6 +141,12 @@ describe('sectionMarkdown, frontmatter & llms surfaces', () => {
     const taiVideoMd = taiVideoMarkdown('https://tqd.me', '2026-11-12');
     expect(taiVideoMd).toMatch(/^---\nsource: "https:\/\/tqd\.me\/tai-video"/);
     expect(taiVideoMd).not.toContain('> Nguồn:');
+
+    const shopMd = shopMarkdown('https://tqd.me', '2026-11-17');
+    expect(shopMd).toMatch(/^---\nsource: "https:\/\/tqd\.me\/shop"/);
+    expect(shopMd).toContain('Veo 25k-1m (Ultra 20X)');
+    expect(shopMd).toContain('Fam Chính Chủ-12m (Ultra 20X)');
+    expect(shopMd.toLowerCase()).not.toContain('ahki');
 
     const privMd = privacyMarkdown('https://tqd.me', 'dungtq.ceo@gmail.com', '2026-11-12');
     expect(privMd).toMatch(/^---\nsource: "https:\/\/tqd\.me\/quyen-rieng-tu"/);
@@ -169,6 +179,8 @@ describe('sectionMarkdown, frontmatter & llms surfaces', () => {
     expect(legacyTxt).toContain('## Mục lục');
     expect(legacyTxt).toContain('Nội dung bài viết thực tế.');
     expect(legacyTxt).toContain('Chính sách Quyền riêng tư');
+    expect(legacyTxt).toContain('Veo 25k-12m (Ultra 20X)');
+    expect(legacyTxt).toContain('11.600.000đ');
 
     const metadataOnlyData = {
       ...withPerson,

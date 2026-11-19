@@ -5,8 +5,8 @@ const fails = [];
 const get = (p) => fetch(base + p, { redirect: 'manual' });
 
 const ok = [
-  '/', '/ho-so', '/san-pham', '/thu-vien', '/video-ai', '/bai-viet', '/lien-he', '/tai-video', '/quyen-rieng-tu',
-  '/index.md', '/ho-so.md', '/san-pham.md', '/thu-vien.md', '/video-ai.md', '/bai-viet.md', '/lien-he.md', '/tai-video.md', '/quyen-rieng-tu.md',
+  '/', '/ho-so', '/san-pham', '/thu-vien', '/video-ai', '/bai-viet', '/lien-he', '/shop', '/tai-video', '/quyen-rieng-tu',
+  '/index.md', '/ho-so.md', '/san-pham.md', '/thu-vien.md', '/video-ai.md', '/bai-viet.md', '/lien-he.md', '/shop.md', '/tai-video.md', '/quyen-rieng-tu.md',
   '/llms.txt', '/llms-full.txt', '/.well-known/llms.txt', '/.well-known/agent.json', '/catalog.json', '/feed.json', '/rss.xml',
   '/sitemap.xml', '/robots.txt', '/og.png', '/img/portrait-480.webp',
 ];
@@ -50,8 +50,9 @@ const contains = async (p, needles) => {
   for (const n of needles) if (!html.includes(n)) fails.push(`${p} missing ${n}`);
   return html;
 };
-await contains('/', ['Trịnh Quang Dũng', 'dungtq.ceo@gmail.com', 'zalo.me/trinhquangdung', 'tiktok.com/@abmdungtq', 'href="/tai-video"', 'Tải Video']);
+await contains('/', ['Trịnh Quang Dũng', 'dungtq.ceo@gmail.com', 'zalo.me/trinhquangdung', 'tiktok.com/@abmdungtq', 'href="/shop"', 'Cửa hàng AI', 'href="/tai-video"', 'Tải Video']);
 await contains('/san-pham', ['Viết Pro']);
+await contains('/shop', ['Veo 25k-1m (Ultra 20X)', '1.600.000đ', 'Veo 25k-12m (Ultra 20X)', '11.600.000đ', 'zalo.me/trinhquangdung']);
 await contains('/robots.txt', ['Disallow: /admin']);
 
 // Curated homepage & showcase verification: top repos present, legacy discontinued apps absent.
@@ -134,10 +135,10 @@ async function checkJsonLdGraph(pagePath) {
   }
 }
 
-for (const p of ['/', '/san-pham', '/tai-video', '/quyen-rieng-tu']) {
+for (const p of ['/', '/san-pham', '/shop', '/tai-video', '/quyen-rieng-tu']) {
   await checkMarkdownTwinLink(p);
 }
-for (const p of ['/', '/ho-so', '/san-pham', '/thu-vien', '/video-ai', '/bai-viet', '/lien-he', '/tai-video', '/quyen-rieng-tu']) {
+for (const p of ['/', '/ho-so', '/san-pham', '/thu-vien', '/video-ai', '/bai-viet', '/lien-he', '/shop', '/tai-video', '/quyen-rieng-tu']) {
   await checkJsonLdGraph(p);
 }
 

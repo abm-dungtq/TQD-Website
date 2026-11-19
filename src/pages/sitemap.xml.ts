@@ -21,6 +21,7 @@ export const GET: APIRoute = async ({ request }) => {
 
   const urls = [
     { loc: `${siteOrigin}/`, lastmod },
+    { loc: `${siteOrigin}/shop`, lastmod },
     { loc: `${siteOrigin}/tai-video`, lastmod },
     { loc: `${siteOrigin}/quyen-rieng-tu`, lastmod },
     ...site.sections.map((s) => ({ loc: `${siteOrigin}/${s.id}`, lastmod })),

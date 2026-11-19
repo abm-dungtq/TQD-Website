@@ -1,0 +1,1246 @@
+---
+import { env } from 'cloudflare:workers';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Icon from '../components/Icon.astro';
+import PageActions from '../components/PageActions.astro';
+import PageHeading from '../components/PageHeading.astro';
+import { getSite } from '../lib/content';
+import {
+  buildZaloOrderMessage,
+  DEFAULT_SHOP_STATE,
+  findShopProductBySlug,
+  formatVnd,
+  monthlyAverageLabel,
+  resolveShopSelection,
+  SHOP_CREDIT_BADGES,
+  SHOP_CREDIT_EXPLANATIONS,
+  SHOP_FAQS,
+  SHOP_PLAN_META,
+  SHOP_PLANS,
+  SHOP_PRESETS,
+  SHOP_PRODUCTS,
+  SHOP_UPGRADE_META,
+  SHOP_UPGRADE_REQUIREMENTS,
+  SHOP_UPGRADE_TYPES,
+  type ShopProduct,
+} from '../lib/shop-catalog';
+import { breadcrumbNode, collectionPageNode, personNode } from '../lib/structured-data';
+
+const site = await getSite(env.DB);
+const primaryZalo = site.person.zalo || 'https://zalo.me/trinhquangdung';
+const title = 'Cửa hàng Gói Google AI Ultra & Veo';
+const description =
+  'Chọn nhanh 30 gói Google AI Ultra (5x, 20x) & Veo Flow chính chủ: Slot Family, Full Family và Nâng cấp trực tiếp tại tqd.me. Minh bạch credit và bảo hành.';
+const origin = Astro.url.origin;
+const canonicalUrl = `${origin}/shop`;
+
+const requestedSku = Astro.url.searchParams.get('sku');
+const requestedProduct = requestedSku ? findShopProductBySlug(requestedSku) : undefined;
+const initialResolved = resolveShopSelection(
+  requestedProduct
+    ? {
+        plan: requestedProduct.plan,
+        upgradeType: requestedProduct.upgradeType,
+        creditKey: requestedProduct.creditKey,
+        duration: requestedProduct.duration,
+      }
+    : DEFAULT_SHOP_STATE,
+);
+const initialProduct = initialResolved.product;
+const initialExp = SHOP_CREDIT_EXPLANATIONS[initialProduct.creditType];
+const initialDrive = `${initialProduct.plan === 'Google Ultra 20x' ? '30 TB Drive' : '20 TB Drive'} ${
+  initialProduct.upgradeType === 'Trực tiếp chính chủ' ? '(Owner + 5 slot)' : '(dùng chung Family)'
+}`;
+const initialIsDirect = initialProduct.upgradeType === 'Trực tiếp chính chủ';
+
+function radioId(groupName: string, value: string): string {
+  return `shop-${groupName}-${value.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase()}`;
+}
+
+function creditTypeForKey(plan: ShopProduct['plan'], upgradeType: ShopProduct['upgradeType'], ck: string) {
+  return (
+    SHOP_PRODUCTS.find((p) => p.plan === plan && p.upgradeType === upgradeType && p.creditKey === ck)
+      ?.creditType ?? 'fixed'
+  );
+}
+
+const jsonLd = [
+  personNode(site, origin),
+  collectionPageNode({
+    url: canonicalUrl,
+    origin,
+    name: title,
+    description,
+    items: SHOP_PRODUCTS.map((p) => ({
+      name: `${p.name} — ${formatVnd(p.price)}`,
+      url: `${canonicalUrl}?sku=${p.slug}`,
+      description: p.shortDescription,
+    })),
+  }),
+  breadcrumbNode(
+    [
+      { name: 'Trang chủ', url: origin },
+      { name: 'Cửa hàng AI', url: canonicalUrl },
+    ],
+    canonicalUrl,
+  ),
+];
+---
+
+<BaseLayout
+  site={site}
+  title={title}
+  description={description}
+  path="/shop"
+  markdownPath="/shop.md"
+  jsonLd={jsonLd}
+>
+  <PageHeading
+    label="Cửa hàng Google AI Ultra & Veo"
+    title="Chọn đúng gói Google AI Ultra & Veo trong 10 giây"
+    lede="Thay vì tự dò giữa 30 gói rời rạc, bạn chỉ cần chọn 4 bước bên dưới. Bảng tóm tắt hiển thị rõ gói nào có hoặc không có credit dựng video Flow, mức Drive dùng chung và quyền lợi kèm theo để bạn không mua nhầm nhu cầu."
+  />
+
+  <PageActions
+    markdownPath="/shop.md"
+    canonicalUrl={canonicalUrl}
+    title={title}
+    class="-mt-5 mb-6"
+  />
+
+  <!-- Quick presets -->
+  <section class="mb-7" aria-label="Gợi ý nhanh theo mục đích sử dụng">
+    <p class="mb-2.5 text-xs font-semibold uppercase tracking-[0.08em] text-muted">
+      Gợi ý nhanh theo mục đích sử dụng
+    </p>
+    <div class="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
+      {
+        SHOP_PRESETS.map((preset) => {
+          const item = findShopProductBySlug(preset.slug);
+          return (
+            item && (
+              <button
+                type="button"
+                class="shop-preset-btn"
+                data-preset={item.slug}
+                aria-pressed={item.slug === initialProduct.slug ? 'true' : 'false'}
+              >
+                <span class="text-sm font-semibold leading-snug text-ink">{preset.title}</span>
+                <span class="font-mono text-xs text-muted">
+                  {item.name} · {formatVnd(item.price)}
+                </span>
+              </button>
+            )
+          );
+        })
+      }
+    </div>
+  </section>
+
+  <!-- 2-column Configurator -->
+  <section id="shop-configurator" class="shop-layout" aria-label="Bộ cấu hình gói sản phẩm">
+    <div class="shop-config-col">
+      <!-- Bước 1 -->
+      <div class="lux-card p-5 sm:p-6">
+        <fieldset class="shop-fieldset">
+          <legend class="shop-legend">
+            <span><span class="shop-step">01</span>Phiên bản nền tảng</span>
+            <span class="shop-hint">Khác nhau ở dung lượng Drive và hạn mức AI</span>
+          </legend>
+          <div class="shop-grid-2" id="step-plan">
+            {
+              SHOP_PLANS.map((pl) => (
+                <div class="shop-radio-item">
+                  <input
+                    type="radio"
+                    class="shop-radio-input"
+                    name="plan"
+                    id={radioId('plan', pl)}
+                    value={pl}
+                    checked={initialResolved.state.plan === pl}
+                  />
+                  <label class="shop-radio-card" for={radioId('plan', pl)}>
+                    <span class="shop-radio-check" aria-hidden="true">✓</span>
+                    <span class="shop-option-title">{SHOP_PLAN_META[pl].label}</span>
+                    <span class="shop-option-sub">{SHOP_PLAN_META[pl].sub}</span>
+                  </label>
+                </div>
+              ))
+            }
+          </div>
+        </fieldset>
+      </div>
+
+      <!-- Bước 2 -->
+      <div class="lux-card p-5 sm:p-6">
+        <fieldset class="shop-fieldset">
+          <legend class="shop-legend">
+            <span><span class="shop-step">02</span>Hình thức nâng cấp</span>
+            <span class="shop-hint">Slot 1 người, Full nhóm 5 người hay Owner chính chủ</span>
+          </legend>
+          <div class="shop-grid-3" id="step-upgrade">
+            {
+              SHOP_UPGRADE_TYPES.map((up) => {
+                const ok = initialResolved.availableUpgrades.includes(up);
+                return (
+                  <div class="shop-radio-item">
+                    <input
+                      type="radio"
+                      class="shop-radio-input"
+                      name="upgradeType"
+                      id={radioId('upgradeType', up)}
+                      value={up}
+                      checked={initialResolved.state.upgradeType === up}
+                      disabled={!ok}
+                    />
+                    <label class="shop-radio-card" for={radioId('upgradeType', up)}>
+                      <span class="shop-radio-check" aria-hidden="true">✓</span>
+                      <span class="shop-option-title">{SHOP_UPGRADE_META[up].label}</span>
+                      <span class="shop-option-sub">
+                        {ok ? SHOP_UPGRADE_META[up].sub : 'Hiện chỉ có trên dòng Ultra 20x'}
+                      </span>
+                    </label>
+                  </div>
+                );
+              })
+            }
+          </div>
+        </fieldset>
+      </div>
+
+      <!-- Bước 3 -->
+      <div class="lux-card p-5 sm:p-6">
+        <fieldset class="shop-fieldset">
+          <legend class="shop-legend">
+            <span><span class="shop-step">03</span>Credit tạo video Flow (Veo)</span>
+            <span class="shop-hint">Không trừ khi dùng Gemini hay Antigravity</span>
+          </legend>
+          <div class="shop-grid-2" id="step-credit">
+            {
+              initialResolved.availableCredits.map((ck) => {
+                const cType = creditTypeForKey(
+                  initialResolved.state.plan,
+                  initialResolved.state.upgradeType,
+                  ck,
+                );
+                const badge = SHOP_CREDIT_BADGES[cType];
+                return (
+                  <div class="shop-radio-item">
+                    <input
+                      type="radio"
+                      class="shop-radio-input"
+                      name="creditKey"
+                      id={radioId('creditKey', ck)}
+                      value={ck}
+                      checked={initialResolved.state.creditKey === ck}
+                    />
+                    <label class="shop-radio-card" for={radioId('creditKey', ck)}>
+                      <span class="shop-radio-check" aria-hidden="true">✓</span>
+                      <span class="shop-option-title">{ck}</span>
+                      <span class={`shop-badge ${badge.cls}`}>{badge.text}</span>
+                    </label>
+                  </div>
+                );
+              })
+            }
+          </div>
+          <div class="shop-callout" id="credit-callout" data-tone={initialExp.tone} aria-live="off">
+            <strong>{initialExp.calloutTitle}</strong>
+            <span>{initialProduct.creditNote}</span>
+          </div>
+        </fieldset>
+      </div>
+
+      <!-- Bước 4 -->
+      <div class="lux-card p-5 sm:p-6">
+        <fieldset class="shop-fieldset">
+          <legend class="shop-legend">
+            <span><span class="shop-step">04</span>Thời hạn sử dụng</span>
+            <span class="shop-hint">Hiển thị các mốc có sẵn cho cấu hình bạn vừa chọn</span>
+          </legend>
+          <div class="shop-grid-2" id="step-duration">
+            {
+              initialResolved.availableDurations.map((p) => (
+                <div class="shop-radio-item">
+                  <input
+                    type="radio"
+                    class="shop-radio-input"
+                    name="duration"
+                    id={radioId('duration', p.duration)}
+                    value={p.duration}
+                    checked={initialResolved.state.duration === p.duration}
+                  />
+                  <label class="shop-radio-card" for={radioId('duration', p.duration)}>
+                    <span class="shop-radio-check" aria-hidden="true">✓</span>
+                    <span class="shop-option-title">{p.duration}</span>
+                    <span class="shop-option-sub">
+                      {p.users} người dùng · {p.durationDays} ngày
+                    </span>
+                    <span class="shop-option-price">{formatVnd(p.price)}</span>
+                  </label>
+                </div>
+              ))
+            }
+          </div>
+        </fieldset>
+      </div>
+    </div>
+
+    <!-- Sticky Summary -->
+    <aside class="shop-summary-aside" aria-label="Tóm tắt gói đang chọn">
+      <div class="shop-summary-card" id="shop-summary-card" aria-live="off">
+        <div class="mb-2.5 flex items-center justify-between gap-2">
+          <span class="shop-badge badge-gold" id="sum-category">{initialProduct.category}</span>
+          <span class="font-mono text-xs text-muted" id="sum-sku">
+            #{String(initialProduct.index).padStart(2, '0')} · {initialProduct.slug}
+          </span>
+        </div>
+
+        <h2 class="display text-2xl leading-tight sm:text-[1.65rem]" id="sum-name">{initialProduct.name}</h2>
+
+        <div class="my-2.5 flex flex-wrap items-baseline gap-2.5">
+          <span class="shop-sum-price font-mono text-2xl font-bold text-accent-ink sm:text-[1.7rem]" id="sum-price">
+            {formatVnd(initialProduct.price)}
+          </span>
+          <span class="text-xs font-medium text-muted" id="sum-avg">
+            {monthlyAverageLabel(initialProduct)}
+          </span>
+        </div>
+
+        <p class="mb-3.5 text-sm leading-relaxed text-ink/90" id="sum-desc">
+          {initialProduct.shortDescription}
+        </p>
+
+        <ul class="shop-spec-list" id="sum-specs">
+          <li>
+            <span class="shop-spec-key">Hình thức</span>
+            <span class="shop-spec-val">{initialProduct.upgradeType.replace(' chính chủ', '')} ({initialProduct.users} user)</span>
+          </li>
+          <li>
+            <span class="shop-spec-key">Thời hạn</span>
+            <span class="shop-spec-val">{initialProduct.duration} ({initialProduct.durationDays} ngày)</span>
+          </li>
+          <li>
+            <span class="shop-spec-key">Credit Flow</span>
+            <span class="shop-spec-val">{initialProduct.credit}</span>
+          </li>
+          <li>
+            <span class="shop-spec-key">Kho lưu trữ</span>
+            <span class="shop-spec-val is-yes">{initialDrive}</span>
+          </li>
+          <li class="is-wide">
+            <span class="shop-spec-key">Cấp credit &amp; Bảo hành</span>
+            <span class="shop-spec-val">
+              {initialProduct.refillRule} · {initialProduct.deliveryTime} · {initialProduct.warranty}
+            </span>
+          </li>
+          <li class="is-wide">
+            <span class="shop-spec-key">Đặc quyền Owner (YouTube · Lower Priority · Cloud)</span>
+            <span class={`shop-spec-val ${initialIsDirect ? 'is-yes' : 'is-no'}`}>
+              {
+                initialIsDirect
+                  ? 'Có đủ: YouTube Premium cá nhân · Veo 3.1 Lower Priority (0 credit) · 2.000 Colab + $100 Cloud/tháng'
+                  : 'Không bao gồm (chỉ có trên gói Nâng cấp trực tiếp)'
+              }
+            </span>
+          </li>
+        </ul>
+
+        <details class="shop-prereq-details mb-3.5">
+          <summary class="shop-prereq-summary">
+            <span>3 điều kiện Gmail cần kiểm tra trước khi nâng cấp</span>
+          </summary>
+          <ol class="shop-prereq-list">
+            {
+              SHOP_UPGRADE_REQUIREMENTS.map((req) => (
+                <li>
+                  <p>
+                    <strong>{req.title}:</strong> {req.detail}{' '}
+                    <a
+                      href={req.checkUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="font-semibold text-accent-ink underline"
+                    >
+                      Kiểm tra ↗
+                    </a>
+                  </p>
+                </li>
+              ))
+            }
+          </ol>
+        </details>
+
+        <div class="flex flex-col gap-2.5">
+          <a
+            href={primaryZalo}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="btn-gold min-h-[46px] w-full text-sm"
+            id="btn-zalo-order"
+            data-order-text={buildZaloOrderMessage(initialProduct)}
+          >
+            <Icon name="chat" size={16} />
+            <span>Đặt gói này qua Zalo</span>
+          </a>
+          <button
+            type="button"
+            class="btn-outline-gold min-h-[46px] w-full cursor-pointer text-sm"
+            id="btn-copy-order"
+            data-order-text={buildZaloOrderMessage(initialProduct)}
+          >
+            <Icon name="clipboard" size={15} />
+            <span>Sao chép tên gói &amp; giá để gửi nhanh</span>
+          </button>
+          <div class="min-h-5 text-center text-xs font-semibold text-emerald-800" role="status" aria-live="polite" id="copy-status"></div>
+        </div>
+      </div>
+    </aside>
+  </section>
+
+  <!-- Sticky mobile/tablet bottom bar -->
+  <div class="shop-mobile-bar" id="shop-mobile-bar" role="region" aria-label="Tóm tắt nhanh gói đang chọn">
+    <div class="shop-mobile-bar-info">
+      <p class="shop-mobile-bar-name" id="mob-sum-name">{initialProduct.name}</p>
+      <p class="shop-mobile-bar-sub">
+        <span class="shop-mobile-bar-price" id="mob-sum-price">{formatVnd(initialProduct.price)}</span>
+        <span class="shop-mobile-bar-meta" id="mob-sum-meta">{initialProduct.duration} · {initialProduct.credit}</span>
+      </p>
+    </div>
+    <div class="shop-mobile-bar-actions">
+      <a href="#shop-summary-card" class="shop-mobile-detail-btn" id="btn-mob-detail">Chi tiết</a>
+      <a
+        href={primaryZalo}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="btn-gold shop-mobile-zalo-btn"
+        id="btn-mob-zalo"
+        data-order-text={buildZaloOrderMessage(initialProduct)}
+      >
+        <Icon name="chat" size={15} />
+        <span>Đặt Zalo</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- FAQ -->
+  <section class="mt-14 border-t border-line pt-10" id="faq" aria-labelledby="faq-heading">
+    <h2 class="display text-3xl" id="faq-heading">Giải đáp nhanh để tránh hiểu nhầm</h2>
+    <p class="mt-1.5 mb-5 max-w-2xl text-sm text-muted">
+      Những điểm khách hay hỏi nhất trước khi chọn giữa Ultra 5x, Ultra 20x, 0 Credit, Random và Nâng cấp trực tiếp.
+    </p>
+    <div class="flex flex-col gap-2.5">
+      {
+        SHOP_FAQS.map((item) => (
+          <details class="shop-faq-item" open={item.defaultOpen}>
+            <summary>{item.question}</summary>
+            <div class="shop-faq-body">{item.answer}</div>
+          </details>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- Full 30-SKU comparison table -->
+  <section class="mt-14 border-t border-line pt-10" id="bang-gia-30-goi" aria-labelledby="table-heading">
+    <h2 class="display text-3xl" id="table-heading">Bảng giá tổng hợp toàn bộ 30 gói</h2>
+    <p class="mt-1.5 mb-5 max-w-2xl text-sm text-muted">
+      Nhấn vào bất kỳ gói nào bên dưới để nạp thẳng lên bộ cấu hình phía trên và xem chi tiết quyền lợi.
+    </p>
+
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex flex-wrap gap-2" role="group" aria-label="Lọc danh sách 30 gói">
+        <button type="button" class="shop-filter-pill" data-filter="all" aria-pressed="true">Tất cả (30)</button>
+        <button type="button" class="shop-filter-pill" data-filter="slot-20x" aria-pressed="false">Slot Ultra 20x (13)</button>
+        <button type="button" class="shop-filter-pill" data-filter="slot-5x" aria-pressed="false">Slot Ultra 5x (4)</button>
+        <button type="button" class="shop-filter-pill" data-filter="full" aria-pressed="false">Full Family (12)</button>
+        <button type="button" class="shop-filter-pill" data-filter="direct" aria-pressed="false">Chính chủ Owner (1)</button>
+      </div>
+      <search class="shop-search-box">
+        <label for="table-search" class="shop-search-label">Tìm gói</label>
+        <input
+          type="search"
+          id="table-search"
+          name="q"
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="none"
+          spellcheck="false"
+          enterkeyhint="search"
+          placeholder="25k, 12m, 5x..."
+          class="shop-search-input"
+        />
+      </search>
+    </div>
+
+    <div tabindex="0" role="region" aria-labelledby="table-caption" class="shop-table-wrapper">
+      <table class="shop-table">
+        <caption id="table-caption">
+          Danh mục 30 gói Google AI Ultra &amp; Veo trên tqd.me
+          <span id="table-count" class="font-normal text-muted"> · Đang hiển thị 30/30 gói</span>
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Tên gói</th>
+            <th scope="col">Dòng &amp; Hình thức</th>
+            <th scope="col">Credit Flow</th>
+            <th scope="col">Thời hạn</th>
+            <th scope="col">User</th>
+            <th scope="col">Giá bán</th>
+            <th scope="col">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody id="sku-table-body">
+          {
+            SHOP_PRODUCTS.map((p) => {
+              const active = p.slug === initialProduct.slug;
+              return (
+                <tr class={active ? 'is-active' : undefined}>
+                  <th scope="row">{p.name}</th>
+                  <td data-label="Dòng &amp; Hình thức">
+                    {p.plan.replace('Google ', '')} · {SHOP_UPGRADE_META[p.upgradeType].label}
+                  </td>
+                  <td data-label="Credit Flow">{p.credit}</td>
+                  <td data-label="Thời hạn">{p.duration}</td>
+                  <td data-label="Số user">{p.users}</td>
+                  <td data-label="Giá bán">
+                    <strong>{formatVnd(p.price)}</strong>
+                  </td>
+                  <td data-label="Thao tác">
+                    <button
+                      type="button"
+                      class={`shop-pick-row-btn${active ? ' is-selected' : ''}`}
+                      data-pick-slug={p.slug}
+                    >
+                      {active ? '✓ Đang chọn' : 'Chọn gói này'}
+                    </button>
+                  </td>
+                </tr>
+              );
+            })
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <script>
+    import '../scripts/shop.ts';
+  </script>
+</BaseLayout>
+
+<style is:global>
+  .shop-radio-input {
+    position: absolute;
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100%;
+    margin: 0;
+    opacity: 0;
+    z-index: 1;
+    cursor: pointer;
+  }
+
+  .shop-radio-input:disabled {
+    cursor: not-allowed;
+  }
+
+  .shop-preset-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
+    min-block-size: 48px;
+    padding: 0.7rem 0.95rem;
+    border-radius: 0.85rem;
+    border: 1px solid var(--color-line);
+    background: var(--color-panel);
+    text-align: start;
+    cursor: pointer;
+    transition: border-color 150ms ease, background-color 150ms ease, transform 150ms ease;
+  }
+
+  .shop-preset-btn:hover {
+    border-color: var(--color-champagne);
+    background: var(--color-tint);
+    transform: translateY(-1px);
+  }
+
+  .shop-preset-btn[aria-pressed='true'] {
+    border-color: var(--color-accent);
+    background: var(--color-tint);
+    box-shadow: inset 0 0 0 1px var(--color-accent);
+  }
+
+  .shop-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.32fr) minmax(320px, 0.92fr);
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  @media (max-width: 960px) {
+    .shop-layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  .shop-config-col {
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
+    min-inline-size: 0;
+  }
+
+  .shop-fieldset {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    min-inline-size: 0;
+  }
+
+  .shop-legend {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    inline-size: 100%;
+    padding: 0;
+    margin-block-end: 0.85rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-ink);
+  }
+
+  .shop-step {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-accent);
+    margin-inline-end: 0.45rem;
+  }
+
+  .shop-hint {
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: var(--color-muted);
+  }
+
+  .shop-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .shop-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .shop-radio-item {
+    position: relative;
+    display: flex;
+  }
+
+  .shop-radio-card {
+    inline-size: 100%;
+    min-block-size: 56px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.28rem;
+    padding: 0.85rem 1rem;
+    border-radius: 0.75rem;
+    border: 1.5px solid var(--color-line);
+    background: var(--color-panel);
+    cursor: pointer;
+    position: relative;
+    transition: border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+  }
+
+  .shop-radio-card:hover,
+  .shop-radio-input:hover:not(:disabled) + .shop-radio-card {
+    border-color: var(--color-champagne);
+    background: color-mix(in srgb, var(--color-tint) 55%, #fff);
+  }
+
+  .shop-radio-input:checked + .shop-radio-card {
+    border-color: var(--color-accent);
+    background: var(--color-tint);
+    box-shadow: 0 0 0 1px var(--color-accent);
+  }
+
+  .shop-radio-input:focus-visible + .shop-radio-card {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  .shop-radio-input:disabled + .shop-radio-card {
+    opacity: 0.52;
+    cursor: not-allowed;
+    background: #f3f1ec;
+  }
+
+  .shop-radio-check {
+    position: absolute;
+    inset-block-start: 0.55rem;
+    inset-inline-end: 0.55rem;
+    inline-size: 1.25rem;
+    block-size: 1.25rem;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    background: var(--color-accent);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    opacity: 0;
+    transform: scale(0.85);
+    transition: opacity 150ms ease, transform 150ms ease;
+  }
+
+  .shop-radio-input:checked + .shop-radio-card .shop-radio-check {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .shop-option-title {
+    font-size: 0.94rem;
+    font-weight: 700;
+    color: var(--color-ink);
+    padding-inline-end: 1.35rem;
+  }
+
+  .shop-option-sub {
+    font-size: 0.79rem;
+    color: var(--color-muted);
+    line-height: 1.4;
+  }
+
+  .shop-option-price {
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-accent-ink);
+  }
+
+  .shop-badge {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    padding: 0.16rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+    white-space: nowrap;
+  }
+
+  .badge-neutral {
+    background: #f3f1ec;
+    color: #4f4a40;
+    border-color: #dbd4c6;
+  }
+  .badge-info {
+    background: #eef4fc;
+    color: #1d4d8f;
+    border-color: #bfd6f6;
+  }
+  .badge-success {
+    background: #edf7f0;
+    color: #165e34;
+    border-color: #b8dfc6;
+  }
+  .badge-gold {
+    background: var(--color-tint);
+    color: var(--color-accent-ink);
+    border-color: color-mix(in srgb, var(--color-champagne) 60%, var(--color-line));
+  }
+
+  .shop-callout {
+    margin-block-start: 0.9rem;
+    padding: 0.85rem 1rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--color-line);
+    background: var(--color-tint);
+    font-size: 0.86rem;
+    line-height: 1.55;
+  }
+  .shop-callout[data-tone='success'] {
+    background: #edf7f0;
+    border-color: #b8dfc6;
+    color: #134427;
+  }
+  .shop-callout[data-tone='info'] {
+    background: #eef4fc;
+    border-color: #bfd6f6;
+    color: #163a6c;
+  }
+  .shop-callout[data-tone='neutral'] {
+    background: #f3f1ec;
+    border-color: #dbd4c6;
+    color: #353129;
+  }
+  .shop-callout strong {
+    display: block;
+    margin-block-end: 0.2rem;
+  }
+
+  .shop-summary-aside {
+    position: sticky;
+    inset-block-start: 5.25rem;
+    min-inline-size: 0;
+  }
+  @media (max-width: 960px) {
+    .shop-summary-aside {
+      position: static;
+    }
+  }
+
+  .shop-sum-price,
+  .shop-mobile-bar-price {
+    transition: color 180ms ease;
+  }
+  .shop-sum-price.is-updated,
+  .shop-mobile-bar-price.is-updated {
+    color: var(--color-accent);
+  }
+
+  .shop-summary-card {
+    border: 1px solid color-mix(in srgb, var(--color-champagne) 45%, var(--color-line));
+    border-radius: 1rem;
+    background: var(--color-panel);
+    box-shadow: var(--shadow-lift);
+    padding: 1.25rem;
+  }
+
+  .shop-spec-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin: 0 0 0.9rem;
+    padding: 0;
+    list-style: none;
+  }
+  .shop-spec-list li {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 0.55rem 0.7rem;
+    border-radius: 0.65rem;
+    border: 1px solid var(--color-line);
+    background: var(--color-paper);
+    font-size: 0.8rem;
+  }
+  .shop-spec-list li.is-wide {
+    grid-column: 1 / -1;
+  }
+  .shop-spec-key {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--color-muted);
+  }
+  .shop-spec-val {
+    text-align: start;
+    font-weight: 600;
+    color: var(--color-ink);
+    line-height: 1.35;
+  }
+  .shop-spec-val.is-no {
+    color: var(--color-muted);
+    font-weight: 500;
+  }
+  .shop-spec-val.is-yes {
+    color: #165e34;
+  }
+
+  .shop-prereq-details {
+    border: 1px solid var(--color-line);
+    border-radius: 0.75rem;
+    background: var(--color-paper);
+  }
+  .shop-prereq-summary {
+    list-style: none;
+    min-block-size: 44px;
+    padding: 0.5rem 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-ink);
+  }
+  .shop-prereq-summary::-webkit-details-marker {
+    display: none;
+  }
+  .shop-prereq-summary::after {
+    content: '▸';
+    color: var(--color-accent);
+    font-size: 0.85rem;
+    transition: rotate 180ms ease;
+    flex-shrink: 0;
+  }
+  .shop-prereq-details[open] > .shop-prereq-summary::after {
+    rotate: 90deg;
+  }
+  .shop-prereq-list {
+    padding: 0 0.85rem 0.75rem 1.85rem;
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--color-muted);
+    line-height: 1.5;
+  }
+  .shop-prereq-list p {
+    margin: 0.25rem 0;
+  }
+
+  .shop-mobile-bar {
+    position: fixed;
+    inset-inline: 0;
+    inset-block-end: 0;
+    z-index: 950;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.6rem 1rem calc(0.6rem + env(safe-area-inset-bottom));
+    background: color-mix(in srgb, var(--color-panel) 95%, transparent);
+    backdrop-filter: blur(12px);
+    border-block-start: 1px solid color-mix(in srgb, var(--color-champagne) 45%, var(--color-line));
+    box-shadow: 0 -8px 24px rgba(27, 32, 48, 0.08);
+    transition: transform 180ms ease, opacity 180ms ease;
+  }
+  .shop-mobile-bar.is-docked-hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(105%);
+  }
+  .shop-mobile-bar-info {
+    min-inline-size: 0;
+    flex: 1 1 auto;
+  }
+  .shop-mobile-bar-name {
+    margin: 0;
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: var(--color-ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .shop-mobile-bar-sub {
+    margin: 0.1rem 0 0;
+    display: flex;
+    align-items: baseline;
+    gap: 0.45rem;
+    min-inline-size: 0;
+  }
+  .shop-mobile-bar-price {
+    font-family: var(--font-mono);
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--color-accent-ink);
+    white-space: nowrap;
+  }
+  .shop-mobile-bar-meta {
+    font-size: 0.72rem;
+    color: var(--color-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .shop-mobile-bar-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+  .shop-mobile-detail-btn,
+  .shop-mobile-zalo-btn {
+    min-block-size: 44px;
+    min-inline-size: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 0.5rem 0.9rem;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .shop-mobile-detail-btn {
+    border: 1px solid var(--color-line);
+    background: var(--color-paper);
+    color: var(--color-ink);
+  }
+  @media (min-width: 961px) {
+    .shop-mobile-bar {
+      display: none !important;
+    }
+  }
+  @media (max-width: 960px) {
+    body:has(#shop-mobile-bar:not(.is-docked-hidden)) .chat-fab {
+      bottom: calc(86px + env(safe-area-inset-bottom));
+    }
+    body:has(#shop-mobile-bar) .site-footer {
+      padding-block-end: calc(5.5rem + env(safe-area-inset-bottom));
+    }
+  }
+
+  .shop-faq-item {
+    border: 1px solid var(--color-line);
+    border-radius: 0.75rem;
+    background: var(--color-panel);
+    padding: 0.1rem 1.1rem;
+  }
+  .shop-faq-item summary {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-block-size: 48px;
+    padding-block: 0.6rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    color: var(--color-ink);
+  }
+  .shop-faq-item summary::-webkit-details-marker {
+    display: none;
+  }
+  .shop-faq-item summary::before {
+    content: '▸';
+    color: var(--color-accent);
+    transition: rotate 180ms ease;
+    font-size: 0.9rem;
+  }
+  .shop-faq-item[open] > summary::before {
+    rotate: 90deg;
+  }
+  .shop-faq-body {
+    padding-block: 0 0.95rem;
+    padding-inline-start: 1.25rem;
+    color: var(--color-muted);
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+
+  .shop-filter-pill {
+    min-block-size: 44px;
+    min-inline-size: 44px;
+    padding: 0.5rem 1rem;
+    border-radius: 999px;
+    border: 1px solid var(--color-line);
+    background: var(--color-panel);
+    color: var(--color-ink);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .shop-filter-pill[aria-pressed='true'] {
+    background: var(--color-ink);
+    color: #fff;
+    border-color: var(--color-ink);
+  }
+
+  .shop-search-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-block-size: 44px;
+    padding-inline: 0.85rem 0.5rem;
+    border-radius: 999px;
+    border: 1px solid var(--color-line);
+    background: var(--color-panel);
+  }
+  .shop-search-box:focus-within {
+    border-color: var(--color-accent);
+    outline: 2px solid color-mix(in srgb, var(--color-accent) 28%, transparent);
+    outline-offset: 1px;
+  }
+  .shop-search-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--color-muted);
+    white-space: nowrap;
+  }
+  .shop-search-input {
+    min-block-size: 44px;
+    min-inline-size: 165px;
+    border: 0;
+    background: transparent;
+    padding-inline: 0.25rem 0.5rem;
+    font: inherit;
+    font-size: max(1rem, 1em);
+    color: var(--color-ink);
+    outline: none;
+  }
+  @media (min-width: 640px) {
+    .shop-search-input {
+      font-size: 0.88rem;
+      min-inline-size: 195px;
+    }
+  }
+
+  .shop-table-wrapper {
+    overflow: auto;
+    max-inline-size: 100%;
+    max-block-size: 560px;
+    border: 1px solid var(--color-line);
+    border-radius: 1rem;
+    background: var(--color-panel);
+    container-type: inline-size;
+  }
+  @media (max-width: 960px) {
+    .shop-table-wrapper {
+      max-block-size: none;
+      overflow: visible;
+    }
+  }
+
+  .shop-table {
+    inline-size: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.85rem;
+  }
+  .shop-table caption {
+    text-align: start;
+    padding: 0.85rem 1rem;
+    font-weight: 600;
+    color: var(--color-muted);
+    background: var(--color-paper);
+    border-block-end: 1px solid var(--color-line);
+  }
+  .shop-table thead th {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 2;
+    background: var(--color-tint);
+    color: var(--color-accent-ink);
+    text-align: start;
+    padding: 0.7rem 0.85rem;
+    font-weight: 700;
+    border-block-end: 1px solid var(--color-line);
+    white-space: nowrap;
+  }
+  .shop-table tbody td,
+  .shop-table tbody th {
+    padding: 0.65rem 0.85rem;
+    border-block-end: 1px solid var(--color-line);
+    vertical-align: middle;
+  }
+  .shop-table tbody tr:hover {
+    background: color-mix(in srgb, var(--color-tint) 45%, #fff);
+  }
+  .shop-table tbody tr.is-active {
+    background: var(--color-tint);
+  }
+  .shop-table tbody th {
+    font-weight: 600;
+    text-align: start;
+    position: sticky;
+    inset-inline-start: 0;
+    background: var(--color-panel);
+    z-index: 1;
+  }
+  .shop-table tbody tr.is-active th {
+    background: var(--color-tint);
+  }
+
+  .shop-pick-row-btn {
+    min-block-size: 44px;
+    min-inline-size: 44px;
+    padding: 0.5rem 0.95rem;
+    border-radius: 999px;
+    border: 1px solid var(--color-champagne);
+    background: var(--color-panel);
+    color: var(--color-accent-ink);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .shop-pick-row-btn:hover {
+    background: var(--color-accent);
+    color: #fff;
+    border-color: var(--color-accent);
+  }
+  .shop-pick-row-btn.is-selected {
+    background: var(--color-accent);
+    color: #fff;
+    border-color: var(--color-accent);
+  }
+
+  @container (width < 760px) {
+    .shop-table,
+    .shop-table caption,
+    .shop-table tr,
+    .shop-table th,
+    .shop-table td {
+      display: block;
+    }
+    .shop-table caption {
+      inline-size: 100%;
+      box-sizing: border-box;
+    }
+    .shop-table thead {
+      display: none;
+    }
+    .shop-table tbody {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+      gap: 0.75rem;
+      padding: 0.75rem;
+    }
+    .shop-table tbody tr {
+      margin: 0;
+      border: 1px solid var(--color-line);
+      border-radius: 0.85rem;
+      overflow: hidden;
+      background: var(--color-panel);
+    }
+    .shop-table tbody th {
+      position: static;
+      background: var(--color-tint);
+      border-block-end: 1px solid var(--color-line);
+    }
+    .shop-table tbody td {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      text-align: end;
+      border-block-end: 1px dashed var(--color-line);
+    }
+    .shop-table tbody td:last-child {
+      border-block-end: 0;
+    }
+    .shop-table tbody td::before {
+      content: attr(data-label);
+      color: var(--color-muted);
+      font-weight: 600;
+      text-align: start;
+      flex-shrink: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .shop-preset-btn,
+    .shop-radio-card,
+    .shop-radio-check,
+    .shop-faq-item summary::before,
+    .shop-prereq-summary::after,
+    .shop-mobile-bar,
+    .shop-sum-price,
+    .shop-mobile-bar-price {
+      transition: none;
+    }
+  }
+</style>

@@ -23,6 +23,7 @@ describe('markdown negotiation and twin routing helpers', () => {
   it('resolves valid markdown twins and skips non-HTML / admin / api paths', () => {
     expect(markdownTwinPath('/')).toBe('/index.md');
     expect(markdownTwinPath('/ho-so')).toBe('/ho-so.md');
+    expect(markdownTwinPath('/shop')).toBe('/shop.md');
     expect(markdownTwinPath('/tai-video')).toBe('/tai-video.md');
     expect(markdownTwinPath('/bai-viet/ai-agent-2026')).toBe('/bai-viet/ai-agent-2026.md');
     expect(markdownTwinPath('/xray/c-a1b2c3d4e5f6')).toBe('/xray/c-a1b2c3d4e5f6.md');

@@ -206,6 +206,25 @@ export function buildPublicCatalog({
       };
     });
 
+  const shopTool: CatalogItem = {
+    id: 'tool:shop',
+    type: 'tool',
+    slug: 'shop',
+    title: 'Cửa hàng Gói Google AI Ultra & Veo',
+    summary:
+      'Bộ cấu hình 4 bước và bảng giá 30 gói Google AI Ultra (5x, 20x) & Veo Flow chính chủ: Slot Family, Full Family và Nâng cấp trực tiếp.',
+    tags: ['Shop', 'Google AI Ultra', 'Veo', 'Google Flow', 'Antigravity'],
+    publishedAt: null,
+    updatedAt: null,
+    htmlUrl: `${origin}/shop`,
+    markdownUrl: `${origin}/shop.md`,
+    imageUrl: `${origin}/og.png`,
+    links: [
+      { label: 'Mở cửa hàng', url: `${origin}/shop` },
+      { label: 'Bảng giá Markdown', url: `${origin}/shop.md` },
+    ],
+  };
+
   const taiVideoTool: CatalogItem = {
     id: 'tool:tai-video',
     type: 'tool',
@@ -301,6 +320,6 @@ export function buildPublicCatalog({
       sitemapXml: `${origin}/sitemap.xml`,
       searchJson: `${origin}/search.json`,
     },
-    items: [...articleItems, ...productItems, taiVideoTool, ...videoItems, ...showcaseItems],
+    items: [...articleItems, ...productItems, shopTool, taiVideoTool, ...videoItems, ...showcaseItems],
   };
 }

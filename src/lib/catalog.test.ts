@@ -196,6 +196,7 @@ describe('buildPublicCatalog', () => {
     expect(ids).toEqual([
       'article:huong-dan-mcp',
       'product:10',
+      'tool:shop',
       'tool:tai-video',
       'video:20',
       'showcase:c-case-bds',
