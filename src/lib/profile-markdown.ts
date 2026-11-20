@@ -1,5 +1,11 @@
 // Markdown versions of the site content, for /index.md, /{section}.md, /llms.txt and /llms-full.txt readers.
 import { isVideoKey, mediaUrl, toIsoUtc, type Article, type Item, type SectionId, type Site, type SiteData } from './content';
+import {
+  formatVnd,
+  SHOP_PRODUCTS,
+  SHOP_UPGRADE_REQUIREMENTS,
+  SHOP_WARRANTY_POLICY,
+} from './shop-catalog';
 
 const DEFAULT_SITE = 'https://tqd.me';
 const MAX_LLMS_FULL_CHARS = 120_000;
@@ -59,6 +65,7 @@ function sectionBody(id: SectionId, data: SiteData, site = DEFAULT_SITE): string
   switch (id) {
     case 'ho-so': {
       const featuredProducts = [
+        `- [Cửa hàng Gói Google AI Ultra & Veo](${base}/shop): Bảng giá & bộ cấu hình 30 gói Google AI Ultra (5x, 20x) và Veo Flow chính chủ (${base}/shop.md).`,
         `- [Tải Video & Xưởng Mổ Xẻ Kịch Bản Viral AI](${base}/tai-video): Công cụ web tải MP4 H.264, tách MP3 320kbps, bóc băng lời thoại AI (SRT) và viết lại kịch bản chuẩn Viết Pro.`,
         ...data.products.slice(0, 7).map((p) => `- [${p.title}](${resolveProductUrl(p, base)}): ${p.summary}`),
       ];
@@ -84,7 +91,18 @@ function sectionBody(id: SectionId, data: SiteData, site = DEFAULT_SITE): string
     }
     case 'san-pham': {
       const items = data.products.map((p) => itemMarkdown(p, base));
+      const minShopPrice = Math.min(...SHOP_PRODUCTS.map((p) => p.price));
+      const maxShopPrice = Math.max(...SHOP_PRODUCTS.map((p) => p.price));
       items.push(
+        [
+          '### Cửa hàng Gói Google AI Ultra & Veo',
+          '',
+          `Bộ cấu hình và bảng giá minh bạch 30 gói Google AI Ultra (5x, 20x) & Veo Flow chính chủ (${formatVnd(minShopPrice)} - ${formatVnd(maxShopPrice)}): Slot Family, Full Family và Trực tiếp chính chủ.`,
+          '',
+          'Nhãn: Google AI Ultra, Veo, Google Flow, Antigravity, Shop',
+          '',
+          `[Chọn gói ngay](${base}/shop) · [Bảng giá Markdown](${base}/shop.md)`,
+        ].join('\n'),
         [
           '### Tải Video & Mổ Xẻ Kịch Bản Viral AI',
           '',
@@ -213,6 +231,55 @@ export function taiVideoMarkdown(site = DEFAULT_SITE, lastmod?: string): string 
   ].join('\n');
 }
 
+export function shopMarkdown(site = DEFAULT_SITE, lastmod?: string): string {
+  const base = cleanSite(site);
+  const title = 'Cửa hàng Gói Google AI Ultra & Veo · DũngTQ';
+  const frontmatter = renderFrontmatter({
+    source: `${base}/shop`,
+    title,
+    author: 'Trịnh Quang Dũng (DũngTQ)',
+    updated: lastmod,
+    summary:
+      'Bảng giá 30 gói Google AI Ultra (5x, 20x) & Veo Flow chính chủ: Slot Family, Full Family và Trực tiếp chính chủ tại tqd.me.',
+    tags: ['Google AI Ultra', 'Veo', 'Google Flow', 'Antigravity', 'Shop'],
+  });
+
+  return [
+    frontmatter,
+    '',
+    `# ${title}`,
+    '',
+    'Trang cấu hình và tra cứu toàn bộ 30 gói Google AI Ultra (5x và 20x) dùng cho Gemini, Google Antigravity, NotebookLM, Google Flow (Veo) và Google Drive 20–30 TB.',
+    '',
+    '## Quy tắc phân biệt 4 nhóm Credit',
+    '',
+    '- **0 Credit:** Chỉ dùng bộ công cụ AI (Gemini, Google Antigravity, NotebookLM, AI Studio) và kho Drive dùng chung (20 TB hoặc 30 TB). Không có credit tạo video Veo trên Flow.',
+    '- **Random (0-10.000 / 0-25.000 / 0-750.000):** Lượng credit khả dụng biến động ngẫu nhiên trong khoảng công bố và tính theo lượng đã dùng; không hỗ trợ refill hay cấp bù nếu dùng hết.',
+    '- **Cố định (10k đến 750k):** Cam kết dùng đủ đúng số credit ghi trên tên gói; các gói cần nạp thêm được hỗ trợ refill từ 9:00 - 23:00 (GMT+7).',
+    '- **Unlimited:** Không giới hạn tổng lượng credit trong thời hạn gói nhờ refill 25.000 credit/lần (9:00 - 23:00 GMT+7).',
+    '',
+    '## Điều kiện tài khoản trước khi nâng cấp',
+    '',
+    ...SHOP_UPGRADE_REQUIREMENTS.map((r) => `${r.step}. **${r.title}:** ${r.detail} (${r.checkUrl})`),
+    '',
+    '## Bảng giá 30 gói sản phẩm',
+    '',
+    '| # | Tên gói | Giá bán | Dòng & Hình thức | Thời hạn | Credit Flow | Refill |',
+    '|---:|---|---:|---|---|---|---|',
+    ...SHOP_PRODUCTS.map(
+      (p) =>
+        `| ${p.index} | [${p.name}](${base}/shop?sku=${p.slug}) | ${formatVnd(p.price)} | ${p.plan} · ${p.upgradeType} (${p.users} user) | ${p.duration} | ${p.credit} | ${p.refillRule} |`,
+    ),
+    '',
+    '## Liên hệ đặt gói & bảo hành',
+    '',
+    '- **Đặt gói trực tiếp qua Zalo:** https://zalo.me/trinhquangdung',
+    `- **Trang cấu hình tương tác:** ${base}/shop`,
+    `- **Chính sách bảo hành:** ${SHOP_WARRANTY_POLICY.summary}`,
+    '',
+  ].join('\n');
+}
+
 export function privacyMarkdown(site = DEFAULT_SITE, email = 'dungtq.ceo@gmail.com', lastmod?: string): string {
   const base = cleanSite(site);
   const title = 'Chính sách Quyền riêng tư · DũngTQ';
@@ -221,7 +288,7 @@ export function privacyMarkdown(site = DEFAULT_SITE, email = 'dungtq.ceo@gmail.c
     title,
     author: 'Trịnh Quang Dũng (DũngTQ)',
     updated: lastmod,
-    summary: `Nguyên tắc bảo mật dữ liệu tại ${base}: không quảng cáo, không theo dõi chéo trang. Liên hệ ${email}.`,
+    summary: `Nguyên tắc dữ liệu tại ${base}: thống kê nội bộ không cookie, Google Analytics và Microsoft Clarity chỉ chạy khi người đọc đồng ý, không pixel quảng cáo. Liên hệ ${email}.`,
   });
 
   return [
@@ -229,22 +296,32 @@ export function privacyMarkdown(site = DEFAULT_SITE, email = 'dungtq.ceo@gmail.c
     '',
     `# ${title}`,
     '',
-    'Trang web này được vận hành với nguyên tắc tôn trọng tuyệt đối quyền riêng tư của người đọc: không quảng cáo, không theo dõi chéo trang (cross-site tracking), và không bán hay chia sẻ dữ liệu cho bên thứ ba.',
+    'Trang web này đo lường theo hai lớp. Thống kê nội bộ không cookie luôn chạy để đếm lượt đọc. Google Analytics và Microsoft Clarity chỉ chạy sau khi người đọc bấm Đồng ý. Trang không hiển thị quảng cáo, không gắn pixel quảng cáo và không bán dữ liệu.',
     '',
     '## 1. Đo lường lượt xem ẩn danh',
     '',
     'Hệ thống sử dụng Cloudflare Web Analytics và bộ đếm nội bộ ẩn danh để thống kê trang nào được đọc, thời gian đọc và nguồn giới thiệu tổng quát. Địa chỉ IP không được lưu trữ thô; định danh ngày được băm một chiều (SHA-256) kèm muối ngẫu nhiên và tự động mất hiệu lực sau 24 giờ.',
     '',
-    '## 2. Trợ lý Trò chuyện AI & Công cụ Tải / Mổ xẻ Video',
+    '## 2. Google Analytics và Microsoft Clarity chỉ chạy khi bạn đồng ý',
+    '',
+    'Lần đầu ghé trang, người đọc thấy một khung hỏi ý kiến. Trước khi họ bấm Đồng ý, trình duyệt không tải mã nào của Google hay Microsoft và không có cookie đo lường nào được đặt. Trình duyệt bật Global Privacy Control được tính là đã từ chối.',
+    '',
+    '- Khi có sự đồng ý, Google Analytics 4 đặt cookie `_ga` và `_ga_*` (lưu tối đa 2 năm), ghi lại trang được xem, mức cuộn trang, nguồn dẫn tới trang, loại thiết bị, khu vực ước lượng theo thành phố và lượt bấm vào liên kết Zalo, Messenger, email, điện thoại, chỉ đường, mạng xã hội. Số điện thoại và địa chỉ email trong các liên kết này không được gửi đi.',
+    '- Khi có sự đồng ý, Microsoft Clarity đặt cookie `_clck` (tối đa 1 năm) và `_clsk` (1 ngày), ghi lại chỗ bấm, mức cuộn và di chuyển chuột để dựng bản đồ nhiệt và bản ghi phiên. Mọi chữ gõ vào ô nhập liệu, nội dung khung trò chuyện với trợ lý AI và kết quả của công cụ tải video đều bị che. Clarity cũng có thể đặt cookie `MUID`, `CLID`, `ANONCHK`, `SM` trên tên miền của Microsoft (`clarity.ms`, `bing.com`), lưu tối đa 1 năm. Bản ghi phiên được giữ 30 ngày (bản ghi được đánh dấu lưu lại giữ tới 13 tháng), dữ liệu tổng hợp và bản đồ nhiệt tối đa 13 tháng.',
+    '- Google LLC và Microsoft Corporation xử lý phần dữ liệu này trên máy chủ của họ, có thể đặt ngoài Việt Nam. Đây là hai bên thứ ba duy nhất nhận dữ liệu đo lường từ trang.',
+    '- Google Signals và tính năng cá nhân hóa quảng cáo đều tắt; Clarity chỉ được phép phân tích. Dữ liệu sự kiện trên Google Analytics được giữ tối đa 14 tháng.',
+    '- Người đọc đổi lựa chọn bất kỳ lúc nào qua liên kết Tùy chọn đo lường ở cuối trang. Khi rút lại sự đồng ý, trang ngừng gửi dữ liệu cho Google và Microsoft, đồng thời xóa các cookie `_ga`, `_gid`, `_clck`, `_clsk`. Cookie nằm trên tên miền của Microsoft không xóa được từ trang; người đọc xóa chúng trong cài đặt trình duyệt.',
+    '',
+    '## 3. Trợ lý Trò chuyện AI & Công cụ Tải / Mổ xẻ Video',
     '',
     '- Khi bạn gửi câu hỏi trong khung Trò chuyện AI, nội dung tin nhắn được chuyển tới mô hình ngôn ngữ để trả lời trực tiếp và áp dụng giới hạn tần suất chống lạm dụng.',
     '- Khi bạn sử dụng công cụ Tải Video & Mổ Xẻ Kịch Bản tại `/tai-video`, đường dẫn video chỉ được xử lý tạm thời trong thư mục `/tmp/tqd-dl` để truyền tải về thiết bị của bạn rồi tự động xóa ngay sau khi hoàn tất. Lịch sử tải gần đây chỉ nằm trong `localStorage` trên trình duyệt của chính bạn.',
     '',
-    '## 3. Cookie',
+    '## 4. Cookie',
     '',
-    'Trang công khai hoàn toàn không đặt cookie quảng cáo hay cookie theo dõi. Cookie phiên bảo mật (`HttpOnly`, `Secure`, `SameSite=Lax`) chỉ được sử dụng duy nhất cho quản trị viên khi đăng nhập khu vực `/admin`.',
+    'Trang công khai không đặt cookie quảng cáo. Cookie đo lường `_ga` của Google Analytics và `_clck`, `_clsk` của Microsoft Clarity chỉ xuất hiện sau khi bạn đồng ý. Cookie phiên bảo mật (`HttpOnly`, `Secure`, `SameSite=Lax`) chỉ được sử dụng duy nhất cho quản trị viên khi đăng nhập khu vực `/admin`.',
     '',
-    '## 4. Liên hệ',
+    '## 5. Liên hệ',
     '',
     `Mọi thắc mắc liên quan đến dữ liệu và quyền riêng tư, vui lòng gửi thư về [${email}](mailto:${email}) hoặc nhắn Zalo trực tiếp tại [zalo.me/trinhquangdung](https://zalo.me/trinhquangdung).`,
     '',
@@ -273,13 +350,15 @@ export function llmsText(data: SiteData, site = DEFAULT_SITE): string {
     '## Sản phẩm & Công cụ AI nổi bật',
     '',
     ...data.products.map((p) => `- [${p.title}](${resolveProductUrl(p, base)}): ${p.summary}`),
+    `- [Cửa hàng Gói Google AI Ultra & Veo](${base}/shop): Bảng giá và bộ cấu hình 30 gói Google AI Ultra (5x, 20x) & Veo Flow chính chủ (bản Markdown tại ${base}/shop.md)`,
     `- [Tải Video & Xưởng Mổ Xẻ Kịch Bản Viral AI](${base}/tai-video): Công cụ web tải MP4 H.264, tách MP3 320kbps, bóc băng lời thoại (SRT) và viết lại kịch bản chuẩn chống văn mẫu Viết Pro (bản Markdown tại ${base}/tai-video.md)`,
     '',
     '## Pages',
     '',
     ...sections.map((s) => `- [${s.title}](${base}/${s.id}.md): ${s.short}`),
+    `- [Cửa hàng Gói Google AI Ultra & Veo](${base}/shop.md): Danh mục đầy đủ 30 gói Google AI Ultra (5x, 20x) & Veo Flow chính chủ`,
     `- [Tải Video & Xưởng Mổ Xẻ Kịch Bản Viral AI](${base}/tai-video.md): Tài liệu Markdown đầy đủ về tính năng tải video, X-Quang Viral và kiểm định Viết Pro`,
-    `- [Chính sách Quyền riêng tư](${base}/quyen-rieng-tu.md): Nguyên tắc bảo mật dữ liệu, không quảng cáo, không theo dõi chéo trang và tự động xóa file tạm`,
+    `- [Chính sách Quyền riêng tư](${base}/quyen-rieng-tu.md): Thống kê nội bộ không cookie, Google Analytics và Microsoft Clarity chỉ chạy khi người đọc đồng ý, không pixel quảng cáo và tự động xóa file tạm`,
   ];
   if (data.articles.length) {
     lines.push(
@@ -352,6 +431,7 @@ export function llmsFullText(
     '## Mục lục',
     '',
     ...sections.map((s) => `- [${s.title}](${base}/${s.id}.md)${s.short ? `: ${s.short}` : ''}`),
+    `- [Cửa hàng Gói Google AI Ultra & Veo](${base}/shop.md)`,
     `- [Tải Video & Xưởng Mổ Xẻ Kịch Bản Viral AI](${base}/tai-video.md)`,
     `- [Chính sách Quyền riêng tư](${base}/quyen-rieng-tu.md)`,
   ];
@@ -365,6 +445,7 @@ export function llmsFullText(
   }
 
   const profileBody = stripFrontmatter(profileMarkdown(data, base, lastmod)).replace(/^# .*\n+/, '');
+  const shopBody = stripFrontmatter(shopMarkdown(base, lastmod));
   const taiVideoBody = stripFrontmatter(taiVideoMarkdown(base, lastmod));
   const privacyBody = stripFrontmatter(privacyMarkdown(base, person.email, lastmod));
 
@@ -378,6 +459,10 @@ export function llmsFullText(
     '---',
     '',
     profileBody.trimEnd(),
+    '',
+    '---',
+    '',
+    shopBody.trimEnd(),
     '',
     '---',
     '',

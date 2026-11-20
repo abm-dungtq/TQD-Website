@@ -14,7 +14,7 @@
   ],
   "observability": { "enabled": true },
   "ai": { "binding": "AI", "remote": true },
-  "vars": { "ADMIN_EMAIL": "dungtq.ceo@gmail.com", "CF_ACCOUNT_ID": "b243f38bff984ce1741c379547e97a75", "GOCLAW_BASE_URL": "https://goclaw.tqd.io.vn", "GOCLAW_AGENT": "dungtq-web", "CHAT_DAILY_CAP": "300", "DL_BASE_URL": "https://chatbot.abmedu.vn/_tqd_dl", "DL_DAILY_CAP": "150", "OPENCODE_GO_BASE_URL": "https://opencode.ai/zen/go/v1", "OPENCODE_GO_MODEL": "deepseek-v4.1-flash", "VIRAL_DAILY_CAP": "150" },
+  "vars": { "ADMIN_EMAIL": "dungtq.ceo@gmail.com", "CF_ACCOUNT_ID": "b243f38bff984ce1741c379547e97a75", "GOCLAW_BASE_URL": "https://goclaw.tqd.io.vn", "GOCLAW_AGENT": "dungtq-web", "CHAT_DAILY_CAP": "300", "DL_BASE_URL": "https://chatbot.abmedu.vn/_tqd_dl", "DL_DAILY_CAP": "150", "OPENCODE_GO_BASE_URL": "https://opencode.ai/zen/go/v1", "OPENCODE_GO_MODEL": "deepseek-v4.1-flash", "VIRAL_DAILY_CAP": "150", "GA4_MEASUREMENT_ID": "G-Z9XEQ6BVXJ", "CLARITY_PROJECT_ID": "zgki6l3y68", "GOOGLE_SITE_VERIFICATION": "1ZJkquwEywSTHDfvuZ55i8NpiUICqb5yBTo3i_GOxBo" },
   "d1_databases": [
     { "binding": "DB", "database_name": "tqd_db", "database_id": "b11ff76d-6626-4d05-ab23-34cc124d9163", "migrations_dir": "migrations" },
     { "binding": "TUVI_DB", "database_name": "tuvi_db", "database_id": "735a388d-ba27-436e-940a-d7375d41e482", "migrations_dir": "migrations-tuvi-readonly" }
@@ -32,7 +32,7 @@
       "routes": [],
       "triggers": { "crons": [] },
       "ai": { "binding": "AI", "remote": true },
-      "vars": { "ADMIN_EMAIL": "dungtq.ceo@gmail.com", "CF_ACCOUNT_ID": "b243f38bff984ce1741c379547e97a75", "GOCLAW_BASE_URL": "https://goclaw.tqd.io.vn", "GOCLAW_AGENT": "dungtq-web", "CHAT_DAILY_CAP": "300", "DL_BASE_URL": "https://chatbot.abmedu.vn/_tqd_dl", "DL_DAILY_CAP": "150", "OPENCODE_GO_BASE_URL": "https://opencode.ai/zen/go/v1", "OPENCODE_GO_MODEL": "deepseek-v4.1-flash", "VIRAL_DAILY_CAP": "150" },
+      "vars": { "ADMIN_EMAIL": "dungtq.ceo@gmail.com", "CF_ACCOUNT_ID": "b243f38bff984ce1741c379547e97a75", "GOCLAW_BASE_URL": "https://goclaw.tqd.io.vn", "GOCLAW_AGENT": "dungtq-web", "CHAT_DAILY_CAP": "300", "DL_BASE_URL": "https://chatbot.abmedu.vn/_tqd_dl", "DL_DAILY_CAP": "150", "OPENCODE_GO_BASE_URL": "https://opencode.ai/zen/go/v1", "OPENCODE_GO_MODEL": "deepseek-v4.1-flash", "VIRAL_DAILY_CAP": "150", "GA4_MEASUREMENT_ID": "", "CLARITY_PROJECT_ID": "", "GOOGLE_SITE_VERIFICATION": "" },
       "d1_databases": [
         { "binding": "DB", "database_name": "tqd_db", "database_id": "b11ff76d-6626-4d05-ab23-34cc124d9163", "migrations_dir": "migrations" }
       ],

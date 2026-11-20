@@ -16,6 +16,13 @@
     "cf-typegen": "wrangler types",
     "dl:daemon": "node scripts/ytdlp-daemon.mjs",
     "verify:dl": "node scripts/verify/dl-daemon.mjs",
+    "seo:status": "node scripts/ak-seo-bridge.mjs status",
+    "seo:keywords": "node scripts/ak-seo-bridge.mjs keywords",
+    "seo:gsc:auth": "node scripts/ak-seo-bridge.mjs gsc-auth",
+    "seo:gsc:sync": "node scripts/ak-seo-bridge.mjs gsc-sync",
+    "seo:audit": "node scripts/ak-seo-bridge.mjs audit",
+    "seo:seed": "node scripts/ak-seo-bridge.mjs seed",
+    "seo:set-reviewweb-key": "node scripts/ak-seo-bridge.mjs set-reviewweb-key",
     "test": "vitest run"
   },
   "dependencies": {

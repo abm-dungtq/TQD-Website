@@ -106,6 +106,32 @@ export async function saveArticle(
   const row = result.results[0] as Parameters<typeof toArticle>[0] | undefined;
   // Another writer won between the read and the update.
   if (!row) throw new ConflictError(current ? current.version + 1 : 0);
+
+  if (input.status === 'published') {
+    await Promise.all([
+      db
+        .prepare(
+          `UPDATE seo_daily_briefs
+           SET status = 'published',
+               published_at = COALESCE(published_at, datetime('now')),
+               updated_at = datetime('now')
+           WHERE slug = ?1`,
+        )
+        .bind(input.slug)
+        .run()
+        .catch(() => {}),
+      db
+        .prepare(
+          `UPDATE seo_keywords
+           SET status = 'published', updated_at = datetime('now')
+           WHERE target_slug = ?1 AND status != 'archived'`,
+        )
+        .bind(input.slug)
+        .run()
+        .catch(() => {}),
+    ]);
+  }
+
   return { article: toArticle(row), created: !current };
 }
 

@@ -8,7 +8,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-const SCOPES = ['articles:write', 'media:write', 'publish'];
+const SCOPES = ['articles:write', 'media:write', 'publish', 'seo:write'];
 const npxBin = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 const [command, ...rest] = process.argv.slice(2);
 const arg = (flag) => {

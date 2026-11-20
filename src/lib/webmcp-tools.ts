@@ -24,6 +24,7 @@ const TOP_LEVEL_MARKDOWN_PAGES = new Set([
   'video-ai',
   'bai-viet',
   'lien-he',
+  'shop',
   'tai-video',
   'quyen-rieng-tu',
 ]);

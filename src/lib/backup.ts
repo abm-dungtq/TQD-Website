@@ -161,6 +161,17 @@ async function buildCompressedBackupJson(env: Env): Promise<Uint8Array> {
     await writeTableStream(env.DB, name, writeText);
   }
 
+  for (const seoTable of ['seo_keywords', 'seo_gsc_daily', 'seo_snapshots', 'seo_daily_briefs'] as const) {
+    try {
+      await env.DB.prepare(`SELECT 1 FROM ${seoTable} LIMIT 1`).all();
+      await writeText(`${firstTable ? '' : ','}${JSON.stringify(seoTable)}:`);
+      firstTable = false;
+      await writeTableStream(env.DB, seoTable, writeText);
+    } catch {
+      // Ignore if migration 0007 has not been applied yet.
+    }
+  }
+
   const tuviDb = (env as { TUVI_DB?: D1Database }).TUVI_DB;
   if (tuviDb) {
     for (const [alias, sqlTable] of [

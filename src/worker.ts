@@ -25,11 +25,13 @@ export default {
     const { cleanupDlLimits } = await import('./lib/dl');
     const { cleanupViralCache } = await import('./lib/viral');
     const { rollupRecentDays } = await import('./lib/analytics/rollup');
+    const { syncGscNightlyIfConfigured } = await import('./lib/seo/gsc-client');
     ctx.waitUntil(runBackup(env));
     ctx.waitUntil(cleanupChatLimits(env.DB));
     ctx.waitUntil(pruneChatVisitors(env.DB));
     ctx.waitUntil(cleanupDlLimits(env.DB));
     ctx.waitUntil(cleanupViralCache(env.DB));
     ctx.waitUntil(rollupRecentDays(env));
+    ctx.waitUntil(syncGscNightlyIfConfigured(env));
   },
 } satisfies ExportedHandler<Env>;

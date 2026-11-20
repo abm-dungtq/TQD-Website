@@ -23,6 +23,7 @@ describe('markdown negotiation and twin routing helpers', () => {
   it('resolves valid markdown twins and skips non-HTML / admin / api paths', () => {
     expect(markdownTwinPath('/')).toBe('/index.md');
     expect(markdownTwinPath('/ho-so')).toBe('/ho-so.md');
+    expect(markdownTwinPath('/shop')).toBe('/shop.md');
     expect(markdownTwinPath('/tai-video')).toBe('/tai-video.md');
     expect(markdownTwinPath('/bai-viet/ai-agent-2026')).toBe('/bai-viet/ai-agent-2026.md');
     expect(markdownTwinPath('/xray/c-a1b2c3d4e5f6')).toBe('/xray/c-a1b2c3d4e5f6.md');
@@ -159,5 +160,32 @@ describe('CSP inline script hash deduplication on /404 rewrite', () => {
     const csp = hashedTwice.headers.get('Content-Security-Policy') ?? '';
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp.match(/'sha256-[A-Za-z0-9+/=]+'/g) ?? []).toHaveLength(1);
+  });
+});
+
+describe('Google Analytics hosts in the Content-Security-Policy', () => {
+  const cspFor = async (isAdmin: boolean) => {
+    const html = new Response('<p>ok</p>', { headers: { 'Content-Type': 'text/html' } });
+    return (await withHtmlInlineScriptHashes(html, isAdmin, true)).headers.get('Content-Security-Policy') ?? '';
+  };
+
+  it('lets public pages load the opt-in GA4 tag and send its hits', async () => {
+    const csp = await cspFor(false);
+    expect(csp).toMatch(/script-src [^;]*https:\/\/www\.googletagmanager\.com/);
+    expect(csp).toMatch(/connect-src [^;]*https:\/\/\*\.google-analytics\.com/);
+  });
+
+  it('lets public pages load the opt-in Clarity tag and send its recordings', async () => {
+    const csp = await cspFor(false);
+    expect(csp).toMatch(/script-src [^;]*https:\/\/www\.clarity\.ms/);
+    expect(csp).toMatch(/script-src [^;]*https:\/\/scripts\.clarity\.ms/);
+    expect(csp).toMatch(/connect-src [^;]*https:\/\/\*\.clarity\.ms/);
+  });
+
+  it('keeps Google hosts out of admin pages', async () => {
+    const csp = await cspFor(true);
+    expect(csp).toContain("script-src 'self'");
+    expect(csp).not.toContain('google');
+    expect(csp).not.toContain('clarity');
   });
 });

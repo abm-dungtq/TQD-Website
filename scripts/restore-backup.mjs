@@ -12,6 +12,10 @@ const TABLES = [
   'api_keys',
   'chat_daily',
   'analytics_daily',
+  'seo_keywords',
+  'seo_gsc_daily',
+  'seo_snapshots',
+  'seo_daily_briefs',
 ];
 
 const SAFE_IDENT_RE = /^[a-z_][a-z0-9_]{0,63}$/;

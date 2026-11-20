@@ -67,6 +67,8 @@ export interface AgentCard {
     rssXml: string;
     feedJson: string;
     sitemapXml: string;
+    shop: string;
+    shopMarkdown: string;
     taiVideo: string;
     taiVideoMarkdown: string;
   };
@@ -216,6 +218,8 @@ export function buildAgentCard(data: SiteData, siteOrigin = 'https://tqd.me'): A
       rssXml: `${origin}/rss.xml`,
       feedJson: `${origin}/feed.json`,
       sitemapXml: `${origin}/sitemap.xml`,
+      shop: `${origin}/shop`,
+      shopMarkdown: `${origin}/shop.md`,
       taiVideo: `${origin}/tai-video`,
       taiVideoMarkdown: `${origin}/tai-video.md`,
     },
@@ -262,6 +266,7 @@ export function buildAgentCard(data: SiteData, siteOrigin = 'https://tqd.me'): A
           ? `Sản phẩm và phần mềm AI từ D1: ${productSummaryList} cùng công cụ /tai-video`
           : 'Hệ sản phẩm AI, Skill và công cụ /tai-video trên tqd.me',
         'Bài viết thực hành AI Agent, tối ưu vận hành doanh nghiệp và chống văn mẫu Viết Pro',
+        'Cửa hàng gói Google AI Ultra (5x, 20x) & Veo Flow chính chủ (/shop)',
         'Công cụ Tải Video đa nền tảng và Xưởng Mổ Xẻ Kịch Bản Viral AI (/tai-video)',
       ],
       products: visibleProducts.map((p) => ({
