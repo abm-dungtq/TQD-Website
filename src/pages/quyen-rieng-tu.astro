@@ -9,7 +9,7 @@ import { breadcrumbNode } from '../lib/structured-data';
 const site = await getSite(env.DB);
 const title = 'Chính Sách Quyền Riêng Tư';
 const description =
-  'Chính sách quyền riêng tư tại tqd.me: thống kê nội bộ không cookie, không lưu IP thô; Google Analytics chỉ chạy khi bạn đồng ý và tắt được bất kỳ lúc nào.';
+  'Chính sách quyền riêng tư tại tqd.me: thống kê nội bộ không cookie, không lưu IP thô; Google Analytics và Microsoft Clarity chỉ chạy khi bạn đồng ý và tắt được bất kỳ lúc nào.';
 const origin = new URL('/', Astro.url.origin).href;
 const canonicalUrl = new URL('/quyen-rieng-tu', Astro.url.origin).href;
 const primaryZalo = site.person.zalo || 'https://zalo.me/trinhquangdung';
@@ -35,7 +35,7 @@ const primaryZalo = site.person.zalo || 'https://zalo.me/trinhquangdung';
   <PageHeading
     label="Pháp lý & Minh bạch dữ liệu"
     title="Chính Sách Quyền Riêng Tư"
-    lede="tqd.me đo lường theo hai lớp. Thống kê nội bộ không cookie luôn chạy để đếm lượt đọc. Google Analytics chỉ chạy sau khi bạn bấm Đồng ý, và bạn đổi ý được bất kỳ lúc nào."
+    lede="tqd.me đo lường theo hai lớp. Thống kê nội bộ không cookie luôn chạy để đếm lượt đọc. Google Analytics và Microsoft Clarity chỉ chạy sau khi bạn bấm Đồng ý, và bạn đổi ý được bất kỳ lúc nào."
   />
 
   <PageActions
@@ -59,19 +59,20 @@ const primaryZalo = site.person.zalo || 'https://zalo.me/trinhquangdung';
       </ul>
     </section>
 
-    <section class="flex flex-col gap-2">
-      <h2 class="display mt-2 text-xl sm:text-2xl font-semibold">2. Google Analytics chỉ chạy khi bạn đồng ý</h2>
+    <section id="do-luong" class="flex flex-col gap-2 scroll-mt-24">
+      <h2 class="display mt-2 text-xl sm:text-2xl font-semibold">2. Google Analytics và Microsoft Clarity chỉ chạy khi bạn đồng ý</h2>
       <p class="text-muted">
-        Lần đầu ghé trang, bạn sẽ thấy một khung hỏi ý kiến ở góc màn hình. Trước khi bạn bấm <strong>Đồng ý</strong>, trình duyệt không tải mã nào của Google và không có cookie đo lường nào được đặt. Nếu bạn bấm <strong>Từ chối</strong>, mọi thứ giữ nguyên như vậy.
+        Lần đầu ghé trang, bạn sẽ thấy một khung hỏi ý kiến ở góc màn hình. Trước khi bạn bấm <strong>Đồng ý</strong>, trình duyệt không tải mã nào của Google hay Microsoft và không có cookie đo lường nào được đặt. Nếu bạn bấm <strong>Từ chối</strong>, mọi thứ giữ nguyên như vậy. Trình duyệt bật Global Privacy Control được tính là đã từ chối, nên khung hỏi ý kiến không hiện ra.
       </p>
       <ul class="list-disc pl-6 flex flex-col gap-1.5 text-muted">
-        <li><strong>Dữ liệu được ghi nhận:</strong> Khi bạn đồng ý, Google Analytics 4 đặt cookie <code>_ga</code> và <code>_ga_*</code> (lưu tối đa 2 năm) để phân biệt các lượt truy cập. Công cụ ghi lại trang bạn xem, mức cuộn trang, nguồn dẫn bạn tới trang, loại thiết bị, khu vực ước lượng theo thành phố và lượt bấm vào liên kết Zalo, email, điện thoại.</li>
-        <li><strong>Bên nhận dữ liệu:</strong> Google LLC xử lý phần dữ liệu này trên máy chủ của họ, có thể đặt ngoài Việt Nam. Đây là bên thứ ba duy nhất nhận dữ liệu đo lường từ tqd.me. Dữ liệu không được bán cho ai.</li>
-        <li><strong>Không phục vụ quảng cáo:</strong> Google Signals và tính năng cá nhân hóa quảng cáo đều tắt. Trang không gắn pixel quảng cáo của Meta, TikTok hay nền tảng nào khác.</li>
-        <li><strong>Thời hạn lưu trữ:</strong> Dữ liệu sự kiện trên Google Analytics được giữ tối đa <strong>14 tháng</strong>.</li>
+        <li><strong>Dữ liệu được ghi nhận:</strong> Khi bạn đồng ý, Google Analytics 4 đặt cookie <code>_ga</code> và <code>_ga_*</code> (lưu tối đa 2 năm) để phân biệt các lượt truy cập. Công cụ ghi lại trang bạn xem, mức cuộn trang, nguồn dẫn bạn tới trang, loại thiết bị, khu vực ước lượng theo thành phố và lượt bấm vào liên kết Zalo, Messenger, email, điện thoại, chỉ đường, mạng xã hội. Số điện thoại và địa chỉ email trong các liên kết này không được gửi đi.</li>
+        <li><strong>Microsoft Clarity:</strong> Khi bạn đồng ý, Clarity đặt cookie <code>_clck</code> (lưu tối đa 1 năm) và <code>_clsk</code> (lưu 1 ngày), ghi lại chỗ bạn bấm, bạn cuộn tới đâu và chuột di chuyển ra sao. DũngTQ xem bản đồ nhiệt và bản ghi lại phiên truy cập để sửa những chỗ khó đọc, khó bấm. Mọi chữ bạn gõ vào ô nhập liệu đều bị che trước khi gửi đi.</li>
+        <li><strong>Bên nhận dữ liệu:</strong> Google LLC và Microsoft Corporation xử lý phần dữ liệu này trên máy chủ của họ, có thể đặt ngoài Việt Nam. Đây là hai bên thứ ba duy nhất nhận dữ liệu đo lường từ tqd.me. Dữ liệu không được bán cho ai.</li>
+        <li><strong>Không phục vụ quảng cáo:</strong> Google Signals và tính năng cá nhân hóa quảng cáo đều tắt; Clarity chỉ được phép phân tích, không được dùng cho quảng cáo. Trang không gắn pixel quảng cáo của Meta, TikTok hay nền tảng nào khác.</li>
+        <li><strong>Thời hạn lưu trữ:</strong> Dữ liệu sự kiện trên Google Analytics được giữ tối đa <strong>14 tháng</strong>. Clarity giữ bản ghi phiên tối đa 30 ngày, trừ bản ghi được đánh dấu lưu lại.</li>
       </ul>
       <p class="text-muted">
-        Bạn đổi lựa chọn được bất kỳ lúc nào. Khi bạn rút lại sự đồng ý, trang ngừng gửi dữ liệu cho Google và xóa các cookie <code>_ga</code> trên trình duyệt này.
+        Bạn đổi lựa chọn được bất kỳ lúc nào bằng liên kết <strong>Tùy chọn đo lường</strong> ở cuối mỗi trang hoặc nút bên dưới. Khi bạn rút lại sự đồng ý, trang ngừng gửi dữ liệu cho Google và Microsoft, đồng thời xóa các cookie <code>_ga</code>, <code>_gid</code>, <code>_clck</code>, <code>_clsk</code> trên trình duyệt này.
       </p>
       <p>
         <button type="button" class="btn-outline-gold cursor-pointer" data-consent-open hidden>Thay đổi lựa chọn đo lường</button>
@@ -88,7 +89,7 @@ const primaryZalo = site.person.zalo || 'https://zalo.me/trinhquangdung';
     <section class="flex flex-col gap-2">
       <h2 class="display mt-2 text-xl sm:text-2xl font-semibold">4. Quyền từ chối đo lường (Opt-out)</h2>
       <p class="text-muted">
-        Bạn có thể tắt cả hai lớp đo lường trên trình duyệt hiện tại, gồm thống kê nội bộ và Google Analytics, bằng cách mở Console của trình duyệt và chạy lệnh:
+        Bạn có thể tắt cả hai lớp đo lường trên trình duyệt hiện tại, gồm thống kê nội bộ, Google Analytics và Microsoft Clarity, bằng cách mở Console của trình duyệt và chạy lệnh:
       </p>
       <pre><code>localStorage.setItem('tqd_notrack', '1');</code></pre>
     </section>

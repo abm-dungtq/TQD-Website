@@ -4,6 +4,7 @@ import { env } from 'cloudflare:workers';
 import '../styles/global.css';
 import type { Site } from '../lib/content';
 import { personNode } from '../lib/structured-data';
+import { cleanClarityId, cleanGa4Id } from '../lib/consent-track';
 import CommandPalette from '../components/CommandPalette.astro';
 import ChatPanel from '../components/ChatPanel.astro';
 
@@ -60,8 +61,11 @@ const fullTitle = title
   : path === '/'
     ? homeTitle
     : brandedTitle;
-// Public identifiers; when unset, no Google tag, consent prompt or verification tag is rendered.
-const ga4Id = /^G-[A-Z0-9]+$/.test(env.GA4_MEASUREMENT_ID ?? '') ? env.GA4_MEASUREMENT_ID : undefined;
+// Public identifiers; when both are unset, no Google or Microsoft tag, consent prompt or verification tag is rendered.
+const ga4Id = cleanGa4Id(env.GA4_MEASUREMENT_ID) || undefined;
+const clarityId = cleanClarityId(env.CLARITY_PROJECT_ID) || undefined;
+const measured = Boolean(ga4Id || clarityId);
+const measurementTools = [ga4Id && 'Google Analytics', clarityId && 'Microsoft Clarity'].filter(Boolean).join(' và ');
 const googleSiteVerification = env.GOOGLE_SITE_VERIFICATION || undefined;
 const baseOrigin = Astro.url.origin || Astro.site?.origin || 'https://tqd.me';
 const canonical = new URL(path, baseOrigin).href;
@@ -123,7 +127,7 @@ const structuredJson = JSON.stringify(structured).replace(/</g, '\\u003c');
 ---
 
 <!doctype html>
-<html lang="vi" data-ga4={ga4Id}>
+<html lang="vi" data-ga4={ga4Id} data-clarity={clarityId}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -267,16 +271,25 @@ const structuredJson = JSON.stringify(structured).replace(/</g, '\\u003c');
               ))
             }
             <li><a href="/quyen-rieng-tu" class="site-footer-link">Quyền riêng tư</a></li>
+            {
+              measured && (
+                <li>
+                  <a href="/quyen-rieng-tu#do-luong" class="site-footer-link" data-consent-open>
+                    Tùy chọn đo lường
+                  </a>
+                </li>
+              )
+            }
           </ul>
         </div>
       </footer>
     </div>
     {
-      ga4Id && (
+      measured && (
         <section class="consent-banner" data-consent aria-label="Lựa chọn đo lường truy cập" hidden>
           <p>
-            tqd.me muốn dùng Google Analytics để biết bài nào hữu ích và bạn tìm thấy trang từ đâu. Công cụ này đặt cookie
-            đo lường và chỉ chạy khi bạn đồng ý. <a href="/quyen-rieng-tu">Chi tiết</a>
+            tqd.me muốn dùng {measurementTools} để biết bài nào hữu ích, bạn tìm thấy trang từ đâu và bấm, cuộn tới
+            đâu. Các công cụ này đặt cookie đo lường và chỉ chạy khi bạn đồng ý. <a href="/quyen-rieng-tu#do-luong">Chi tiết</a>
           </p>
           <div class="consent-actions">
             <button type="button" class="btn-outline-gold" data-consent-deny>Từ chối</button>

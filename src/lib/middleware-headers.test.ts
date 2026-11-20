@@ -175,9 +175,17 @@ describe('Google Analytics hosts in the Content-Security-Policy', () => {
     expect(csp).toMatch(/connect-src [^;]*https:\/\/\*\.google-analytics\.com/);
   });
 
+  it('lets public pages load the opt-in Clarity tag and send its recordings', async () => {
+    const csp = await cspFor(false);
+    expect(csp).toMatch(/script-src [^;]*https:\/\/www\.clarity\.ms/);
+    expect(csp).toMatch(/script-src [^;]*https:\/\/scripts\.clarity\.ms/);
+    expect(csp).toMatch(/connect-src [^;]*https:\/\/\*\.clarity\.ms/);
+  });
+
   it('keeps Google hosts out of admin pages', async () => {
     const csp = await cspFor(true);
     expect(csp).toContain("script-src 'self'");
     expect(csp).not.toContain('google');
+    expect(csp).not.toContain('clarity');
   });
 });

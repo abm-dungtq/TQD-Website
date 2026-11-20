@@ -18,6 +18,7 @@ interface __BaseEnv_Env {
 	OPENCODE_GO_MODEL: "deepseek-v4.1-flash";
 	VIRAL_DAILY_CAP: "150";
 	GA4_MEASUREMENT_ID: string;
+	CLARITY_PROJECT_ID: string;
 	GOOGLE_SITE_VERIFICATION: string;
 	ADMIN_PASSWORD_HASH: string;
 }
@@ -42,6 +43,7 @@ declare namespace Cloudflare {
 		OPENCODE_GO_MODEL: "deepseek-v4.1-flash";
 		VIRAL_DAILY_CAP: "150";
 		GA4_MEASUREMENT_ID: string;
+		CLARITY_PROJECT_ID: string;
 		GOOGLE_SITE_VERIFICATION: string;
 		ADMIN_PASSWORD_HASH: string;
 	}
@@ -52,7 +54,7 @@ type StringifyValues<EnvType extends Record<string, unknown>> = {
 	[Binding in keyof EnvType]: EnvType[Binding] extends string ? EnvType[Binding] : string;
 };
 declare namespace NodeJS {
-	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "ADMIN_EMAIL" | "CF_ACCOUNT_ID" | "GOCLAW_BASE_URL" | "GOCLAW_AGENT" | "CHAT_DAILY_CAP" | "DL_BASE_URL" | "DL_DAILY_CAP" | "OPENCODE_GO_BASE_URL" | "OPENCODE_GO_MODEL" | "VIRAL_DAILY_CAP" | "GA4_MEASUREMENT_ID" | "GOOGLE_SITE_VERIFICATION" | "ADMIN_PASSWORD_HASH">> {}
+	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "ADMIN_EMAIL" | "CF_ACCOUNT_ID" | "GOCLAW_BASE_URL" | "GOCLAW_AGENT" | "CHAT_DAILY_CAP" | "DL_BASE_URL" | "DL_DAILY_CAP" | "OPENCODE_GO_BASE_URL" | "OPENCODE_GO_MODEL" | "VIRAL_DAILY_CAP" | "GA4_MEASUREMENT_ID" | "CLARITY_PROJECT_ID" | "GOOGLE_SITE_VERIFICATION" | "ADMIN_PASSWORD_HASH">> {}
 }
 declare module "*.txt" {
 	const value: string;
