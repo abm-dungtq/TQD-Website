@@ -289,7 +289,7 @@ const structuredJson = JSON.stringify(structured).replace(/</g, '\\u003c');
         <section class="consent-banner" data-consent aria-label="Lựa chọn đo lường truy cập" hidden>
           <p>
             tqd.me muốn dùng {measurementTools} để biết bài nào hữu ích, bạn tìm thấy trang từ đâu và bấm, cuộn tới
-            đâu. Các công cụ này đặt cookie đo lường và chỉ chạy khi bạn đồng ý. <a href="/quyen-rieng-tu#do-luong">Chi tiết</a>
+            đâu. {clarityId && ga4Id ? 'Các công cụ này' : 'Công cụ này'} đặt cookie đo lường và chỉ chạy khi bạn đồng ý. <a href="/quyen-rieng-tu#do-luong">Chi tiết</a>
           </p>
           <div class="consent-actions">
             <button type="button" class="btn-outline-gold" data-consent-deny>Từ chối</button>

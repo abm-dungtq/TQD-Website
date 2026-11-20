@@ -102,11 +102,15 @@ function loadClarity() {
 }
 
 function startMeasuring() {
+  if (hasOptedOut()) return;
   granted = true;
   if (ga4Id) flags[`ga-disable-${ga4Id}`] = false;
   if (loaded) {
     if (ga4Id) gtag('consent', 'update', { analytics_storage: 'granted' });
-    if (clarityId) clarityConsent('granted');
+    if (clarityId) {
+      window.clarity?.('start');
+      clarityConsent('granted');
+    }
     return;
   }
   loaded = true;
@@ -120,7 +124,11 @@ function stopMeasuring() {
     flags[`ga-disable-${ga4Id}`] = true;
     if (loaded) gtag('consent', 'update', { analytics_storage: 'denied' });
   }
-  if (clarityId) clarityConsent('denied');
+  // Denied consent alone only switches Clarity to cookieless mode; stop() ends recording on this page.
+  if (clarityId && window.clarity) {
+    clarityConsent('denied');
+    window.clarity('stop');
+  }
   const domains = cookieDomains(location.hostname);
   for (const pair of document.cookie.split(';')) {
     const name = pair.split('=')[0].trim();
@@ -185,6 +193,9 @@ function setupConsent() {
     else stopMeasuring();
   };
 
+  // The first-party opt-out switch overrides everything, including the footer opener.
+  if (hasOptedOut()) return;
+
   banner.querySelector('[data-consent-accept]')?.addEventListener('click', () => decide('granted'));
   banner.querySelector('[data-consent-deny]')?.addEventListener('click', () => decide('denied'));
   document.querySelectorAll<HTMLElement>('[data-consent-open]').forEach((opener) => {
@@ -197,7 +208,6 @@ function setupConsent() {
   });
   trackClicks();
 
-  if (hasOptedOut()) return;
   const choice = readChoice();
   if (choice === 'granted') startMeasuring();
   // Automated browsers (crawlers, agents, audits) never see the prompt and are never measured.

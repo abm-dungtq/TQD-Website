@@ -67,6 +67,7 @@ describe('reportableUrl', () => {
     expect(reportableUrl('https://chat.zalo.me/0912345678')).toBe('https://chat.zalo.me');
     expect(reportableUrl('https://m.me/someone')).toBe('https://m.me');
     expect(reportableUrl('https://www.messenger.com/t/123')).toBe('https://www.messenger.com');
+    expect(reportableUrl('//zalo.me/0912345678')).toBe('//zalo.me');
   });
 });
 
@@ -75,14 +76,17 @@ describe('placementOf', () => {
     closest: (selector: string) => (matching.includes(selector) ? {} : null),
   });
   it('detects each page zone', () => {
-    expect(placementOf(inside('header, .site-header'))).toBe('header');
-    expect(placementOf(inside('footer, .site-footer'))).toBe('footer');
+    expect(placementOf(inside('.site-header'))).toBe('header');
+    expect(placementOf(inside('.site-footer'))).toBe('footer');
     expect(placementOf(inside('.hero, [data-placement="hero"]'))).toBe('hero');
     expect(placementOf(inside())).toBe('content');
     expect(placementOf(null)).toBe('content');
   });
+  it('ignores content-level <header> elements such as page headings', () => {
+    expect(placementOf(inside('header'))).toBe('content');
+  });
   it('prefers header over hero when nested', () => {
-    expect(placementOf(inside('header, .site-header', '.hero, [data-placement="hero"]'))).toBe('header');
+    expect(placementOf(inside('.site-header', '.hero, [data-placement="hero"]'))).toBe('header');
   });
 });
 

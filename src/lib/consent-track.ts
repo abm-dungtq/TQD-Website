@@ -63,7 +63,7 @@ export function reportableUrl(href: string | null | undefined): string | undefin
   const raw = String(href ?? '').trim();
   if (!raw || /^(tel|mailto):/i.test(raw)) return undefined;
   const bare = raw.split(/[?#]/)[0];
-  const chat = /^(https?:\/\/(?:www\.)?(?:chat\.)?(?:zalo\.me|m\.me|messenger\.com))(?:[/:]|$)/i.exec(bare);
+  const chat = /^((?:https?:)?\/\/(?:www\.)?(?:chat\.)?(?:zalo\.me|m\.me|messenger\.com))(?:[/:]|$)/i.exec(bare);
   return chat ? chat[1].toLowerCase() : bare;
 }
 
@@ -72,13 +72,13 @@ type Closest = { closest(selector: string): unknown };
 /** Where on the page an element sits, so reports can split header, hero, body and footer clicks. */
 export function placementOf(el: Closest | null | undefined): Placement {
   if (!el || typeof el.closest !== 'function') return 'content';
-  if (el.closest('header, .site-header')) return 'header';
-  if (el.closest('footer, .site-footer')) return 'footer';
+  if (el.closest('.site-header')) return 'header';
+  if (el.closest('.site-footer')) return 'footer';
   if (el.closest('.hero, [data-placement="hero"]')) return 'hero';
   return 'content';
 }
 
-/** Cookies set by Google Analytics and Microsoft Clarity. */
+/** First-party cookies set by Google Analytics and Microsoft Clarity. */
 export const isMeasurementCookie = (name: string): boolean => /^(_ga($|_)|_gid$|_gat|_clck$|_clsk$)/.test(name);
 
 /**
