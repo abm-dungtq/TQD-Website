@@ -28,6 +28,8 @@ import {
 
 export interface ReaderEnv extends OriginEnv {
   ORIGIN_ADMIN: string;
+  /** Worker version; part of the reader cache key because readers embed bundled data (e.g. shop-data.json). */
+  CF_VERSION_METADATA?: { id: string };
 }
 
 const TTL_STANDARD = 600;
@@ -62,19 +64,20 @@ interface Produced {
 
 const jsonBody = (value: unknown, pretty = false): string => JSON.stringify(value, null, pretty ? 2 : undefined);
 
-function readCacheKey(url: URL): Request {
-  return new Request(`${url.origin}${url.pathname}`, { method: 'GET' });
+function readCacheKey(url: URL, version: string): Request {
+  return new Request(`${url.origin}${url.pathname}?v=${encodeURIComponent(version)}`, { method: 'GET' });
 }
 
 /** Serves a reader from the Cache API, rebuilding at most once per TTL. */
 async function serveCached(
   url: URL,
+  version: string,
   ctx: ExecutionContext,
   ttl: number,
   produce: () => Promise<Produced>,
 ): Promise<Response> {
   const cache = caches.default;
-  const key = readCacheKey(url);
+  const key = readCacheKey(url, version);
   const hit = await cache.match(key);
   if (hit) return hit;
 
@@ -141,7 +144,7 @@ export async function handleReader(
   if (request.method !== 'GET' && request.method !== 'HEAD') return null;
 
   const respond = (ttl: number, produce: () => Promise<Produced>): Promise<Response> =>
-    serveCached(url, ctx, ttl, produce);
+    serveCached(url, env.CF_VERSION_METADATA?.id ?? 'dev', ctx, ttl, produce);
   const head = async (promise: Promise<Response>): Promise<Response> => {
     const response = await promise;
     if (request.method !== 'HEAD') return response;

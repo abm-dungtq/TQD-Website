@@ -12,6 +12,8 @@
     { "pattern": "admin.tqd.me", "custom_domain": true }
   ],
   "observability": { "enabled": true },
+  // Version id keys the reader cache, so a deploy never serves readers built from the previous bundle's data.
+  "version_metadata": { "binding": "CF_VERSION_METADATA" },
   "vars": {
     // EzyPlatform web/admin hosts on the VPS (sslip.io: no DNS record inside the tqd.me zone is required).
     "ORIGIN_WEB": "https://tqdweb.103-161-119-32.sslip.io",

@@ -35,9 +35,12 @@ const entries = {
   'tqd-chat.js': 'chat-panel.ts',
   'tqd-cmdk.js': 'command-palette.ts',
   'tqd-tiktok.js': 'tiktok.ts',
-  'tqd-shop.js': 'shop.ts',
+  // The live /shop bundle, verbatim: tqd.me still sells the 23-SKU catalog it embeds, while the mirrored
+  // shop.ts/shop-catalog.ts carry an undeployed 30-SKU catalog with different prices.
+  'tqd-shop.js': path.join(here, 'shop.live.js'),
   'tqd-tai-video.js': 'tai-video.ts',
   'tqd-contact.js': path.join(here, 'contact.ts'),
+  'tqd-article.js': path.join(here, 'article.ts'),
 };
 
 /** Rewrites asset paths that only exist on the old runtime to their media-library twins. */

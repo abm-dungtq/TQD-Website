@@ -11,11 +11,18 @@ Usage (from the repository root):
 """
 import argparse
 import glob
+import hashlib
 import os
+import re
 import sys
 import urllib.parse
+import urllib.request
 
-SKILLS = 'C:/Users/ABC/.omp/plugins/cache/plugins/cppai___ezyplatform___0.6.0/skills/ezy-shared'
+# ezy_client ships with the EzyPlatform agent plugin, whose cache folder name carries its version; take the newest
+# install unless EZY_SHARED points elsewhere.
+SKILLS = os.environ.get('EZY_SHARED') or max(
+    glob.glob(os.path.expanduser('~/.omp/plugins/cache/plugins/*ezyplatform*/skills/ezy-shared')) or [''],
+    key=lambda p: [int(n) for n in re.findall(r'\d+', p.rsplit('___', 1)[-1])])
 sys.path.insert(0, SKILLS)
 from ezy_client import EzyError, load_env, request_bytes, upload_file  # noqa: E402
 
@@ -32,9 +39,11 @@ def remote_bytes(name):
         raise
 
 
-def public_url(name):
+def public_url(name, data):
+    # Same ?v=<sha1[:10]> the pages use (port.py asset_version): the unversioned URL may still be cached.
     env = load_env()
-    return (env.get('public_url') or 'https://stg.tqd.me').rstrip('/') + '/api/v1/media/' + urllib.parse.quote(name)
+    return ((env.get('public_url') or 'https://stg.tqd.me').rstrip('/') + '/api/v1/media/' + urllib.parse.quote(name)
+            + '?v=' + hashlib.sha1(data).hexdigest()[:10])
 
 
 def main():
@@ -74,9 +83,10 @@ def main():
         print(action, name)
     # The admin endpoint proves storage, not delivery: one public fetch through the site edge catches a private
     # file or a path that the public host does not serve.
-    import urllib.request
     for name, local, action in work:
-        with urllib.request.urlopen(public_url(name), timeout=30) as response:
+        # the site edge answers 403 to urllib's default User-Agent
+        request = urllib.request.Request(public_url(name, local), headers={'User-Agent': 'tqd-upload-assets'})
+        with urllib.request.urlopen(request, timeout=30) as response:
             delivered = response.read()
         if delivered != local:
             raise SystemExit('public fetch of %s returned different bytes' % name)

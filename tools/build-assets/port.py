@@ -372,19 +372,6 @@ IMAGE_VERSIONED = (
 # The platform JVM runs in UTC (Etc/UTC) while the site publishes in Indochina time; without the shift a post
 # published after 17:00 UTC shows the previous day. Vietnam has no DST, so the templates add a constant
 # 25200000 ms (+7 h) before formatting.
-SKU_COUNT_FIXES = (
-    # The captured deploy predates the 30-SKU catalog that the repository ships (src/lib/shop-catalog.ts);
-    # the summary heading still said 23, so it disagreed with the client-rendered table. The ItemList keeps 23:
-    # it describes the server-rendered rows crawlers see, and the client catalog only swaps the table.
-    ('23 gói', '30 gói'),
-)
-
-
-def sku_counts(text):
-    for old, new in SKU_COUNT_FIXES:
-        text = text.replace(old, new)
-    return text
-
 
 def media_paths(text):
     for source, target in MEDIA_REWRITES:
@@ -397,7 +384,7 @@ def media_paths(text):
 
 
 def write_page(slug, meta, content):
-    content = sku_counts(media_paths(fix_calls(content)))
+    content = media_paths(fix_calls(content))
     d = os.path.join(PAGES, slug)
     os.makedirs(d, exist_ok=True)
     with open(os.path.join(d, 'content.html'), 'w', encoding='utf-8', newline='\n') as f:
@@ -466,7 +453,7 @@ def main():
     desc = re.search(r'<meta name="description" content="(.*?)"', head, re.S).group(1)
     desk = build_desktop_windows(body)
     with open(os.path.join(FRAG, 'desktop', 'content.html'), 'w', encoding='utf-8', newline='\n') as f:
-        f.write('<th:block th:fragment="desktop">' + sku_counts(rewrite_common(desk)) + '</th:block>\n')
+        f.write('<th:block th:fragment="desktop">' + rewrite_common(desk) + '</th:block>\n')
     inner = sanitize_page_main(main_inner(body), 'index')
     fallback = body[body.index('<div data-fallback>'):]
     fallback = re.sub(r'<header class="site-header">.*?</header>', '', fallback, flags=re.S)
@@ -590,8 +577,19 @@ def article_template(head, body):
     main = main_inner(body)
     # breadcrumb date -> post date
     main = re.sub(r'<time[^>]*>[^<]+</time>', '<time class="tabular-nums" th:text="${#dates.format(new java.util.Date(post.publishedAt + 25200000L), \'dd/MM/yyyy\')}"></time>', main, count=1)
-    # reading time is derived at build time on the old site; it is not stored in the post
-    main = re.sub(r'<span class="tabular-nums text-muted"> · ~[0-9]+ phút đọc</span>', '', main)
+    # Reading time was derived at build time on the old site (max(1, round(words / 210)) over the Markdown source).
+    # Migrated posts carry it in the tqd_reading_minutes meta as "<minutes>/<length of the migrated content>"; once
+    # the content is edited in admin the length no longer matches and tqd-article.js estimates from the body.
+    reading_call = "ezyfunctions.call('get_post_meta','{&quot;postId&quot;:' + post.id + ',&quot;metaKey&quot;:&quot;tqd_reading_minutes&quot;}')"
+    main = re.sub(r'<span class="tabular-nums text-muted">\s*· ~[0-9]+ phút đọc</span>',
+                  '<th:block th:with="readingMeta=${' + reading_call + '},'
+                  'reading=${readingMeta != null and readingMeta.metaValue != null ? readingMeta.metaValue : \'\'},'
+                  'readingFresh=${#strings.contains(reading, \'/\') and post.content != null and '
+                  '#strings.substringAfter(reading, \'/\') == (\'\' + #strings.length(post.content))}">'
+                  '<span class="tabular-nums text-muted" th:if="${readingFresh}" '
+                  'th:text="${\'· ~\' + #strings.substringBefore(reading, \'/\') + \' phút đọc\'}"></span>'
+                  '<span class="tabular-nums text-muted" data-reading-time hidden th:unless="${readingFresh}"></span>'
+                  '</th:block>', main)
     main = re.sub(r'<h1 class="display mb-5 text-\[2\.35rem\] sm:text-6xl">.*?</h1>',
                   '<h1 class="display mb-5 text-[2.35rem] sm:text-6xl" th:text="${post.title}"></h1>', main, count=1, flags=re.S)
     main = re.sub(r'<p class="mb-6 text-lg leading-relaxed text-muted">.*?</p>',
@@ -634,7 +632,7 @@ def article_template(head, body):
                   'th:src="${\'/api/v1/media/\' + coverMeta.metaValue}" '
                   'th:attr="alt=${post.title}" width="1200" height="675" fetchpriority="high">'
                   '</th:block>', main, count=1)
-    main = re.sub(r'<details class="lux-card mb-8 p-5">.*?</details>', toc_block(), main, count=1, flags=re.S)
+    main = re.sub(r'<details[^>]*class="lux-card mb-8 p-5"[^>]*>.*?</details>', toc_shell, main, count=1, flags=re.S)
     main = re.sub(r'<div class="prose-article">.*?</div>\s*<aside class="lux-card mt-14',
                   '<div class="prose-article" th:utext="${post.content}"></div>\n<aside class="lux-card mt-14', main, count=1, flags=re.S)
     # related posts: latest 4 minus the current one, capped at 3
@@ -670,7 +668,8 @@ def article_template(head, body):
 <meta name="twitter:image" content="/api/v1/media/tqd-og.png">
 '''
     title = 'Bài viết · DũngTQ'
-    page = wrap_page(title, '', extra, main_open_tag + main + '</main>', 'bai-viet', page_scripts('article', read('page_bai-viet__ai-agent-khac-gi-chatbot')))
+    scripts = page_scripts('article', read('page_bai-viet__ai-agent-khac-gi-chatbot')) + ['tqd-article.js']
+    page = wrap_page(title, '', extra, main_open_tag + main + '</main>', 'bai-viet', scripts)
     post_expr = ("ezyfunctions.call('get_post_by_slug','{&quot;slug&quot;:&quot;' + "
                  "ezyfunctions.call('get_request_parameter','{&quot;name&quot;:&quot;slug&quot;}') + '&quot;}')")
     prompt = ("'Hãy đọc trang &quot;' + post.title + '&quot; của Trịnh Quang Dũng (DũngTQ) tại "
@@ -682,20 +681,15 @@ def article_template(head, body):
     return page
 
 
-def toc_block():
-    return '''<details class="lux-card mb-8 p-5" th:if="${post.content != null and #strings.contains(post.content, '<h2')}" th:with="parts=${#strings.arraySplit(post.content,'<h')},tocCount=${#arrays.length(#strings.arraySplit(post.content,'</h2>')) + #arrays.length(#strings.arraySplit(post.content,'</h3>')) - 2}">
-<summary class="flex min-h-11 -my-2 cursor-pointer items-center justify-between gap-2 font-semibold">
-<span class="inline-flex items-center gap-2 text-sm uppercase tracking-wider text-accent"><span th:text="|Mục lục bài viết (${tocCount} phần)|">Mục lục bài viết</span></span>
-<span class="text-xs font-medium text-muted">Thu gọn / Mở</span>
-</summary>
-<nav class="mt-3 border-t border-line pt-3" aria-label="Mục lục bài viết">
-<ol class="flex flex-col gap-1 text-sm">
-<li th:each="part : ${parts}" th:if="${#strings.startsWith(part,'2 ') or #strings.startsWith(part,'3 ')}" th:classappend="${#strings.startsWith(part,'3 ') ? 'pl-4' : null}">
-<a class="inline-flex min-h-11 sm:min-h-9 items-center py-1 text-ink/90 no-underline hover:text-accent-ink" th:href="${'#' + #strings.substringBetween(part,'id=&quot;','&quot;')}" th:text="${#strings.substringBefore(#strings.substringAfter(part,'&gt;'),'&lt;/h')}"></a>
-</li>
-</ol>
-</nav>
-</details>'''
+def toc_shell(match):
+    """The captured TOC lists the sample article's headings. Keep its markup but empty the list: the footer
+    script rebuilds it from this post's h2/h3 (old rule: shown only with 3+ h2) and unhides it."""
+    block = match.group(0).replace('<details', '<details data-toc hidden', 1)
+    block = re.sub(r'<span>Mục lục bài viết \([0-9]+ phần\)</span>', '<span data-toc-count>Mục lục bài viết</span>', block, count=1)
+    block = re.sub(r'(<ol[^>]*>).*?(</ol>)', r'\1\2', block, count=1, flags=re.S)
+    if 'data-toc-count' not in block or '<li' in block:
+        raise SystemExit('article TOC markup changed')
+    return block
 
 
 if __name__ == '__main__':

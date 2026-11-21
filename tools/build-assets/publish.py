@@ -10,12 +10,17 @@ Usage (from the repository root):
     python tools/build-assets/publish.py --yes      # write to the local environment
 """
 import argparse
+import glob
 import json
 import os
 import re
 import sys
 
-SKILLS = 'C:/Users/ABC/.omp/plugins/cache/plugins/cppai___ezyplatform___0.6.0/skills/ezy-shared'
+# ezy_client ships with the EzyPlatform agent plugin, whose cache folder name carries its version; take the newest
+# install unless EZY_SHARED points elsewhere.
+SKILLS = os.environ.get('EZY_SHARED') or max(
+    glob.glob(os.path.expanduser('~/.omp/plugins/cache/plugins/*ezyplatform*/skills/ezy-shared')) or [''],
+    key=lambda p: [int(n) for n in re.findall(r'\d+', p.rsplit('___', 1)[-1])])
 sys.path.insert(0, SKILLS)
 from ezy_client import list_posts, request_json, update_payload  # noqa: E402
 

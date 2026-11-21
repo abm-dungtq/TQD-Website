@@ -55,6 +55,21 @@ node -e "process.stdout.write(require('crypto').randomBytes(32).toString('hex'))
   | npx wrangler secret put ORIGIN_KEY --config edge/wrangler.jsonc
 ```
 
+## Giao diện và nội dung EzyPlatform
+
+```bash
+node tools/build-assets/build.mjs                                  # asset tqd-* vào api/v1/media/
+python tools/build-assets/upload-assets.py --yes --env production  # đẩy asset đổi vào thư viện media
+python tools/build-assets/port.py                                  # sinh pages/ và page-fragments/
+python tools/build-assets/publish.py --yes --env production        # đẩy trang + fragment
+python tools/migrate/migrate.py --env production tags --apply      # meta bài viết: tqd_tags, tqd_cover, tqd_reading_minutes
+python tools/migrate/migrate.py --env production verify
+```
+
+- Template bài viết đọc meta qua `get_post_meta`; khóa chỉ trả về khi nằm trong setting `ezyarticle_post_metadata_can_be_retrieved`. Lệnh `tags --apply` tự thêm khóa còn thiếu; sau khi setting đổi phải `systemctl restart tqd-web.service` trên VPS (web server cache setting).
+- `/shop` dùng nguyên bundle đang chạy trên tqd.me (`tools/build-assets/shop.live.js`, 23 gói, giá hiện hành) và `edge/src/shop-data.json` cùng danh mục đó. `shop.ts`/`shop-catalog.ts` trong `tools/build-assets/site/` là danh mục 30 gói chưa từng lên production; chỉ đổi sang khi chủ site duyệt bảng giá mới.
+- Bộ đệm reader của edge (`.md`, llms, feed, sitemap…) khóa theo version Worker, nên mỗi lần deploy edge là reader được dựng lại.
+
 ## Đã bỏ khỏi Worker công cụ
 
 - Custom domain `tqd.me`, `www.tqd.me`, `tqd.io.vn`: vẫn thuộc `tqd-website`.

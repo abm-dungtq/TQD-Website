@@ -75,6 +75,7 @@ REPORT_PATH = MIGRATE_DIR / "report.json"
 MEDIA_BASE = "https://tqd.me/media/"
 TAGS_META_KEY = "tqd_tags"
 COVER_META_KEY = "tqd_cover"
+READING_META_KEY = "tqd_reading_minutes"
 VN_TZ = dt.timezone(dt.timedelta(hours=7))
 
 EXPECTED_ARTICLES = 22
@@ -229,6 +230,16 @@ def compact_tags(tags: list[str]) -> str:
     return json.dumps(tags, ensure_ascii=False, separators=(",", ":"))
 
 
+def reading_meta(source: str, content: str) -> str:
+    """`<minutes>/<length of content>`. Minutes follow the old `estimateReadingMinutes` (src/lib/toc.ts): words of
+    the Markdown source with tags turned into spaces, ~210 words/min, JS Math.round (8.5 -> 9, unlike Python's
+    round()). The length is counted in UTF-16 units like Java's String.length(), so the article template can tell
+    when the post was edited in admin since migration and fall back to a client-side estimate."""
+    words = len(html.unescape(re.sub(r"<[^>]*>", " ", source)).split())
+    minutes = max(1, int(words / 210 + 0.5))
+    return f"{minutes}/{len(content.encode('utf-16-le')) // 2}"
+
+
 # ---------------------------------------------------------------------------
 # Card extraction / fallback rendering
 # ---------------------------------------------------------------------------
@@ -369,7 +380,8 @@ def generate(conn: sqlite3.Connection) -> dict[str, Any]:
 
     def add_post(slug: str, title: str, summary: str, post_type: str, status: str,
                  content: str, published_at: str | None, priority: int,
-                 source: str, tags: list[str] | None = None, cover: str | None = None) -> None:
+                 source: str, tags: list[str] | None = None, cover: str | None = None,
+                 reading: str | None = None) -> None:
         meta: dict[str, Any] = {
             "slug": slug,
             "title": title,
@@ -382,6 +394,8 @@ def generate(conn: sqlite3.Connection) -> dict[str, Any]:
             meta["tags"] = tags
         if cover:
             meta["cover"] = cover
+        if reading:
+            meta["reading"] = reading
         if published_at:
             if not DATETIME_RE.match(published_at):
                 raise MigrationError(f"{slug}: publishedAt must be yyyy-MM-dd HH:mm:ss, got {published_at!r}")
@@ -423,6 +437,7 @@ def generate(conn: sqlite3.Connection) -> dict[str, Any]:
             source=f"article:{article['id']}",
             tags=tags,
             cover=name_by_key.get(article["cover_key"] or ""),
+            reading=reading_meta(article["body_md"] or article["body_html"], content),
         )
 
     # 2. Items -> tqd_product / tqd_video, ordered by sort/id and prioritised
@@ -977,6 +992,23 @@ def sync_post_meta(client: EzyClient, post_id: int, key: str, value: str, apply:
     return {"action": action, "postId": post_id, "metaId": meta_id}
 
 
+META_WHITELIST_SETTING = "ezyarticle_post_metadata_can_be_retrieved"
+
+
+def ensure_meta_whitelist(client: EzyClient, apply: bool) -> list[str]:
+    """The article templates read tqd_* post meta through `get_post_meta`, which only returns keys listed in this
+    setting (anything else is a 404 that breaks the page). Returns the keys that were (or would be) added; the web
+    server caches settings, so `tqd-web.service` must be restarted after a change."""
+    setting = client.request("GET", "/api/v1/settings/names/" + META_WHITELIST_SETTING)
+    keys = [key for key in str(setting.get("value") or "").split(",") if key]
+    missing = [key for key in (TAGS_META_KEY, COVER_META_KEY, READING_META_KEY) if key not in keys]
+    if missing and apply:
+        client.request("PUT", f"/api/v1/settings/{setting['id']}",
+                       {"name": META_WHITELIST_SETTING, "value": ",".join(keys + missing), "dataType": "ARRAY"})
+        print(f"  ! added {missing} to {META_WHITELIST_SETTING}; restart tqd-web.service", file=sys.stderr)
+    return missing
+
+
 def tags_report(
     client: EzyClient,
     posts: list[dict[str, Any]],
@@ -985,6 +1017,7 @@ def tags_report(
     filename: str,
 ) -> dict[str, Any]:
     actions: list[dict[str, Any]] = []
+    whitelist_added = ensure_meta_whitelist(client, apply)
     failures: list[str] = []
     # every article is checked, including the untagged ones: dropping all tags must clear the stored JSON too
     articles = [meta for meta in posts if meta.get("postType") == "POST"]
@@ -1008,6 +1041,12 @@ def tags_report(
         except MigrationError as err:
             failures.append(f"cover {slug}: {err}")
             print(f"  x cover {slug}: {err}", file=sys.stderr)
+        try:
+            reading = sync_post_meta(client, int(live["id"]), READING_META_KEY, str(meta.get("reading") or ""), apply)
+            actions.append({"slug": slug, "action": "reading-" + reading["action"], "metaId": reading["metaId"]})
+        except MigrationError as err:
+            failures.append(f"reading {slug}: {err}")
+            print(f"  x reading {slug}: {err}", file=sys.stderr)
 
     report = {
         "applied": apply,
@@ -1018,6 +1057,7 @@ def tags_report(
         "unchanged": sum(1 for action in actions if action["action"] == "unchanged"),
         "pendingCreate": sum(1 for action in actions if action["action"] == "pending-create"),
         "failures": failures,
+        "metaWhitelistAdded": whitelist_added,
     }
     write_json(MIGRATE_DIR / filename, {"report": report, "actions": actions})
     return report
@@ -1211,6 +1251,7 @@ def verify(env_name: str | None = None) -> dict[str, Any]:
     tags_mismatched: list[dict[str, Any]] = []
     missing_covers: list[str] = []
     wrong_covers: list[dict[str, Any]] = []
+    wrong_reading: list[dict[str, Any]] = []
     for meta in local:
         slug = meta["slug"]
         live = live_by_slug.get(slug)
@@ -1240,9 +1281,16 @@ def verify(env_name: str | None = None) -> dict[str, Any]:
             covers = [item for item in meta_rows if item.get("metaKey") == COVER_META_KEY]
             expected_cover = meta.get("cover") or ""
             if len(covers) != 1:
-                missing_covers.append(slug)
+                # a post without a cover (old site showed none) legitimately has no cover meta
+                if covers or expected_cover:
+                    missing_covers.append(slug)
             elif str(covers[0].get("metaValue") or "") != expected_cover:
                 wrong_covers.append({"slug": slug, "expected": expected_cover, "actual": covers[0].get("metaValue")})
+            reading = [item for item in meta_rows if item.get("metaKey") == READING_META_KEY]
+            expected_reading = str(meta.get("reading") or "")
+            if len(reading) != 1 or str(reading[0].get("metaValue") or "") != expected_reading:
+                wrong_reading.append({"slug": slug, "expected": expected_reading,
+                                      "actual": [item.get("metaValue") for item in reading]})
 
     mapping = json.loads(MEDIA_MAP_PATH.read_text(encoding="utf-8")) if MEDIA_MAP_PATH.is_file() else {}
     missing_media = [name for name in mapping.values() if not client.media_contains(name)]
@@ -1263,6 +1311,7 @@ def verify(env_name: str | None = None) -> dict[str, Any]:
         "mediaMissingOnServer": missing_media,
         "coversMissing": missing_covers,
         "coversMismatched": wrong_covers,
+        "readingMismatched": wrong_reading,
     }
 
 

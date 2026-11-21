@@ -199,7 +199,7 @@ export function buildCatalog(data: ReaderData, siteOrigin: string, generatedAt =
     slug: 'shop',
     title: 'Cửa hàng Gói Google AI Ultra & Veo',
     summary:
-      'Bộ cấu hình 4 bước và bảng giá 30 gói Google AI Ultra (5x, 20x) & Veo Flow chính chủ: Slot Family, Full Family và Nâng cấp trực tiếp.',
+      'Bộ cấu hình 4 bước và bảng giá 23 gói Google AI Ultra (5x, 20x) & Veo Flow chính chủ: Slot Family và Full Family.',
     tags: ['Shop', 'Google AI Ultra', 'Veo', 'Google Flow', 'Antigravity'],
     publishedAt: null,
     updatedAt: null,
@@ -311,7 +311,7 @@ export function buildSearchEntries(data: ReaderData): SearchEntry[] {
       title: 'Cửa hàng Google AI Ultra & Veo Flow (Shop)',
       url: '/shop',
       kind: 'product',
-      hint: '30 gói Google AI Ultra 5x/20x & Veo: Slot Family, Full Family và Trực tiếp chính chủ',
+      hint: '23 gói Google AI Ultra 5x/20x & Veo: Slot Family và Full Family chính chủ',
     },
     {
       title: 'Tải Video & Xưởng Mổ Xẻ Kịch Bản Viral AI (Viết Pro)',

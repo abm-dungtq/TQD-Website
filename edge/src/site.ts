@@ -215,7 +215,7 @@ function sectionBody(id: SectionId, data: ReaderData, base: string): string {
   switch (id) {
     case 'ho-so': {
       const featuredProducts = [
-        `- [Cửa hàng Gói Google AI Ultra & Veo](${base}/shop): Bảng giá & bộ cấu hình 30 gói Google AI Ultra (5x, 20x) và Veo Flow chính chủ (${base}/shop.md).`,
+        `- [Cửa hàng Gói Google AI Ultra & Veo](${base}/shop): Bảng giá & bộ cấu hình 23 gói Google AI Ultra (5x, 20x) và Veo Flow chính chủ (${base}/shop.md).`,
         `- [Tải Video & Xưởng Mổ Xẻ Kịch Bản Viral AI](${base}/tai-video): Công cụ web tải MP4 H.264, tách MP3 320kbps, bóc băng lời thoại AI (SRT) và viết lại kịch bản chuẩn Viết Pro.`,
         ...data.products.slice(0, 7).map((p) => `- [${p.title}](${resolveProductUrl(p, base)}): ${p.summary}`),
       ];
@@ -248,7 +248,7 @@ function sectionBody(id: SectionId, data: ReaderData, base: string): string {
         [
           '### Cửa hàng Gói Google AI Ultra & Veo',
           '',
-          `Bộ cấu hình và bảng giá minh bạch 30 gói Google AI Ultra (5x, 20x) & Veo Flow chính chủ (${formatVnd(minShopPrice)} - ${formatVnd(maxShopPrice)}): Slot Family, Full Family và Trực tiếp chính chủ.`,
+          `Bộ cấu hình và bảng giá minh bạch 23 gói Google AI Ultra (5x, 20x) & Veo Flow chính chủ (${formatVnd(minShopPrice)} - ${formatVnd(maxShopPrice)}): Slot Family và Full Family.`,
           '',
           'Nhãn: Google AI Ultra, Veo, Google Flow, Antigravity, Shop',
           '',
@@ -394,7 +394,7 @@ export function shopMarkdown(site = DEFAULT_SITE, lastmod?: string): string {
     author: 'Trịnh Quang Dũng (DũngTQ)',
     updated: lastmod,
     summary:
-      'Bảng giá 30 gói Google AI Ultra (5x, 20x) & Veo Flow chính chủ: Slot Family, Full Family và Trực tiếp chính chủ tại tqd.me.',
+      'Bảng giá 23 gói Google AI Ultra (5x, 20x) & Veo Flow chính chủ: Slot Family và Full Family tại tqd.me.',
     tags: ['Google AI Ultra', 'Veo', 'Google Flow', 'Antigravity', 'Shop'],
   });
   return [
@@ -402,7 +402,7 @@ export function shopMarkdown(site = DEFAULT_SITE, lastmod?: string): string {
     '',
     `# ${title}`,
     '',
-    'Trang cấu hình và tra cứu toàn bộ 30 gói Google AI Ultra (5x và 20x) dùng cho Gemini, Google Antigravity, NotebookLM, Google Flow (Veo) và Google Drive 20–30 TB.',
+    'Trang cấu hình và tra cứu toàn bộ 23 gói Google AI Ultra (5x và 20x) dùng cho Gemini, Google Antigravity, NotebookLM, Google Flow (Veo) và Google Drive 20–30 TB.',
     '',
     '## Quy tắc phân biệt 4 nhóm Credit',
     '',
@@ -415,7 +415,7 @@ export function shopMarkdown(site = DEFAULT_SITE, lastmod?: string): string {
     '',
     ...shop.requirements.map((r) => `${r.step}. **${r.title}:** ${r.detail} (${r.checkUrl})`),
     '',
-    '## Bảng giá 30 gói sản phẩm',
+    '## Bảng giá 23 gói sản phẩm',
     '',
     '| # | Tên gói | Giá bán | Dòng & Hình thức | Thời hạn | Credit Flow | Refill |',
     '|---:|---|---:|---|---|---|---|',
@@ -496,13 +496,13 @@ export function llmsText(data: ReaderData, site = DEFAULT_SITE): string {
     '## Sản phẩm & Công cụ AI nổi bật',
     '',
     ...data.products.map((p) => `- [${p.title}](${resolveProductUrl(p, base)}): ${p.summary}`),
-    `- [Cửa hàng Gói Google AI Ultra & Veo](${base}/shop): Bảng giá và bộ cấu hình 30 gói Google AI Ultra (5x, 20x) & Veo Flow chính chủ (bản Markdown tại ${base}/shop.md)`,
+    `- [Cửa hàng Gói Google AI Ultra & Veo](${base}/shop): Bảng giá và bộ cấu hình 23 gói Google AI Ultra (5x, 20x) & Veo Flow chính chủ (bản Markdown tại ${base}/shop.md)`,
     `- [Tải Video & Xưởng Mổ Xẻ Kịch Bản Viral AI](${base}/tai-video): Công cụ web tải MP4 H.264, tách MP3 320kbps, bóc băng lời thoại (SRT) và viết lại kịch bản chuẩn chống văn mẫu Viết Pro (bản Markdown tại ${base}/tai-video.md)`,
     '',
     '## Pages',
     '',
     ...sections.map((s) => `- [${s.title}](${base}/${s.id}.md): ${s.short}`),
-    `- [Cửa hàng Gói Google AI Ultra & Veo](${base}/shop.md): Danh mục đầy đủ 30 gói Google AI Ultra (5x, 20x) & Veo Flow chính chủ`,
+    `- [Cửa hàng Gói Google AI Ultra & Veo](${base}/shop.md): Danh mục đầy đủ 23 gói Google AI Ultra (5x, 20x) & Veo Flow chính chủ`,
     `- [Tải Video & Xưởng Mổ Xẻ Kịch Bản Viral AI](${base}/tai-video.md): Tài liệu Markdown đầy đủ về tính năng tải video, X-Quang Viral và kiểm định Viết Pro`,
     `- [Chính sách Quyền riêng tư](${base}/quyen-rieng-tu.md): Thống kê nội bộ không cookie, Google Analytics và Microsoft Clarity chỉ chạy khi người đọc đồng ý, không pixel quảng cáo và tự động xóa file tạm`,
   ];
