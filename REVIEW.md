@@ -61,14 +61,14 @@ node node_modules/astro/bin/astro.mjs build
 
 # 4. Quét bề mặt khám phá SEO / GEO / AX trên site EzyPlatform (qua edge)
 node /Users/tqd/.gemini/config/skills/ak-enhance-ux-ax/scripts/check-discovery-surfaces.mjs \
-  https://stg.tqd.me \
-  --site-origin https://stg.tqd.me
+  https://tqd.me \
+  --site-origin https://tqd.me
 
 # 5. Kiểm tra bố cục, tràn ngang, mục tiêu chạm 44px và lỗi tài nguyên trên trình duyệt thật
 node /Users/tqd/.gemini/config/skills/ak-frontend-design/scripts/render-check.mjs \
-  https://stg.tqd.me
+  https://tqd.me
 node /Users/tqd/.gemini/config/skills/ak-frontend-design/scripts/render-check.mjs \
-  https://stg.tqd.me/tai-video
+  https://tqd.me/tai-video
 node /Users/tqd/.gemini/config/skills/ak-frontend-design/scripts/render-check.mjs \
-  https://stg.tqd.me/ho-so
+  https://tqd.me/ho-so
 ```

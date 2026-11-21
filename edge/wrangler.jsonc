@@ -8,6 +8,10 @@
   // Public hostnames served by this Worker. The VPS origins are private (they answer 403 without the secret header).
   "workers_dev": true,
   "routes": [
+    { "pattern": "tqd.me", "custom_domain": true },
+    // www, the old domain and the former staging host only 301 to tqd.me (src/index.ts ALIAS_HOSTS).
+    { "pattern": "www.tqd.me", "custom_domain": true },
+    { "pattern": "tqd.io.vn", "custom_domain": true },
     { "pattern": "stg.tqd.me", "custom_domain": true },
     { "pattern": "admin.tqd.me", "custom_domain": true }
   ],

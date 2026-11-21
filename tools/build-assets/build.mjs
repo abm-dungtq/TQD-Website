@@ -69,7 +69,10 @@ async function copyMedia() {
   // static files that already live in public/ (phase 3 did not touch them)
   await cp(path.join(root, 'public/favicon.svg'), path.join(media, 'tqd-favicon.svg'));
   await cp(path.join(root, 'public/og.png'), path.join(media, 'tqd-og.png'));
-  await cp(path.join(root, 'public/og/tai-video.png'), path.join(media, 'tqd-og-tai-video.png'));
+  // Per-page Open Graph cards (old URLs /og/<page>.png; the edge 301s them here).
+  for (const card of (await readdir(path.join(root, 'public/og'))).filter((f) => f.endsWith('.png'))) {
+    await cp(path.join(root, 'public/og', card), path.join(media, `tqd-og-${card}`));
+  }
   for (const size of ['240', '480']) {
     await cp(path.join(root, `public/img/portrait-${size}.webp`), path.join(media, `tqd-portrait-${size}.webp`));
   }

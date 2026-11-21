@@ -1,6 +1,7 @@
-// tqd-edge: public edge for stg.tqd.me + admin.tqd.me.
-// - stg: generated readers (llms.txt, *.md, feeds, sitemap), tool routes proxied to the tooling Worker, legacy
+// tqd-edge: public edge for tqd.me + admin.tqd.me.
+// - tqd.me: generated readers (llms.txt, *.md, feeds, sitemap), tool routes proxied to the tooling Worker, legacy
 //   redirects, and a transparent passthrough to the EzyPlatform web origin.
+// - www.tqd.me, tqd.io.vn and the former staging host stg.tqd.me: 301 to the same path on tqd.me.
 // - admin: transparent passthrough to the EzyPlatform admin origin, never cached.
 import { handleReader, type ReaderEnv } from './readers';
 
@@ -14,6 +15,19 @@ const CANONICAL_REDIRECTS: Record<string, string> = {
   '/video': '/video-ai',
   '/so-lieu': '/',
 };
+
+/** Old Open Graph card URLs (cached by share crawlers) → their media-library copies. */
+function ogCardTarget(path: string): string | null {
+  if (path === '/og.png') return '/api/v1/media/tqd-og.png';
+  const card = /^\/og\/([a-z0-9-]+\.png)$/.exec(path);
+  return card ? `/api/v1/media/tqd-og-${card[1]}` : null;
+}
+
+const CANONICAL_ORIGIN = 'https://tqd.me';
+const ALIAS_HOSTS: Record<string, true> = { 'www.tqd.me': true, 'tqd.io.vn': true, 'stg.tqd.me': true };
+// The Worker's own `*.workers.dev` address would otherwise publish a second copy of every page under its own
+// canonical URLs, so it redirects to tqd.me as well.
+const ALIAS_SUFFIX = '.workers.dev';
 
 const TOOL_PREFIXES = ['/api/dl/', '/api/viral/', '/api/chat/', '/xray/', '/media/'];
 const TOOL_EXACT: Record<string, true> = { '/api/chat': true, '/api/t': true, '/xray': true, '/media': true };
@@ -48,6 +62,20 @@ function rewriteLocation(
   } catch {
     return response;
   }
+}
+
+/**
+ * The EzyPlatform templates keep page URLs relative so they never hard-code a domain, but share crawlers (Facebook,
+ * Zalo, X) and search engines want absolute canonical/Open Graph URLs and JSON-LD ids; the edge knows the public
+ * origin and fills it in.
+ */
+function absolutizeShareUrls(html: string, origin: string): string {
+  return html
+    .replace(/(<link rel="(?:canonical|alternate)"[^>]*? href=")\/(?!\/)/g, `$1${origin}/`)
+    .replace(/(<meta (?:property="og:(?:url|image)"|name="twitter:image") content=")\/(?!\/)/g, `$1${origin}/`)
+    .replace(/(<script type="application\/ld\+json">)([\s\S]*?)(<\/script>)/g, (_m, open: string, json: string, close: string) =>
+      open + json.replace(/([:[,]\s*)"\/(?!\/)/g, `$1"${origin}/`) + close,
+    );
 }
 
 /**
@@ -128,7 +156,7 @@ async function proxyToOrigin(
       }
     }
     if (notFound) headersOut.set('X-Robots-Tag', 'noindex');
-    return new Response(body, {
+    return new Response(absolutizeShareUrls(body, publicUrl.origin), {
       status: notFound ? 404 : 200,
       statusText: notFound ? 'Not Found' : rewritten.statusText,
       headers: headersOut,
@@ -155,6 +183,13 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
     const matchPath = normalizePath(path);
+
+    if (url.hostname in ALIAS_HOSTS || url.hostname.endsWith(ALIAS_SUFFIX)) {
+      return new Response(null, {
+        status: 301,
+        headers: { Location: `${CANONICAL_ORIGIN}${path}${url.search}`, 'Cache-Control': 'public, max-age=86400' },
+      });
+    }
 
     if (matchPath === '/__health') {
       return jsonResponse({
@@ -183,6 +218,11 @@ export default {
 
     const readerResponse = await handleReader(request, env, ctx, url);
     if (readerResponse) return readerResponse;
+
+    const ogTarget = ogCardTarget(matchPath);
+    if (ogTarget) {
+      return new Response(null, { status: 301, headers: { Location: ogTarget, 'Cache-Control': 'public, max-age=86400' } });
+    }
 
     const redirectTarget = CANONICAL_REDIRECTS[matchPath];
     if (redirectTarget) {

@@ -2,22 +2,22 @@
 
 Repo này chứa hai phần hạ tầng còn lại sau khi chuyển website cá nhân của **Trịnh Quang Dũng (DũngTQ)** sang EzyPlatform:
 
-1. **`edge/` — Worker `tqd-edge`**: cửa công khai cho `stg.tqd.me` và `admin.tqd.me`. Sinh các bản máy đọc từ API công khai của EzyPlatform, proxy công cụ sang Worker `tqd-tools`, giữ 301 cho đường dẫn cũ và chuyển tiếp trong suốt mọi request khác về EzyPlatform.
+1. **`edge/` — Worker `tqd-edge`**: cửa công khai cho `tqd.me` và `admin.tqd.me`. Sinh các bản máy đọc từ API công khai của EzyPlatform, proxy công cụ sang Worker `tqd-tools`, giữ 301 cho đường dẫn cũ và chuyển tiếp trong suốt mọi request khác về EzyPlatform.
 2. **`src/` — Worker `tqd-tools`**: runtime công cụ thuần Astro SSR, gồm chatbot, tải video, Viral Lab, trang X-ray và phục vụ media R2. Không còn nội dung, không còn `/admin`, không còn API đăng bài.
 
-Site công khai **`tqd.me` bản cũ vẫn do Worker `tqd-website` phục vụ** và không được deploy lại từ repo này. Nội dung mới nằm trên EzyPlatform; địa chỉ thử nghiệm là `stg.tqd.me`.
+Từ 2026-11-21 site công khai **`tqd.me` do `tqd-edge` + EzyPlatform phục vụ**; Worker `tqd-website` (bản Astro cũ) không còn nhận traffic và không được deploy lại từ repo này. `www.tqd.me`, `tqd.io.vn` và host thử nghiệm cũ `stg.tqd.me` chỉ trả 301 về `tqd.me`.
 
 ## Host và thành phần
 
 | Host / route | Xử lý bởi | Ghi chú |
 |---|---|---|
-| `stg.tqd.me/**` | `tqd-edge` | Trang công khai, reader máy đọc, proxy công cụ; passthrough sang `ORIGIN_WEB` |
+| `tqd.me/**` | `tqd-edge` | Trang công khai, reader máy đọc, proxy công cụ; passthrough sang `ORIGIN_WEB` |
 | `admin.tqd.me/**` | `tqd-edge` | Chỉ passthrough sang `ORIGIN_ADMIN`; HTML admin không bao giờ cache |
 | `/bai-viet/<slug>` | `tqd-edge` | Giữ URL hiển thị, lấy nội dung từ `/posts/<slug>` của origin |
 | `/bai-viet` | `tqd-edge` | Passthrough sang `/bai-viet` của origin |
 | `/api/chat*`, `/api/dl/*`, `/api/viral/*`, `/api/t`, `/xray/*`, `/media/*` | `tqd-tools` qua service binding `TOOLS` | Không lộ host của Worker công cụ ra ngoài |
 | `/dao-tao`, `/chuyen-mon`, `/video`, `/so-lieu` | `tqd-edge` | 301 cố định, giữ query string |
-| `tqd.me`, `www.tqd.me`, `tqd.io.vn` | `tqd-website` (bản cũ) | **Không deploy lại** trong quá trình migration |
+| `www.tqd.me`, `tqd.io.vn`, `stg.tqd.me` | `tqd-edge` | 301 về cùng đường dẫn trên `tqd.me` |
 
 Origin EzyPlatform là các host `sslip.io` của VPS, khai báo trong `edge/wrangler.jsonc`:
 

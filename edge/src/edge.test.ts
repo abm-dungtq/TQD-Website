@@ -4,7 +4,7 @@ import { htmlToMarkdown, htmlToText } from './html-to-md';
 import { deriveSummary, extractLinks, extractTikTokId, toReaderItem } from './posts';
 import { llmsText, SITE, toIsoUtc, type ReaderData } from './site';
 
-const ORIGIN = 'https://stg.tqd.me';
+const ORIGIN = 'https://tqd.me';
 
 const article = {
   id: 7,

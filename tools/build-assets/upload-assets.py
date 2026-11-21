@@ -42,7 +42,7 @@ def remote_bytes(name):
 def public_url(name, data):
     # Same ?v=<sha1[:10]> the pages use (port.py asset_version): the unversioned URL may still be cached.
     env = load_env()
-    return ((env.get('public_url') or 'https://stg.tqd.me').rstrip('/') + '/api/v1/media/' + urllib.parse.quote(name)
+    return ((env.get('public_url') or 'https://tqd.me').rstrip('/') + '/api/v1/media/' + urllib.parse.quote(name)
             + '?v=' + hashlib.sha1(data).hexdigest()[:10])
 
 

@@ -187,18 +187,25 @@ a[data-tqd-origin][hidden] {
 <link rel="alternate" type="application/rss+xml" title="Trịnh Quang Dũng — RSS" href="/rss.xml">
 <link rel="alternate" type="application/feed+json" title="Trịnh Quang Dũng — JSON Feed" href="/feed.json">
 <link rel="stylesheet" ezy:mhref="/api/v1/media/tqd-site.css?v=3f03295fb5">
-<title>Bài viết · DũngTQ</title>
-<meta name="description" content="">
+<title th:text="${post.title + ' · DũngTQ'}">Bài viết · DũngTQ</title>
+<meta name="description" content="Bài viết của Trịnh Quang Dũng (DũngTQ) về AI Agent và vận hành doanh nghiệp." th:content="${post.summary}">
 <link rel="canonical" th:href="${'/bai-viet/' + post.slug}">
 <meta property="og:type" content="article">
 <meta property="og:title" th:content="${post.title}">
 <meta property="og:description" th:content="${post.summary}">
 <meta property="og:url" th:content="${'/bai-viet/' + post.slug}">
-<meta property="og:image" content="/api/v1/media/tqd-og.png">
+<th:block th:with="ogMeta=${ezyfunctions.call('get_post_meta','{&quot;postId&quot;:' + post.id + ',&quot;metaKey&quot;:&quot;tqd_cover&quot;}')}, ogCover=${ogMeta != null and ogMeta.metaValue != null and ogMeta.metaValue != ''}, pubIso=${#dates.format(new java.util.Date(post.publishedAt),'yyyy-MM-dd') + 'T' + #dates.format(new java.util.Date(post.publishedAt),'HH:mm:ssXXX')}">
+<meta property="og:image" th:content="${ogCover ? '/api/v1/media/' + ogMeta.metaValue : '/api/v1/media/tqd-og-bai-viet.png'}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" th:content="${ogCover ? '675' : '630'}">
+<meta property="og:image:alt" th:content="${post.title}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" th:content="${post.title}">
 <meta name="twitter:description" th:content="${post.summary}">
-<meta name="twitter:image" content="/api/v1/media/tqd-og.png">
+<meta name="twitter:image" th:content="${ogCover ? '/api/v1/media/' + ogMeta.metaValue : '/api/v1/media/tqd-og-bai-viet.png'}">
+<script type="application/ld+json" th:utext="${'{&quot;@context&quot;:&quot;https://schema.org&quot;,&quot;@type&quot;:&quot;Article&quot;,&quot;headline&quot;:&quot;' + #strings.replace(post.title,'&quot;','\&quot;') + '&quot;,&quot;description&quot;:&quot;' + (post.summary != null ? #strings.replace(post.summary,'&quot;','\&quot;') : '') + '&quot;,&quot;url&quot;:&quot;/bai-viet/' + post.slug + '&quot;,&quot;mainEntityOfPage&quot;:&quot;/bai-viet/' + post.slug + '&quot;,&quot;inLanguage&quot;:&quot;vi&quot;,&quot;datePublished&quot;:&quot;' + pubIso + '&quot;,&quot;image&quot;:&quot;' + (ogCover ? '/api/v1/media/' + ogMeta.metaValue : '/api/v1/media/tqd-og-bai-viet.png') + '&quot;,&quot;author&quot;:{&quot;@type&quot;:&quot;Person&quot;,&quot;name&quot;:&quot;Trịnh Quang Dũng&quot;}}'}"></script>
+<script type="application/ld+json" th:utext="${'{&quot;@context&quot;:&quot;https://schema.org&quot;,&quot;@type&quot;:&quot;BreadcrumbList&quot;,&quot;itemListElement&quot;:[{&quot;@type&quot;:&quot;ListItem&quot;,&quot;position&quot;:1,&quot;name&quot;:&quot;Trang chủ&quot;,&quot;item&quot;:&quot;/&quot;},{&quot;@type&quot;:&quot;ListItem&quot;,&quot;position&quot;:2,&quot;name&quot;:&quot;Bài viết&quot;,&quot;item&quot;:&quot;/bai-viet&quot;},{&quot;@type&quot;:&quot;ListItem&quot;,&quot;position&quot;:3,&quot;name&quot;:&quot;' + #strings.replace(post.title,'&quot;','\&quot;') + '&quot;,&quot;item&quot;:&quot;/bai-viet/' + post.slug + '&quot;}]}'}"></script>
+</th:block>
 </head>
 <body class="min-h-screen">
 <a href="#main" data-skip class="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[2000] focus:rounded focus:bg-panel focus:px-3 focus:py-2">Bỏ qua tới nội dung</a>

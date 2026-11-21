@@ -1,12 +1,12 @@
 # Deploy sau migration EzyPlatform
 
-> Cập nhật 2026-11-21. Worker `tqd-website` **không còn được deploy từ repo này**; nó đang phục vụ `tqd.me` bản cũ và phải giữ nguyên. Mọi lệnh dưới đây chỉ tác động `tqd-tools`, `tqd-next` (preview của tools) và `tqd-edge`.
+> Cập nhật 2026-11-21. `tqd.me` đã chuyển hẳn sang `tqd-edge` + EzyPlatform. Worker `tqd-website` **không còn được deploy từ repo này** và không còn nhận traffic. Mọi lệnh dưới đây chỉ tác động `tqd-tools`, `tqd-next` (preview của tools) và `tqd-edge`.
 
 ## Kiến trúc
 
 | Thành phần | Host | Vai trò |
 |---|---|---|
-| `tqd-edge` (`edge/`) | `stg.tqd.me`, `admin.tqd.me`, workers.dev | Sinh llms/feed/sitemap/`.md`, proxy công cụ, 301 đường dẫn cũ, chuyển tiếp trong suốt sang EzyPlatform |
+| `tqd-edge` (`edge/`) | `tqd.me`, `admin.tqd.me`, workers.dev | Sinh llms/feed/sitemap/`.md`, proxy công cụ, 301 đường dẫn cũ, chuyển tiếp trong suốt sang EzyPlatform |
 | EzyPlatform web | `https://tqdweb.103-161-119-32.sslip.io` (biến `ORIGIN_WEB`) | Trang công khai `/`, `/posts/<slug>`, `/thu-vien`… |
 | EzyPlatform admin | `https://tqdadmin.103-161-119-32.sslip.io` (biến `ORIGIN_ADMIN`) | Admin, chỉ đi qua `admin.tqd.me`; edge không bao giờ cache HTML admin |
 | `tqd-tools` (`src/worker.ts`) | workers.dev, không custom domain | Chat, tải video, Viral Lab, X-ray, `/media/*`, `/api/t` |
@@ -29,7 +29,7 @@ CLOUDFLARE_ENV=preview npm run build && \
 npx wrangler deploy --config edge/wrangler.jsonc  # tqd-edge + stg/admin custom domains
 
 # 4. Kiểm tra
-curl -s https://tqd-edge.ngulongyquan.workers.dev/__health
+curl -s https://tqd.me/__health  # host workers.dev của edge chỉ 301 về tqd.me
 curl -s https://tqd-tools.ngulongyquan.workers.dev/api/chat/status
 ```
 

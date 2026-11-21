@@ -1,11 +1,11 @@
 # Chatbot "Agent DũngTQ"
 
-Khung chat nằm trong giao diện EzyPlatform (page fragment). Trình duyệt gọi `/api/chat*` trên `stg.tqd.me`; edge chuyển tiếp nguyên request sang Worker công cụ `tqd-tools`, rồi Worker gọi agent `dungtq-web` trên GoClaw tự host.
+Khung chat nằm trong giao diện EzyPlatform (page fragment). Trình duyệt gọi `/api/chat*` trên `tqd.me`; edge chuyển tiếp nguyên request sang Worker công cụ `tqd-tools`, rồi Worker gọi agent `dungtq-web` trên GoClaw tự host.
 
 ## Đường đi của một tin nhắn
 
 ```text
-trình duyệt (stg.tqd.me) ──POST /api/chat──▶ tqd-edge ──service binding──▶ tqd-tools ──/v1/chat/completions (stream)──▶ https://goclaw.tqd.io.vn
+trình duyệt (tqd.me) ──POST /api/chat──▶ tqd-edge ──service binding──▶ tqd-tools ──/v1/chat/completions (stream)──▶ https://goclaw.tqd.io.vn
                                             ◀──────────── SSE truyền nguyên trạng ────────────┘
 ```
 

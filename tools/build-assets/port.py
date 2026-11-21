@@ -197,16 +197,18 @@ def rewrite_common(text):
     text = re.sub(r'/mascot/([a-z]+\.webp)', r'/api/v1/media/tqd-mascot-\1', text)
     text = text.replace('href="/favicon.svg"', 'href="/api/v1/media/tqd-favicon.svg"')
     # page chrome must not carry the production domain
-    text = text.replace('content="https://tqd.me/og/', 'content="/api/v1/media/tqd-og/')
-    text = re.sub(r'(<meta property="og:image" content=")[^"]*"', r'\1/api/v1/media/tqd-og.png"', text)
-    text = re.sub(r'(<meta name="twitter:image" content=")[^"]*"', r'\1/api/v1/media/tqd-og.png"', text)
+    # Open Graph cards keep the old per-page image: /og.png and /og/<page>.png live in the media library.
+    text = re.sub(r'content="https://tqd\.me/og\.png"', 'content="/api/v1/media/tqd-og.png"', text)
+    text = re.sub(r'content="https://tqd\.me/og/([a-z0-9-]+\.png)"', r'content="/api/v1/media/tqd-og-\1"', text)
+    text = re.sub(r'(<meta property="og:image" content=")(?!/api/v1/media/)[^"]*"', r'\1/api/v1/media/tqd-og.png"', text)
+    text = re.sub(r'(<meta name="twitter:image" content=")(?!/api/v1/media/)[^"]*"', r'\1/api/v1/media/tqd-og.png"', text)
     text = re.sub(r'(<link rel="canonical" href=")https://tqd\.me', r'\1', text)
     text = re.sub(r'(<link rel="alternate" type="text/markdown" href=")https://tqd\.me', r'\1', text)
     text = re.sub(r'(<meta property="og:url" content=")https://tqd\.me', r'\1', text)
     # JSON-LD is rewritten first and separately: it wants relative URLs, while the AI prompt links and share
     # buttons below get the origin token (the later generic replacements never touch structured data again).
     def structured(match):
-        return match.group(1).replace('https://tqd.me/', '/').replace('https://tqd.me', '')
+        return match.group(2).replace('https://tqd.me/', '/').replace('https://tqd.me', '')
     text = re.sub(r'(<script type="application/ld\+json">)(.*?)(</script>)',
                   lambda m: m.group(1) + structured(m) + m.group(3), text, flags=re.S)
     # AI prompt links and share buttons get the live origin at runtime
@@ -655,17 +657,52 @@ def article_template(head, body):
         new_rel = new_rel.replace(li, '')
     main = main[:related_start] + new_rel + main[related_end:]
     main = rewrite_common(main)
+    q = '&quot;'
+    def esc(expr):
+        # JSON string content: only the double quote needs escaping (titles/summaries are single-line text)
+        return "#strings.replace(" + expr + ",'" + q + "','\\" + q + "')"
+    # ISO 8601 for the article's datePublished. `new java.util.Date(...)` is only allowed in a normal attribute
+    # context, not inside `th:utext` (OGNL's restricted mode rejects instantiation there), so it is computed once in
+    # the `th:with` below and the JSON only concatenates strings.
+    pub = "new java.util.Date(post.publishedAt)"
+    pub_iso = ("${#dates.format(" + pub + ",'yyyy-MM-dd') + 'T' + #dates.format(" + pub + ",'HH:mm:ssXXX')}")
+    ld_article = (
+        "'{" + q + "@context" + q + ":" + q + "https://schema.org" + q + "," + q + "@type" + q + ":" + q + "Article" + q + ","
+        + q + "headline" + q + ":" + q + "' + " + esc("post.title") + " + '" + q + ","
+        + q + "description" + q + ":" + q + "' + (post.summary != null ? " + esc("post.summary") + " : '') + '" + q + ","
+        + q + "url" + q + ":" + q + "/bai-viet/' + post.slug + '" + q + ","
+        + q + "mainEntityOfPage" + q + ":" + q + "/bai-viet/' + post.slug + '" + q + ","
+        + q + "inLanguage" + q + ":" + q + "vi" + q + ","
+        + q + "datePublished" + q + ":" + q + "' + pubIso + '" + q + ","
+        + q + "image" + q + ":" + q + "' + (ogCover ? '/api/v1/media/' + ogMeta.metaValue : '/api/v1/media/tqd-og-bai-viet.png') + '" + q + ","
+        + q + "author" + q + ":{" + q + "@type" + q + ":" + q + "Person" + q + "," + q + "name" + q + ":" + q + "Trịnh Quang Dũng" + q + "}}'"
+    )
+    ld_crumbs = (
+        "'{" + q + "@context" + q + ":" + q + "https://schema.org" + q + "," + q + "@type" + q + ":" + q + "BreadcrumbList" + q + ","
+        + q + "itemListElement" + q + ":["
+        + "{" + q + "@type" + q + ":" + q + "ListItem" + q + "," + q + "position" + q + ":1," + q + "name" + q + ":" + q + "Trang chủ" + q + "," + q + "item" + q + ":" + q + "/" + q + "},"
+        + "{" + q + "@type" + q + ":" + q + "ListItem" + q + "," + q + "position" + q + ":2," + q + "name" + q + ":" + q + "Bài viết" + q + "," + q + "item" + q + ":" + q + "/bai-viet" + q + "},"
+        + "{" + q + "@type" + q + ":" + q + "ListItem" + q + "," + q + "position" + q + ":3," + q + "name" + q + ":" + q + "' + " + esc("post.title") + " + '" + q + "," + q + "item" + q + ":" + q + "/bai-viet/' + post.slug + '" + q + "}"
+        + "]}'"
+    )
     main_open_tag = '<main id="main" class="mx-auto max-w-5xl px-5 py-10 sm:py-16">'
     extra = '''<link rel="canonical" th:href="${'/bai-viet/' + post.slug}">
 <meta property="og:type" content="article">
 <meta property="og:title" th:content="${post.title}">
 <meta property="og:description" th:content="${post.summary}">
 <meta property="og:url" th:content="${'/bai-viet/' + post.slug}">
-<meta property="og:image" content="/api/v1/media/tqd-og.png">
+<th:block th:with="ogMeta=${''' + cover_call + '''}, ogCover=${ogMeta != null and ogMeta.metaValue != null and ogMeta.metaValue != ''}, pubIso=''' + pub_iso + '''">
+<meta property="og:image" th:content="${ogCover ? '/api/v1/media/' + ogMeta.metaValue : '/api/v1/media/tqd-og-bai-viet.png'}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" th:content="${ogCover ? '675' : '630'}">
+<meta property="og:image:alt" th:content="${post.title}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" th:content="${post.title}">
 <meta name="twitter:description" th:content="${post.summary}">
-<meta name="twitter:image" content="/api/v1/media/tqd-og.png">
+<meta name="twitter:image" th:content="${ogCover ? '/api/v1/media/' + ogMeta.metaValue : '/api/v1/media/tqd-og-bai-viet.png'}">
+<script type="application/ld+json" th:utext="${''' + ld_article + '''}"></script>
+<script type="application/ld+json" th:utext="${''' + ld_crumbs + '''}"></script>
+</th:block>
 '''
     title = 'Bài viết · DũngTQ'
     scripts = page_scripts('article', read('page_bai-viet__ai-agent-khac-gi-chatbot')) + ['tqd-article.js']
@@ -678,6 +715,12 @@ def article_template(head, body):
               "nghiệp bằng tiếng Việt tự nhiên.'")
     page = page.replace('<html lang="vi"',
                         '<html lang="vi" th:with="post=${' + post_expr + '}, qaPrompt=${' + prompt + '}"', 1)
+    # The old page titled each article after its post; both tags must come after `post` is in scope on <html>.
+    page = page.replace('<title>Bài viết · DũngTQ</title>',
+                        '<title th:text="${post.title + \' · DũngTQ\'}">Bài viết · DũngTQ</title>', 1)
+    page = page.replace('<meta name="description" content="">',
+                        '<meta name="description" content="Bài viết của Trịnh Quang Dũng (DũngTQ) về AI Agent '
+                        'và vận hành doanh nghiệp." th:content="${post.summary}">', 1)
     return page
 
 

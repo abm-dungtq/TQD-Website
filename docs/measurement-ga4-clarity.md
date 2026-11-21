@@ -6,7 +6,7 @@
 
 - `tqd-tools` chỉ giữ `/api/t` để ghi sự kiện ẩn danh vào Analytics Engine (`tqd_analytics`) khi phía EzyPlatform gọi tới. Không còn script beacon, không còn khung hỏi consent trong repo này.
 - `tqd-edge` không chèn mã đo lường vào HTML của EzyPlatform; nó chuyển tiếp nguyên response.
-- Nếu bật GA4/Clarity cho `stg.tqd.me`, cấu hình trong page fragment/theme của EzyPlatform và tuân thủ cùng nguyên tắc: chỉ tải sau khi người đọc đồng ý, không pixel quảng cáo.
+- Nếu bật GA4/Clarity cho `tqd.me`, cấu hình trong page fragment/theme của EzyPlatform và tuân thủ cùng nguyên tắc: chỉ tải sau khi người đọc đồng ý, không pixel quảng cáo.
 
 ## Sự kiện `/api/t`
 

@@ -30,7 +30,8 @@ PAGES = ['index', 'ho-so', 'san-pham', 'thu-vien', 'video-ai', 'bai-viet', 'lien
 
 
 def page_title(content):
-    return re.search(r'<title>(.*?)</title>', content, re.S).group(1)
+    # `<title th:text>` on the article page carries a static fallback inside the element.
+    return re.search(r'<title[^>]*>(.*?)</title>', content, re.S).group(1)
 
 
 def page_summary(content):
