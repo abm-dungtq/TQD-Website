@@ -1,0 +1,10 @@
+{
+  "slug": "sp-1-viet-pro",
+  "title": "Viết Pro",
+  "summary": "Cổng kiểm duyệt biên tập tiếng Việt kiến trúc CLI-first dành cho Google Antigravity, Claude Code và OpenAI Codex, tốn 0 token lúc khởi động. Lệnh viet-pro gate rà lỗi câu chữ tất định, giữ nguyên tên riêng, số liệu, ngày tháng, liên kết gốc, rồi chấm nhịp qua Gemini Decisions và đóng tem SHA-256 trước khi xuất bản.",
+  "postType": "tqd_product",
+  "contentType": "HTML",
+  "status": "PUBLISHED",
+  "publishedAt": "2026-11-15 00:00:00",
+  "priority": 1
+}

@@ -1,35 +1,17 @@
-// Shared plumbing for /api/v1: bearer-key auth, scopes, per-key rate limit, JSON errors.
-// Policy (scopes, publish rules) lives here and in the endpoints; the write helpers stay permission-free.
-import type { APIContext } from 'astro';
-import { env, waitUntil } from 'cloudflare:workers';
-import { type ApiKey, authenticate, type Scope } from './api-key';
-import { hit } from './rate-limit';
-
-export const REQUESTS_PER_MINUTE = 60;
-
+// Shared plumbing for the tooling APIs: JSON envelopes and a capped body reader.
 export const jsonResponse = (data: unknown, status = 200, headers: Record<string, string> = {}): Response =>
   new Response(data === null ? null : JSON.stringify(data), {
     status,
     headers: { 'Content-Type': 'application/json; charset=utf-8', ...headers },
   });
 
-export const apiError = (status: number, code: string, message: string, extra: Record<string, unknown> = {}, headers: Record<string, string> = {}): Response =>
-  jsonResponse({ error: code, message, ...extra }, status, headers);
-
-/** Resolves the request's API key, or the error response to send. Cookies are never consulted. */
-export async function requireKey(context: APIContext, scope?: Scope): Promise<ApiKey | Response> {
-  const key = await authenticate(env.DB, context.request.headers.get('Authorization'));
-  if (!key) return apiError(401, 'unauthorized', 'API key thiếu, sai hoặc đã bị thu hồi.');
-  const limit = await hit(env.DB, `api:${key.id}`, REQUESTS_PER_MINUTE, 60);
-  if (!limit.allowed) {
-    return apiError(429, 'rate_limited', `Tối đa ${REQUESTS_PER_MINUTE} request mỗi phút.`, {}, { 'Retry-After': String(Math.max(1, limit.retryAfter)) });
-  }
-  if (scope && !key.scopes.includes(scope)) return apiError(403, 'forbidden', `Key thiếu quyền ${scope}.`);
-  waitUntil(
-    env.DB.prepare("UPDATE api_keys SET last_used_at = datetime('now') WHERE id = ?1 AND (last_used_at IS NULL OR last_used_at < datetime('now', '-60 seconds'))").bind(key.id).run(),
-  );
-  return key;
-}
+export const apiError = (
+  status: number,
+  code: string,
+  message: string,
+  extra: Record<string, unknown> = {},
+  headers: Record<string, string> = {},
+): Response => jsonResponse({ error: code, message, ...extra }, status, headers);
 
 /** Reads at most `max` bytes of body, whether or not Content-Length was sent; `null` when larger. */
 export async function readBodyCapped(request: Request, max: number): Promise<string | null> {
@@ -52,8 +34,3 @@ export async function readBodyCapped(request: Request, max: number): Promise<str
   chunks.reduce((at, chunk) => (bytes.set(chunk, at), at + chunk.byteLength), 0);
   return new TextDecoder().decode(bytes);
 }
-
-/** Version from an `If-Match` header such as `"v3"` or `W/"v3"`. */
-export const parseIfMatch = (header: string): string => header.trim().replace(/^W\//, '').replace(/"/g, '');
-
-export const etag = (version: number): string => `"v${version}"`;

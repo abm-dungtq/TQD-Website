@@ -1,0 +1,30 @@
+<p>Trong những buổi ngồi liên hoan cùng anh em bạn bè, trò <em>Bảy Tám Chín</em> (tổng hai hột bằng 7 thì rót thêm, bằng 8 thì uống nửa, bằng 9 thì uống cạn) luôn khuấy động không khí rất nhanh. Tuy nhiên, lúc vào cuộc thì bàn tiệc lại hay thiếu bát đĩa đậy vừa tay, thiếu cặp xúc xắc hoặc sau vài vòng là cả bàn bắt đầu quên mất lượt trước ai vừa rót, trên bàn đang có mấy cốc và chiều xoay đang đi bên trái hay bên phải.</p>
+<p>Mình dựng <a href="https://789.tqd.io.vn">Bảy Tám Chín 3D (789.tqd.io.vn)</a> để đặt một bộ bát đĩa xúc xắc 3D ngay giữa bàn tiệc. Chỉ cần một chiếc điện thoại hoặc máy tính bảng mở trình duyệt là cả bàn có thể nhập cuộc ngay.</p>
+<p><img src="/api/v1/media/2026-11-1350cadceb8b-game-789-1280x720.jpg" alt="Màn hình chào mừng của trò Bảy Tám Chín 3D trên 789.tqd.io.vn với lời nhắc người chơi đủ 18 tuổi" loading="lazy" decoding="async"></p>
+<p>Ngay từ màn hình đầu tiên, ứng dụng hiển thị cổng xác nhận độ tuổi dành cho người từ đủ 18 tuổi kèm lời nhắc văn hóa bàn tiệc: <em>Uống ít, vui nhiều. Đã uống bia thì không lái xe</em>.</p>
+<h2>Thiết lập quân số và giới hạn cốc trên bàn</h2>
+<p>Trước khi khai bàn, phần <strong>Bày binh bố trận</strong> cho phép cả nhóm tùy chỉnh nhanh hai thông số theo đúng quy mô cuộc vui hôm đó:</p>
+<ul>
+<li><strong>Quân số trên bàn</strong>: chọn nhanh từ 2 đến 10 người chơi và đặt tên riêng cho từng người để lúc gọi lượt không bị nhầm.</li>
+<li><strong>Sức chứa tối đa của bàn</strong>: giới hạn từ 1 đến 4 ly đặt giữa bàn để kiểm soát nhịp độ, tránh tình trạng cộng dồn quá nhiều cốc trong một ván.</li>
+</ul>
+<p><img src="/api/v1/media/2026-11-41cca4714b39-game-789-table-1280x720.jpg" alt="Màn hình chọn quân số chiến hữu và sức chứa ly trên bàn trong trò Bảy Tám Chín 3D" loading="lazy" decoding="async"></p>
+<p>Ngay khi bấm <strong>Khai bàn, rót 1/2 cốc mở hàng</strong>, hệ thống tự động đặt nửa cốc đầu tiên vào giữa bàn và chỉ định người cầm bát đầu tiên.</p>
+<h2>Bát sứ 3D, vật lý xúc xắc và âm thanh tổng hợp trực tiếp</h2>
+<p>Thay vì chỉ hiện hai hình vuông 2D đổi mặt số đơn điệu, mình sử dụng <strong>Three.js / WebGL</strong> để dựng mô hình chiếc bát sứ đen viền vàng úp trên đĩa trắng đặt trên mặt thảm xanh cổ điển.</p>
+<p>Khi đến lượt, người cầm cái bấm nút lắc bát (hoặc lắc trực tiếp điện thoại trên các thiết bị hỗ trợ cảm biến gia tốc). Chiếc bát 3D rung lắc trên mặt đĩa, kéo theo hai viên xúc xắc bên trong va đập vào thành sứ trước khi từ từ hé mở để cả bàn cùng nín thở chờ kết quả.</p>
+<p>Toàn bộ âm thanh tiếng xúc xắc lăn lóc cọc trong lòng bát sứ, tiếng đặt cốc xuống mặt bàn và tiếng chuông báo khi ra cặp đôi đều được tổng hợp theo thời gian thực bằng <strong>Web Audio API</strong>, giúp trò chơi phản hồi tức thì dưới 16 mili-giây mà không cần tải các tệp âm thanh nặng.</p>
+<h2>Tự động tính luật 7 - 8 - 9, đảo chiều và ghi Sổ bia</h2>
+<p>Mọi quy tắc truyền thống của trò <em>Bảy Tám Chín</em> đều được máy trạng thái trong ứng dụng xử lý tự động và minh bạch sau mỗi lần mở bát:</p>
+<ul>
+<li><strong>Tổng bằng 7 (Rót)</strong>: người vừa lắc được quyền rót thêm vào ly giữa bàn (từ nửa cốc đến đầy cốc trong giới hạn sức chứa của bàn), sau đó chuyển bát cho người kế tiếp.</li>
+<li><strong>Tổng bằng 8 (Uống nửa)</strong>: người vừa lắc uống một nửa lượng bia đang có trên bàn rồi giữ nguyên cái để lắc tiếp lượt nữa.</li>
+<li><strong>Tổng bằng 9 (Uống cạn)</strong>: người vừa lắc uống hết số cốc đang có trên bàn, rót mở hàng lại nửa cốc mới rồi chuyển bát sang người tiếp theo.</li>
+<li><strong>Ra đôi (1-1, 2-2, 3-3, 4-4, 5-5, 6-6)</strong>: lập tức đảo ngược chiều truyền bát trên bàn (từ thuận kim đồng hồ sang ngược kim đồng hồ hoặc ngược lại), đồng thời cho phép chỉ định người nhận cốc phạt nếu rơi vào các cặp đôi đặc biệt.</li>
+<li><strong>Các tổng khác (3, 4, 5, 6, 10, 11)</strong>: qua lượt an toàn, bát tự động chuyển cho người ngồi kế bên theo chiều hiện tại.</li>
+</ul>
+<p>Ở cột bên phải màn hình (hoặc ngăn kéo dưới trên điện thoại), bảng <strong>Sổ bia</strong> và <strong>Biên bản</strong> tự động thống kê chi tiết từng người đã uống bao nhiêu lần, tổng cộng mấy cốc và lịch sử từng lượt lắc từ đầu buổi. Cả bàn chỉ việc tập trung vào cuộc trò chuyện mà không cần ai phải làm trọng tài nhớ lượt.</p>
+<p>Ứng dụng cũng hỗ trợ cài đặt ra màn hình chính như một ứng dụng độc lập (<strong>PWA</strong>) để mở nhanh ngay cả khi quán ăn ở tầng hầm có sóng mạng yếu.</p>
+<ul>
+<li><strong>Trải nghiệm trực tiếp</strong>: <a href="https://789.tqd.io.vn">789.tqd.io.vn</a></li>
+</ul>

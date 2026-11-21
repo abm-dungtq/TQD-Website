@@ -1,12 +1,6 @@
 /// <reference types="astro/client" />
 /// <reference types="@astrojs/cloudflare/types.d.ts" />
 
-declare namespace App {
-  interface Locals {
-    admin?: boolean;
-  }
-}
-
 /** Secrets set with `wrangler secret put`; `wrangler types` only sees vars. */
 declare namespace Cloudflare {
   interface Env {
@@ -16,16 +10,13 @@ declare namespace Cloudflare {
     OPENCODE_GO_API_KEY?: string;
     ANALYTICS_SALT?: string;
     CF_ANALYTICS_TOKEN?: string;
+    /** Only referenced by `tools/build-assets/site` (the UI asset builder); not used by the tooling Worker. */
     BACKUP_ENCRYPTION_KEY?: string;
-    REVIEWWEB_API_KEY?: string;
-    GSC_SERVICE_ACCOUNT_JSON?: string;
-    GSC_CLIENT_ID?: string;
-    GSC_CLIENT_SECRET?: string;
-    GSC_REFRESH_TOKEN?: string;
-    GSC_SITE_URL?: string;
+    GA4_MEASUREMENT_ID?: string;
+    CLARITY_PROJECT_ID?: string;
+    GOOGLE_SITE_VERIFICATION?: string;
   }
 }
-
 interface Env extends Cloudflare.Env {}
 
 /** Set per build in astro.config.mjs. */

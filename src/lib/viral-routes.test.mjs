@@ -6,7 +6,7 @@ const { env } = vi.hoisted(() => ({ env: {} }));
 vi.mock('cloudflare:workers', () => ({ env, waitUntil: () => {} }));
 
 import * as dl from './dl';
-import { createSession } from './auth';
+import { sha256Hex } from './auth';
 import { computeVideoHash, saveTranscriptCache } from './viral';
 import { POST as transcribe } from '../pages/api/viral/transcribe';
 import { POST as share } from '../pages/api/viral/share';
@@ -53,7 +53,11 @@ beforeEach(async () => {
   sqlite.exec(readFileSync('migrations/0006_viral_lab.sql', 'utf8'));
   Object.assign(env, { DB: d1(sqlite), DL_API_KEY: 'test-only', DL_BASE_URL: 'https://daemon.invalid',
     VIRAL_DAILY_CAP: '20', OPENCODE_GO_API_KEY: 'test-only' });
-  session = await createSession(env.DB);
+  session = 'test-session-token';
+  sqlite.prepare('INSERT INTO sessions (id_hash, expires_at) VALUES (?, ?)').run(
+    await sha256Hex(session),
+    Math.floor(Date.now() / 1000) + 3600,
+  );
   vi.spyOn(dl, 'daemonOnline').mockResolvedValue({ online: true });
   vi.spyOn(dl, 'callDaemon').mockImplementation(async () => new Response(JSON.stringify({
     mode: 'subtitles', text: 'A fresh transcript with several words.', duration: 120, webpageUrl: videoUrl,

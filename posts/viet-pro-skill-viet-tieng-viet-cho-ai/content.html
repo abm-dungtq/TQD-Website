@@ -1,0 +1,43 @@
+<p>Viết Pro là một skill dạy trợ lý AI viết và biên tập tiếng Việt. Nó chạy trong Claude Code, OpenAI Codex và Google Antigravity, mã nguồn ở <a href="https://github.com/abm-dungtq/viet-pro-codex" rel="noopener nofollow ugc">github.com/abm-dungtq/viet-pro-codex</a>. Bản mới nhất là 5.3.0, phát hành ngày 08/10/2026.</p>
+<h2>Vì sao mình làm Viết Pro</h2>
+<p>Ai dùng AI viết tiếng Việt đủ lâu đều nhận ra vài thói quen lặp lại: mở bài bằng "Trong bối cảnh...", câu đối lập kiểu "Không phải... mà là...", kết bài bằng một câu cảm thán cho có. Đọc qua thì trôi, nhưng người đọc nhận ra ngay đó là văn máy. Tệ hơn, khi nhờ AI "viết lại cho hay", nó thỉnh thoảng đổi luôn con số, ngày tháng hoặc làm hỏng đường link.</p>
+<p>Thay vì dặn lại cùng một danh sách lưu ý trong mỗi câu lệnh, mình gói những lưu ý đó thành một skill để trợ lý AI tự áp dụng.</p>
+<h2>Viết Pro làm được những gì</h2>
+<ul>
+<li>Viết mới: bài blog, bài chuẩn SEO, bài LinkedIn, Facebook, tin Zalo, bản tin email, chuỗi bài trên X, kịch bản video.</li>
+<li>Biên tập bản nháp có sẵn, bớt giọng dịch, làm câu văn tự nhiên hơn.</li>
+<li>Chuyển một bài gốc thành nhiều phiên bản cho từng kênh mà vẫn giữ thông điệp và số liệu.</li>
+<li>Giữ nguyên tên riêng, số liệu, ngày tháng, đường link và trích dẫn qua mọi lần sửa.</li>
+<li>Không bịa số liệu, nguồn hay trải nghiệm. Phần nào chưa kiểm chứng được thì ghi rõ hoặc bỏ.</li>
+</ul>
+<p>Bạn không cần học cú pháp riêng. Trong Claude Code gõ <code>/viet-pro</code> kèm yêu cầu, trong Codex gõ <code>$viet-pro</code>, hoặc chỉ cần nói "viết giúp mình bài này bằng Viết Pro".</p>
+<h2>Cách skill vận hành</h2>
+<p><strong>Tự chọn mức làm việc.</strong> Viết Pro có ba mức: Nhanh cho một chỉnh sửa ngắn, Chuẩn cho một bài mới và Tòa soạn cho việc cần nghiên cứu nhiều hoặc làm nhiều kênh cùng lúc. Bạn không phải chọn; skill đọc yêu cầu rồi quyết định. Mức Tòa soạn chỉ chia việc cho nhiều agent khi việc tách ra thực sự giúp bài tốt hơn, không dựng một dây chuyền nhiều vai cho có.</p>
+<p><strong>Chỉ đọc phần hướng dẫn cần dùng.</strong> Hướng dẫn được chia thành từng nhóm: nghiên cứu, kỹ thuật viết (mở bài, nhịp câu, ẩn dụ, phản bác, tài liệu kỹ thuật), từng kênh đăng (Facebook, LinkedIn, X, blog SEO, bản tin, kịch bản video, Zalo, Instagram) và rà soát. Viết một tin Zalo thì skill không cần đọc hướng dẫn viết bài SEO, nên đỡ tốn ngữ cảnh và trả lời nhanh hơn.</p>
+<p><strong>Rà dấu hiệu văn máy.</strong> Mọi văn bản công khai đều được rà nhẹ. Khi bạn yêu cầu "bớt giọng AI", skill rà đầy đủ theo danh mục 25 dấu hiệu chia năm nhóm: mở bài dàn cảnh, nhịp câu theo công thức, thổi phồng, định dạng trang trí và dấu vết chatbot. Mỗi lần sửa xong, skill đối chiếu lại tên, số, ngày, link và trích dẫn. Sửa tối đa hai vòng; nếu bài không khá hơn thì dừng và nói rõ chỗ vướng thay vì viết lại mãi.</p>
+<p><strong>Hai công cụ kiểm tra chạy ngay trên máy, không cần mạng:</strong></p>
+<ul>
+<li><code>lint-vietnamese-content.mjs</code> bắt các lỗi trình bày hay gặp: dấu cách trước dấu câu, khoảng trắng kép, tiêu đề viết hoa từng chữ kiểu tiếng Anh, các nhãn như "Key takeaways:" hay câu sót lại kiểu "Dưới đây là...".</li>
+<li><code>compare-preserved-content.mjs</code> so bản trước và sau khi sửa, báo ngay nếu một đường link, con số, ngày tháng hay tên riêng bị mất hoặc bị đổi. Từ bản 5.3.0, công cụ này còn bắt được lỗi đảo nghĩa, ví dụ "tăng 12%" bị viết thành "giảm 12%".</li>
+</ul>
+<h2>Ví dụ trước và sau</h2>
+<p>Trong repo có một bài Facebook mẫu trước và sau khi biên tập. Bản trước mở bằng "Trong bối cảnh...", có câu "Không phải... mà là..." và kết bằng "Và đó mới là điều đáng suy ngẫm". Bản sau bỏ các cụm đó, nói thẳng vào ý chính, hạ chữ "bước ngoặt" xuống mức mà dữ liệu cho phép, nhưng giữ nguyên con số 18%, ngày 10/09/2026, đường link và trích dẫn "mẫu 120 khách hàng".</p>
+<p>Mình cũng chạy bộ 12 bài kiểm tra cho bản 5.3.0, gồm bài LinkedIn, humanize, tài liệu kỹ thuật, blog SEO, bản tin, tin Zalo, chuỗi bài X, kịch bản video, lỗi đảo nghĩa, claim chưa kiểm chứng, kiểm tra dấu hiệu văn máy và chuyển thể đa kênh. Kết quả của bản 5.2.1 được lưu làm mốc. So với mốc đó, bản 5.3.0 không làm ca nào tụt từ đạt xuống trượt và sửa được đúng ca nhắm tới: không tự đổi mốc thời gian tương đối như "năm trước" thành một năm cụ thể khi nguồn không ghi. Mỗi phiên bản mới chạy một lần với 12 ca, nên đây là tín hiệu để theo dõi, chưa phải bằng chứng thống kê.</p>
+<h2>Cài đặt</h2>
+<p>Trên macOS hoặc Linux, một lệnh cài cho cả ba nền tảng:</p>
+<pre><code class="language-bash">curl -fsSL https://raw.githubusercontent.com/abm-dungtq/viet-pro-codex/v5.3.0/install.sh | bash
+</code></pre>
+<p>Có thể chọn nơi cài bằng các cờ <code>--claude</code>, <code>--codex</code>, <code>--agy</code> hoặc <code>--all</code>. Bộ cài ghim đúng phiên bản và kiểm tra checksum. Nếu máy đã có bản cũ, bản cũ được chuyển vào <code>~/.viet-pro-backups/</code> chứ không bị xóa.</p>
+<p>Bộ cài là một script chạy bằng <code>bash</code>.</p>
+<h2>Những gì Viết Pro không làm</h2>
+<ul>
+<li>Không phát hiện được một văn bản do AI hay người viết. Các dấu hiệu trong danh mục chỉ là thói quen viết nên tránh.</li>
+<li>Không tự đăng bài, gửi email hay nhắn tin. Skill chỉ trả bản thảo sẵn sàng để bạn đăng.</li>
+<li>Chỉ làm chữ, không tạo ảnh, âm thanh hay dựng video.</li>
+<li>Không thay người có thẩm quyền duyệt văn bản pháp lý, y tế hay tài chính.</li>
+</ul>
+<h2>Các phiên bản trước</h2>
+<p>Viết Pro đi qua vài repo. Bản 4.0 cho Google Antigravity ra ngày 25/07/2026 ở <a href="https://github.com/abm-dungtq/viet-pro-plugin" rel="noopener nofollow ugc">viet-pro-plugin</a>, dựng theo mô hình tòa soạn với bốn agent. Bản cho Codex và ChatGPT Skills nằm ở <a href="https://github.com/abm-dungtq/viet-pro" rel="noopener nofollow ugc">viet-pro</a>. Từ tháng 9/2026, mình gom về <a href="https://github.com/abm-dungtq/viet-pro-codex" rel="noopener nofollow ugc">viet-pro-codex</a> để một bản chạy được trên cả ba nền tảng. Đây là repo nên dùng.</p>
+<h2>Ghi công</h2>
+<p>Danh mục dấu hiệu văn máy dựa trên <a href="https://github.com/blader/humanizer" rel="noopener nofollow ugc">Humanizer</a> 3.0.0 của Siqi Chen, giấy phép MIT, được chuyển sang tiếng Việt và điều chỉnh cho cách viết tiếng Việt.</p>
+<p>Nếu bạn viết nội dung tiếng Việt bằng AI hằng ngày, hãy cài thử và đưa cho nó một bài nháp bạn đang chưa ưng. Báo lỗi hoặc góp ý qua mục Issues trên <a href="https://github.com/abm-dungtq/viet-pro-codex" rel="noopener nofollow ugc">GitHub</a>.</p>

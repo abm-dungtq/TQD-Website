@@ -1,0 +1,69 @@
+<p>Khi bắt đầu giao việc cho agent như Claude Code hay Codex, nhiều bạn vấp cùng một chỗ: agent nói "mình đã commit và mở pull request", còn bạn không biết commit là gì, pull request nằm ở đâu và có nên bấm nút gộp hay không. Agent làm việc rất nhanh, nhưng muốn kiểm soát được nó, bạn cần hiểu vài khái niệm cơ bản của GitHub.</p>
+<p>Bài này giải thích chúng bằng ngôn ngữ đời thường, không cần biết lập trình.</p>
+<h2>GitHub và Git khác nhau thế nào</h2>
+<p>Git là công cụ ghi lại lịch sử thay đổi của một thư mục trên máy bạn. GitHub là một trang web lưu bản sao của thư mục đó trên mạng, kèm các tính năng để xem lại, thảo luận và làm việc chung.</p>
+<p>Có thể hình dung Git như chức năng "lịch sử phiên bản" của Google Docs, còn GitHub là chiếc tủ hồ sơ trên mạng nơi bạn cất tài liệu và mời người khác cùng xem. Agent dùng Git trên máy để lưu từng bước nó làm, rồi đưa kết quả lên GitHub để bạn duyệt.</p>
+<p><img src="/api/v1/media/2026-10-719ae47f9fd1-img-git-vs-github.png" alt="Git lưu lịch sử thay đổi trên máy, GitHub là kho lưu trên mạng để xem lại và làm việc chung" loading="lazy" decoding="async"></p>
+<h2>Repository (kho dự án)</h2>
+<p>Repository (thường gọi tắt là repo) là một dự án trên GitHub: toàn bộ tệp, thư mục và lịch sử thay đổi của chúng. Mỗi website, mỗi công cụ hay mỗi bộ tài liệu thường nằm trong một repo riêng.</p>
+<p>Khi tạo repo, bạn chọn <strong>Public</strong> (ai cũng xem được) hoặc <strong>Private</strong> (chỉ bạn và người được mời). Với dự án cá nhân hay dự án công việc, hãy chọn Private, trừ khi bạn chủ ý chia sẻ mã nguồn.</p>
+<p>Trong repo nên có tệp <code>README.md</code> để mô tả dự án làm gì và cách chạy. Agent đọc tệp này đầu tiên để hiểu dự án, nên README càng rõ thì agent càng ít đoán sai.</p>
+<h2>Commit (bản lưu có ghi chú)</h2>
+<p>Commit là một lần lưu lại trạng thái của dự án, kèm một dòng ghi chú cho biết đã thay đổi gì. Lịch sử commit giống một cuốn nhật ký: lần nào thêm trang liên hệ, lần nào sửa lỗi ảnh, lần nào đổi màu nút.</p>
+<p>Đây là tấm lưới an toàn quan trọng nhất khi làm việc với agent. Nếu agent sửa hỏng, bạn có thể quay về commit trước đó thay vì phải tự gỡ từng dòng.</p>
+<p>Vì vậy, hãy dặn agent commit sau mỗi phần việc xong xuôi chứ đừng làm một mạch rồi mới lưu.</p>
+<h2>Branch (nhánh làm thử)</h2>
+<p>Branch (nhánh) là một bản sao song song của dự án để thử thay đổi mà không đụng vào bản chính. Nhánh chính thường tên là <code>main</code>; đó là bản đang chạy thật hoặc bản bạn tin là ổn.</p>
+<p>Khi giao việc lớn cho agent, hãy bảo nó làm trên một nhánh mới, ví dụ <code>them-trang-bao-gia</code>. Nếu kết quả tốt, bạn gộp nhánh đó vào <code>main</code>. Nếu không, bạn bỏ nhánh đi và <code>main</code> vẫn nguyên vẹn.</p>
+<p><img src="/api/v1/media/2026-10-6d362a3158b0-img-commit-branch.png" alt="Các commit trên nhánh main, một nhánh làm thử của agent và cách quay lại bản lưu trước" loading="lazy" decoding="async"></p>
+<h2>Pull request, nơi bạn duyệt việc agent làm</h2>
+<p>Pull request (PR) là một đề nghị gộp nhánh làm thử vào nhánh chính. Trên trang PR, GitHub hiện rõ từng dòng đã thêm (màu xanh) và đã xoá (màu đỏ), cùng ô bình luận để trao đổi.</p>
+<p>Với người dùng agent, PR là chỗ để bạn kiểm tra trước khi nhận kết quả. Đọc phần mô tả agent viết, xem các tệp bị thay đổi có đúng phạm vi bạn giao không, rồi mới bấm <strong>Merge</strong> (gộp). Nếu thấy chỗ chưa ổn, bạn bình luận ngay trên PR và yêu cầu agent sửa tiếp. Codex khi chạy trên đám mây làm việc trong một bản sao riêng của repo, xong việc thì bạn mở PR ngay từ kết quả đó; Claude Code trên máy bạn cũng tạo được PR khi bạn yêu cầu.</p>
+<p><img src="/api/v1/media/2026-10-6a4f5e8b9e1b-img-pull-request.png" alt="Duyệt pull request: xem dòng thêm, dòng xoá, kết quả kiểm tra tự động rồi mới bấm Merge" loading="lazy" decoding="async"></p>
+<h2>Issue (phiếu giao việc)</h2>
+<p>Issue là một phiếu ghi việc cần làm: một lỗi cần sửa, một tính năng muốn thêm hay một câu hỏi cần trả lời. Mỗi issue có tiêu đề, phần mô tả và có thể gắn nhãn như <code>bug</code> hay <code>tính năng</code>.</p>
+<p>Viết issue rõ ràng cũng chính là viết yêu cầu tốt cho agent. Một issue tốt nói được ba điều: hiện tại đang thế nào, bạn muốn nó thành thế nào và làm sao biết là đã xong. Sau đó bạn chỉ cần bảo agent "làm issue số 12". Khi PR được gộp kèm dòng <code>Closes #12</code>, issue đó tự đóng, nên bạn luôn biết việc nào đã xong.</p>
+<h2>Đồng bộ máy với GitHub bằng clone, push và pull</h2>
+<p>Ba thao tác này giữ cho bản trên máy và bản trên GitHub khớp nhau:</p>
+<table>
+<thead>
+<tr>
+<th>Thao tác</th>
+<th>Ý nghĩa</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Clone</td>
+<td>Tải toàn bộ một repo từ GitHub về máy lần đầu</td>
+</tr>
+<tr>
+<td>Push</td>
+<td>Đẩy các commit mới từ máy lên GitHub</td>
+</tr>
+<tr>
+<td>Pull</td>
+<td>Kéo các thay đổi mới từ GitHub về máy</td>
+</tr>
+</tbody>
+</table>
+<p>Thói quen nên có: <strong>pull trước khi bắt đầu làm</strong>, để agent làm trên bản mới nhất; <strong>push sau khi xong</strong>, để công việc được lưu trên GitHub chứ không chỉ nằm trên một chiếc máy.</p>
+<h2>Giữ bí mật bằng .gitignore</h2>
+<p>Tệp <code>.gitignore</code> liệt kê những tệp Git sẽ bỏ qua, không lưu và không đưa lên GitHub. Hãy đưa vào đây mọi tệp chứa mật khẩu, API key hay thông tin khách hàng, ví dụ tệp <code>.env</code>.</p>
+<p>Đây là lỗi người mới hay gặp nhất: dán API key vào mã rồi để agent commit lên GitHub. Một khi key đã lên GitHub, dù sau đó bạn xoá đi, nó vẫn nằm trong lịch sử commit. Cách xử lý đúng là thu hồi key đó và tạo key mới. Tốt nhất là dặn agent ngay từ đầu: không bao giờ commit tệp chứa bí mật.</p>
+<p><img src="/api/v1/media/2026-10-3396437aa3b5-img-gitignore.png" alt=".gitignore chặn tệp .env và API key, chỉ đưa các tệp còn lại lên GitHub" loading="lazy" decoding="async"></p>
+<h2>Hai công cụ giúp agent làm việc với GitHub</h2>
+<p><strong>GitHub CLI (<code>gh</code>)</strong> là công cụ dòng lệnh cho phép agent tạo issue, mở PR, đọc bình luận hay xem kết quả kiểm tra mà không cần mở trình duyệt. Cài <code>gh</code> và đăng nhập một lần, sau đó bạn chỉ cần nói "mở pull request cho thay đổi này", agent sẽ tự gõ lệnh.</p>
+<p><strong>GitHub Actions</strong> là các bước tự động chạy mỗi khi có commit hay PR mới, ví dụ chạy bộ kiểm tra để xem thay đổi có làm hỏng gì không. Khi PR hiện dấu tích xanh, các bước kiểm tra đã chạy qua; dấu X đỏ nghĩa là có bước thất bại và bạn nên bảo agent xem lỗi trước khi gộp. Claude Code còn có bản tích hợp vào GitHub Actions: bạn nhắc <code>@claude</code> trong issue hay PR thì agent sẽ vào làm việc ngay trên đó.</p>
+<h2>Một vòng làm việc mẫu</h2>
+<p>Ghép các mảnh trên lại, một vòng làm việc với agent thường trông như sau:</p>
+<ol>
+<li>Viết một issue mô tả việc cần làm.</li>
+<li>Bảo agent tạo nhánh mới cho issue đó.</li>
+<li>Agent sửa mã và commit sau mỗi phần việc.</li>
+<li>Agent push nhánh lên GitHub và mở pull request.</li>
+<li>GitHub Actions chạy kiểm tra tự động.</li>
+<li>Bạn đọc PR, bình luận nếu cần, rồi bấm Merge.</li>
+<li>Pull bản mới nhất về máy trước khi giao việc tiếp theo.</li>
+</ol>
+<p>Bạn không cần thuộc lệnh Git nào, vì agent sẽ gõ thay bạn. Điều bạn cần là hiểu mỗi bước có ý nghĩa gì để biết lúc nào nên duyệt, lúc nào nên dừng lại hỏi và lúc nào có thể yên tâm bấm gộp.</p>

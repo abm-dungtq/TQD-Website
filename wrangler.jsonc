@@ -1,38 +1,53 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "tqd-website",
+  // Tooling Worker: chat, downloader, Viral Lab, X-ray reports, R2 media and the analytics beacon.
+  // The public site and admin now live in EzyPlatform behind `tqd-edge` (edge/wrangler.jsonc); this Worker owns no
+  // custom domain route and no cron trigger.
+  "name": "tqd-tools",
   "account_id": "b243f38bff984ce1741c379547e97a75",
   "main": "./src/worker.ts",
   "compatibility_date": "2026-09-01",
   "compatibility_flags": ["nodejs_compat"],
-  "workers_dev": false,
-  "routes": [
-    { "pattern": "tqd.me", "custom_domain": true },
-    { "pattern": "www.tqd.me", "custom_domain": true },
-    // Old domain: kept attached so src/worker.ts can redirect it to tqd.me.
-    { "pattern": "tqd.io.vn", "custom_domain": true }
-  ],
+  "workers_dev": true,
   "observability": { "enabled": true },
   "ai": { "binding": "AI", "remote": true },
-  "vars": { "ADMIN_EMAIL": "dungtq.ceo@gmail.com", "CF_ACCOUNT_ID": "b243f38bff984ce1741c379547e97a75", "GOCLAW_BASE_URL": "https://goclaw.tqd.io.vn", "GOCLAW_AGENT": "dungtq-web", "CHAT_DAILY_CAP": "300", "DL_BASE_URL": "https://chatbot.abmedu.vn/_tqd_dl", "DL_DAILY_CAP": "150", "OPENCODE_GO_BASE_URL": "https://opencode.ai/zen/go/v1", "OPENCODE_GO_MODEL": "deepseek-v4.1-flash", "VIRAL_DAILY_CAP": "150", "GA4_MEASUREMENT_ID": "G-Z9XEQ6BVXJ", "CLARITY_PROJECT_ID": "zgki6l3y68", "GOOGLE_SITE_VERIFICATION": "1ZJkquwEywSTHDfvuZ55i8NpiUICqb5yBTo3i_GOxBo" },
+  "vars": {
+    "CF_ACCOUNT_ID": "b243f38bff984ce1741c379547e97a75",
+    "GOCLAW_BASE_URL": "https://goclaw.tqd.io.vn",
+    "GOCLAW_AGENT": "dungtq-web",
+    "CHAT_DAILY_CAP": "300",
+    "DL_BASE_URL": "https://chatbot.abmedu.vn/_tqd_dl",
+    "DL_DAILY_CAP": "150",
+    "OPENCODE_GO_BASE_URL": "https://opencode.ai/zen/go/v1",
+    "OPENCODE_GO_MODEL": "deepseek-v4.1-flash",
+    "VIRAL_DAILY_CAP": "150"
+  },
   "d1_databases": [
-    { "binding": "DB", "database_name": "tqd_db", "database_id": "b11ff76d-6626-4d05-ab23-34cc124d9163", "migrations_dir": "migrations" },
-    { "binding": "TUVI_DB", "database_name": "tuvi_db", "database_id": "735a388d-ba27-436e-940a-d7375d41e482", "migrations_dir": "migrations-tuvi-readonly" }
+    { "binding": "DB", "database_name": "tqd_db", "database_id": "b11ff76d-6626-4d05-ab23-34cc124d9163", "migrations_dir": "migrations" }
   ],
   "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "tqd-media" }],
   "analytics_engine_datasets": [
     { "binding": "ANALYTICS", "dataset": "tqd_analytics" }
   ],
-  "triggers": { "crons": ["0 19 * * *"] },
   "env": {
-    // Preview Worker: isolated from public workers.dev and from tuvi_db financial tables.
+    // Preview deploy target allowed by the migration plan; it keeps the same bindings for smoke tests.
     "preview": {
       "name": "tqd-next",
-      "workers_dev": false,
+      "workers_dev": true,
       "routes": [],
       "triggers": { "crons": [] },
       "ai": { "binding": "AI", "remote": true },
-      "vars": { "ADMIN_EMAIL": "dungtq.ceo@gmail.com", "CF_ACCOUNT_ID": "b243f38bff984ce1741c379547e97a75", "GOCLAW_BASE_URL": "https://goclaw.tqd.io.vn", "GOCLAW_AGENT": "dungtq-web", "CHAT_DAILY_CAP": "300", "DL_BASE_URL": "https://chatbot.abmedu.vn/_tqd_dl", "DL_DAILY_CAP": "150", "OPENCODE_GO_BASE_URL": "https://opencode.ai/zen/go/v1", "OPENCODE_GO_MODEL": "deepseek-v4.1-flash", "VIRAL_DAILY_CAP": "150", "GA4_MEASUREMENT_ID": "", "CLARITY_PROJECT_ID": "", "GOOGLE_SITE_VERIFICATION": "" },
+      "vars": {
+        "CF_ACCOUNT_ID": "b243f38bff984ce1741c379547e97a75",
+        "GOCLAW_BASE_URL": "https://goclaw.tqd.io.vn",
+        "GOCLAW_AGENT": "dungtq-web",
+        "CHAT_DAILY_CAP": "300",
+        "DL_BASE_URL": "https://chatbot.abmedu.vn/_tqd_dl",
+        "DL_DAILY_CAP": "150",
+        "OPENCODE_GO_BASE_URL": "https://opencode.ai/zen/go/v1",
+        "OPENCODE_GO_MODEL": "deepseek-v4.1-flash",
+        "VIRAL_DAILY_CAP": "150"
+      },
       "d1_databases": [
         { "binding": "DB", "database_name": "tqd_db", "database_id": "b11ff76d-6626-4d05-ab23-34cc124d9163", "migrations_dir": "migrations" }
       ],

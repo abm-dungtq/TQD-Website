@@ -46,3 +46,9 @@ plans/seo-aeo-queue.json
 .dev.vars*
 !.dev.vars.example
 !.env.example
+environment.json
+.artifacts/
+*.pyc
+
+# migration screenshots (local evidence only)
+plans/*/compare/

@@ -1,0 +1,18 @@
+{
+  "slug": "tqd-kidguard-tv-launcher-quan-ly-tivi-may-tinh-bang",
+  "title": "TQD KidGuard và TV Launcher quản lý Tivi, máy tính bảng của con bằng mã 6 số",
+  "summary": "Bộ ứng dụng quản lý thời gian màn hình và điều khiển từ xa cho Android TV cùng máy tính bảng qua tv.tqd.me, cho phép bố mẹ ghép nối thiết bị qua mã 6 số, gửi lời nhắn 14 giây, hẹn giờ khóa PIN, chặn game và dọn sạch màn hình chính Tivi.",
+  "postType": "POST",
+  "contentType": "HTML",
+  "status": "PUBLISHED",
+  "tags": [
+    "TQD KidGuard",
+    "Android TV",
+    "Cloudflare",
+    "MQTT",
+    "Gia đình"
+  ],
+  "cover": "2026-11-7eee417ca80c-cover-tv-tqd.jpg",
+  "publishedAt": "2026-11-12 14:24:26",
+  "priority": 6
+}

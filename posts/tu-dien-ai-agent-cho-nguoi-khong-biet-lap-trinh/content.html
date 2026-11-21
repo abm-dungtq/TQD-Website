@@ -1,0 +1,108 @@
+<p>Khi đọc tin tức công nghệ hoặc bắt đầu đưa trí tuệ nhân tạo vào công ty, người không học lập trình rất dễ ngợp trước hàng loạt thuật ngữ tiếng Anh như AI Agent, Token, Context Window, Skill, MCP, RAG hay Vibe code. Thực chất, mỗi khái niệm này đều tương ứng với một công việc quen thuộc trong văn phòng như giao việc cho nhân viên, ghi sổ tay quy trình, cắm ổ điện nối thiết bị hay cất chìa khóa vào két sắt.</p>
+<p>Bài viết này đóng vai trò bản đồ tra cứu nhanh 15 khái niệm cốt lõi về AI và AI Agent bằng ngôn ngữ đời thường. Các thuật ngữ được xếp theo bốn chặng đúng như hành trình ứng dụng thực tế tại doanh nghiệp nhỏ, từ lúc mới đặt câu hỏi trên khung trò chuyện cho tới khi tự dựng công cụ nội bộ và quản lý một nhóm nhân sự số. Ở mỗi mục, mình gắn kèm liên kết tới các bài hướng dẫn chi tiết đã có trên <code>tqd.me</code> để bạn tra cứu sâu hơn khi cần.</p>
+<h2>Chặng 1 - Hiểu bản chất từ hỏi đáp sang giao việc</h2>
+<p>Nhiều người dùng ChatGPT hoặc Claude hằng ngày nhưng vẫn xem mọi công cụ AI đều là một khung trò chuyện giống nhau. Để chọn đúng gói cước và giao đúng việc, bạn cần phân biệt năm khái niệm nền tảng ở tầng đầu tiên.</p>
+<p><strong>Mô hình ngôn ngữ lớn (LLM)</strong> là bộ não đứng sau các công cụ như GPT, Claude hay Gemini. Bạn có thể hình dung bộ não này giống một sinh viên vừa đọc xong hàng tỷ cuốn sách; nó rất giỏi đọc hiểu, tóm tắt, dịch thuật và viết văn bản, nhưng tự bản thân nó chỉ là một cái đầu biết suy nghĩ chứ chưa có tay chân để bấm nút hay mở phần mềm.</p>
+<p><strong>Chatbot</strong> là hình thức đặt bộ não đó ngồi sau quầy tư vấn. Bạn hỏi một câu bằng chữ, nó trả lời một câu bằng chữ ngay trên màn hình. Ngược lại, <strong>AI Agent (tác tử AI)</strong> là khi bộ não đó được cấp thêm tay chân và công cụ làm việc: bạn giao một mục tiêu lớn, nó tự chia thành nhiều bước, tự mở tệp dữ liệu, tra cứu thông tin, chạy thử kết quả rồi mới quay lại báo cáo. Cách phân biệt cụ thể giữa khung hỏi đáp và phần giao việc dài hơi đã được mình phân tích kỹ trong bài <a href="/bai-viet/chatgpt-chat-work-codex-cho-ceo-doanh-nghiep-nho">phân biệt Chat, Work và Codex trong ChatGPT</a>.</p>
+<p>Hai khái niệm tiếp theo quyết định trực tiếp đến hóa đơn và chất lượng câu trả lời là <strong>Token</strong> và <strong>Context Window (cửa sổ ngữ cảnh)</strong>. Token là đơn vị đếm chữ mà các hãng dùng để bấm đồng hồ tính phí, trung bình một từ tiếng Việt dài khoảng một đến hai token. Còn Context Window là diện tích mặt bàn làm việc của AI trong một cuộc trò chuyện. Mặt bàn này có giới hạn cố định; nếu bạn bày quá nhiều tài liệu hoặc trò chuyện kéo dài hàng trăm lượt trên cùng một cửa sổ, những tờ giấy đầu tiên ở mép bàn sẽ rơi xuống đất, khiến AI quên mất yêu cầu ban đầu và tốn hạn mức rất nhanh.</p>
+<p>Cuối cùng ở chặng này là sự khác nhau giữa <strong>Model trả lời nhanh</strong> và <strong>Model suy luận (Reasoning model)</strong>. Model trả lời nhanh giống người thư ký tốc ký, phản hồi ngay lập tức các việc quen tay như sửa email hay dịch văn bản. Model suy luận giống người trưởng phòng đóng cửa ngồi nháp và tự phản biện qua nhiều bước trước khi trình phương án, rất hợp để lập kế hoạch hoặc tìm lỗi phức tạp.</p>
+<table>
+<thead>
+<tr>
+<th>Khái niệm</th>
+<th>Hình ảnh văn phòng tương đương</th>
+<th>Khi nào bạn cần để ý</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Chatbot</td>
+<td>Nhân viên tư vấn ngồi tại bàn, hỏi gì đáp nấy bằng lời</td>
+<td>Khi cần hỏi nhanh, tóm tắt văn bản ngắn, tra cứu ý tưởng</td>
+</tr>
+<tr>
+<td>AI Agent</td>
+<td>Nhân viên có tay chân tự mở phần mềm làm trọn việc nhiều bước</td>
+<td>Khi giao việc dài như tổng hợp báo cáo từ nhiều tệp hoặc làm công cụ</td>
+</tr>
+<tr>
+<td>Token</td>
+<td>Đơn vị đếm mảnh chữ để trừ hạn mức hoặc tính tiền API</td>
+<td>Khi thấy tài khoản nhanh chạm trần 5 giờ hoặc lập dự toán chi phí</td>
+</tr>
+<tr>
+<td>Context Window</td>
+<td>Mặt bàn làm việc có diện tích giới hạn của AI trong một phiên</td>
+<td>Khi cuộc trò chuyện quá dài khiến AI bắt đầu quên dặn dò ở đầu bài</td>
+</tr>
+<tr>
+<td>Model suy luận</td>
+<td>Trưởng phòng ngồi nháp và kiểm tra chéo trước khi trả lời</td>
+<td>Khi giải bài toán khó, lập kế hoạch hoặc rà soát hợp đồng, mã nguồn</td>
+</tr>
+</tbody>
+</table>
+<p><img src="/api/v1/media/2026-11-cd254085afc5-sec1-ban-chat.jpg" alt="Ba khái niệm nền tảng ở Chặng 1 gồm Chatbot, AI Agent và bộ nhớ tạm Context Window tính theo Token" loading="lazy" decoding="async"></p>
+<p>Hiểu rõ cách các hãng tính lượt dùng theo phiên và theo tuần sẽ giúp bạn tránh mua thừa gói đắt tiền. Bạn có thể xem cách áp dụng thực tế ở bài <a href="/bai-viet/claude-doi-ten-goi-max-thanh-max-va-ultra">Claude đổi tên gói Max thành Max và Ultra</a> cùng hướng dẫn <a href="/bai-viet/chi-phi-ai-theo-tung-nhan-vien-cho-doanh-nghiep-nho">tính chi phí AI theo từng nhân viên</a>.</p>
+<h2>Chặng 2 - Dạy việc và nối công cụ theo nguyên tắc làm một dùng nhiều lần</h2>
+<p>Khi đã có một nhân viên số biết làm việc, vấn đề tiếp theo là làm sao để không phải giải thích lại quy trình từ đầu vào mỗi buổi sáng và làm sao để nhân viên đó không tự bịa số liệu.</p>
+<p>Khái niệm quen thuộc nhất là <strong>Prompt (câu lệnh)</strong>, tức lời bạn dặn miệng cho AI trong từng lần giao việc. Nhược điểm của dặn miệng là hôm nay bạn nhớ nhắc đủ ý thì AI làm tốt, ngày mai bận việc nhắc thiếu một dòng thì kết quả lệch hẳn. Để khắc phục, các nền tảng hiện nay dùng <strong>Skill (kỹ năng đóng gói sẵn)</strong>. Skill giống như cuốn sổ tay quy trình chuẩn (SOP) kèm sẵn biểu mẫu và công cụ kiểm lỗi: bạn chỉ cần viết một lần, từ lần sau cứ gọi tên skill là Agent tự đọc sổ tay và làm đúng chuẩn. Một ví dụ thực tế mình đã xây và mở mã nguồn là <a href="/bai-viet/viet-pro-skill-viet-tieng-viet-cho-ai">Viết Pro giúp trợ lý AI viết tiếng Việt tự nhiên</a>.</p>
+<p>Để Agent bước ra khỏi khung chat và chạm vào dữ liệu công ty, nó cần <strong>API</strong> hoặc <strong>MCP (Model Context Protocol)</strong>. API là cổng giao hàng riêng của từng phần mềm như Gmail, Zalo hay phần mềm kế toán; trước đây muốn nối AI vào năm phần mềm thì thợ lập trình phải chế năm sợi dây cáp khác nhau. MCP ra đời như một chuẩn ổ cắm chuyển đổi dùng chung: phần mềm nào có đầu cắm MCP thì Agent đều tự đọc tệp, tra lịch hoặc tạo bảng tính trực tiếp được.</p>
+<p>Một rủi ro lớn khi giao việc cho AI là <strong>Ảo giác (Hallucination)</strong>, hiện tượng mô hình tự nghĩ ra con số, ngày tháng hoặc trích dẫn không có thật nhưng viết rất trôi chảy. Cách xử lý phổ biến nhất trong doanh nghiệp là <strong>RAG (Retrieval-Augmented Generation)</strong>, tức cơ chế bắt AI phải mở đúng kho tài liệu nội bộ của công ty, lật đúng trang có dữ kiện thật rồi mới được phép viết câu trả lời.</p>
+<table>
+<thead>
+<tr>
+<th>Khái niệm</th>
+<th>Hình ảnh văn phòng tương đương</th>
+<th>Lợi ích thực tế cho doanh nghiệp</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Prompt</td>
+<td>Lời dặn miệng cho nhân viên trong từng việc lẻ</td>
+<td>Nhanh gọn cho các yêu cầu phát sinh một lần</td>
+</tr>
+<tr>
+<td>Skill</td>
+<td>Sổ tay quy trình chuẩn (SOP) đóng gói sẵn kèm bước kiểm lỗi</td>
+<td>Làm 1 dùng N, giúp mọi nhân sự trong nhóm ra kết quả đồng đều</td>
+</tr>
+<tr>
+<td>API &#x26; MCP</td>
+<td>Cổng giao hàng riêng (API) và ổ cắm chuẩn dùng chung (MCP)</td>
+<td>Giúp Agent tự đọc Google Drive, Notion, Excel mà không cần chép tay</td>
+</tr>
+<tr>
+<td>Ảo giác &#x26; RAG</td>
+<td>Nhân viên tự đoán mò (Ảo giác) so với tra đúng sổ tay công ty (RAG)</td>
+<td>Chặn lỗi bịa số liệu báo cáo, chính sách giá và điều khoản hợp đồng</td>
+</tr>
+</tbody>
+</table>
+<p><img src="/api/v1/media/2026-11-4991cbc03e5f-sec2-day-viec-noi-cong-cu.jpg" alt="Ba trụ cột ở Chặng 2 gồm đóng gói quy trình bằng Skill, nối phần mềm qua MCP và chống ảo giác bằng RAG" loading="lazy" decoding="async"></p>
+<h2>Chặng 3 - Tự làm phần mềm không cần biết code (vibe code)</h2>
+<p>Trước đây, muốn làm một trang web giới thiệu sản phẩm hay một bảng tính báo giá nội bộ, chủ doanh nghiệp nhỏ phải thuê đội lập trình hoặc mua phần mềm đóng gói sẵn. Giờ đây, người không biết code có thể tự dựng các công cụ nhỏ thông qua <strong>Vibe code</strong>, cách làm phần mềm bằng việc mô tả ý tưởng bằng tiếng Việt để các Agent lập trình tự viết mã nguồn từ đầu đến cuối.</p>
+<p>Dù AI viết mã thay bạn, bạn vẫn đóng vai chủ công trình nên cần nắm bốn khái niệm hạ tầng cơ bản để nghiệm thu và giữ an toàn tài sản:</p>
+<ul>
+<li><strong>Frontend, Backend và Database</strong> là ba phần của mọi ứng dụng web. Frontend là quầy lễ tân và mặt tiền nơi khách nhìn thấy hình ảnh, nút bấm (bạn có thể tự tạo rất nhanh như trong bài <a href="/bai-viet/claude-design-cho-chu-doanh-nghiep-nho">Claude Design cho chủ doanh nghiệp nhỏ</a>). Backend là khu bếp phía sau xử lý các phép tính và nghiệp vụ. Database là cuốn sổ ghi chép tài khoản, bài viết và đơn hàng.</li>
+<li><strong>Git và GitHub</strong> là hệ thống lưu lịch sử phiên bản và tủ hồ sơ trên mạng. Khi Agent sửa mã bị lỗi, nhờ có các bản lưu (<code>commit</code>) và nhánh làm thử (<code>branch</code>) trên GitHub, bạn dễ dàng quay về trạng thái chạy tốt trước đó chỉ bằng một lệnh. Toàn bộ thao tác này đã có trong bài <a href="/bai-viet/github-co-ban-cho-nguoi-moi-dung-agent-ai">GitHub cơ bản cho người mới dùng agent AI</a>.</li>
+<li><strong>Máy chủ đám mây và mạng biên (Cloudflare Pages, Workers, D1, R2)</strong> là mặt bằng trên mạng để đưa ứng dụng từ máy tính cá nhân (<code>localhost</code>) ra thành đường link công khai cho khách truy cập. Cách tận dụng gói miễn phí hoặc 5 USD mỗi tháng được giải thích chi tiết tại bài <a href="/bai-viet/cloudflare-cho-nguoi-moi-vibe-code">Cloudflare gói 0 đồng và 5 USD cho người mới vibe code</a>. Còn nếu làm ứng dụng chạy trực tiếp trên máy tính cá nhân, bạn có thể xem ví dụ thực tế ở bài <a href="/bai-viet/tqd-clean-your-mac-don-dep-macos-tieng-viet">TQD-Clean Your Mac dọn dẹp macOS bằng giao diện tiếng Việt</a>.</li>
+<li><strong>API Key và tệp <code>.env</code></strong> là chìa khóa thanh toán và két sắt bảo mật. API Key giống như chiếc thẻ ngân hàng trả tiền theo từng lượt ứng dụng của bạn gọi sang OpenAI hay Claude. Chìa khóa này bắt buộc phải cất trong tệp bí mật <code>.env</code> và chặn không cho đưa lên mạng công khai để tránh bị kẻ gian quét trộm làm phát sinh cước phí.</li>
+</ul>
+<p><img src="/api/v1/media/2026-11-d72eaef01c3f-sec3-vibe-code.jpg" alt="Bốn mảnh ghép hạ tầng ở Chặng 3 cho người mới tập vibe code từ mô tả tiếng Việt đến đưa web lên mạng" loading="lazy" decoding="async"></p>
+<h2>Chặng 4 - Vận hành đội ngũ nhân sự số trong doanh nghiệp</h2>
+<p>Khi đã quen giao việc lẻ cho một Agent, bước tiến tiếp theo của người điều hành là phối hợp nhiều Agent và đặt ranh giới an toàn theo đúng nguyên tắc <em>"Brain first - AI second"</em>: con người chốt bài toán, dữ liệu và chịu trách nhiệm cuối cùng, AI thực thi phần việc nặng ở giữa.</p>
+<p>Khái niệm đầu tiên đang phát triển rất nhanh là <strong>Computer Use (hoặc Browser Agent)</strong>. Không phải phần mềm nào trong doanh nghiệp cũng có cổng API hay ổ cắm MCP hiện đại; nhiều hệ thống kế toán, cổng khai báo thuế hay trang nội bộ cũ chỉ dùng được qua màn hình trình duyệt. Computer Use cho phép Agent nhìn trực tiếp vào màn hình máy tính, tự di chuyển chuột, bấm nút và gõ chữ vào biểu mẫu giống hệt một nhân viên văn phòng. Bạn có thể xem tốc độ giảm giá của công nghệ này qua các cập nhật mới nhất trong <a href="/bai-viet/ban-tin-ai-agent-nua-cuoi-thang-10-2026">bản tin AI Agent nửa cuối tháng 10/2026</a>.</p>
+<p>Khái niệm thứ hai là <strong>Multi-Agent (điều phối nhiều Agent)</strong>. Khi giao một đầu việc dài và phức tạp cho một mô hình duy nhất, nó thường gặp tình trạng vừa tự viết vừa tự khen mình đúng. Mô hình Multi-Agent tách công việc cho một nhóm nhân sự số có vai trò riêng: một Agent lập kế hoạch, một Agent viết bản thảo và một Agent khác chỉ làm nhiệm vụ cầm bảng tiêu chí kiểm lỗi độc lập.</p>
+<p>Khái niệm thứ ba và quan trọng nhất với chủ doanh nghiệp là <strong>Human-in-the-loop (điểm dừng duyệt tay)</strong>. Giao việc tự động không có nghĩa là thả nổi 100%. Một quy trình Agent an toàn luôn cài sẵn các chốt dừng bắt buộc người thật bấm nút xác nhận trước những hành động không thể hoàn tác như gửi báo giá cho khách hàng, xóa dữ liệu trong kho hay thực hiện giao dịch thanh toán.</p>
+<p><img src="/api/v1/media/2026-11-7c44b4cba4a7-sec4-van-hanh-nhan-su-so.jpg" alt="Ba cơ chế vận hành nhân sự số ở Chặng 4 gồm Computer Use, phối hợp Multi-Agent và điểm dừng duyệt tay Human-in-the-loop" loading="lazy" decoding="async"></p>
+<h2>Lộ trình đọc tiếp theo nhu cầu của bạn</h2>
+<p>Bạn không cần học thuộc cả 15 khái niệm cùng một lúc. Tùy vào công việc hiện tại, bạn có thể chọn một trong ba nhánh dưới đây để áp dụng ngay trong tuần này:</p>
+<ol>
+<li><strong>Nếu bạn là chủ doanh nghiệp hoặc quản lý muốn chọn công cụ và lập ngân sách:</strong> hãy bắt đầu từ bài <a href="/bai-viet/chon-cong-cu-ai-theo-dau-viec-cho-ceo">bảng chọn nhanh công cụ AI theo đầu việc cho CEO</a>, sau đó đọc tiếp bài <a href="/bai-viet/chi-phi-ai-theo-tung-nhan-vien-cho-doanh-nghiep-nho">tính chi phí AI theo từng nhân viên</a> và bài <a href="/bai-viet/claude-doi-ten-goi-max-thanh-max-va-ultra">cập nhật gói Claude Max, Ultra</a>.</li>
+<li><strong>Nếu bạn là nhân sự chuyên môn muốn dùng AI làm việc nhanh và chuẩn hơn:</strong> hãy đọc bài phân biệt <a href="/bai-viet/chatgpt-chat-work-codex-cho-ceo-doanh-nghiep-nho">Chat, Work, Codex trong ChatGPT</a>, tiếp theo xem cách đóng gói quy trình qua bài <a href="/bai-viet/viet-pro-skill-viet-tieng-viet-cho-ai">skill Viết Pro</a>.</li>
+<li><strong>Nếu bạn không biết lập trình nhưng muốn tự dựng trang web hoặc công cụ đầu tay:</strong> hãy thử làm giao diện qua bài <a href="/bai-viet/claude-design-cho-chu-doanh-nghiep-nho">Claude Design cho chủ doanh nghiệp nhỏ</a>, học cách giữ mã an toàn với <a href="/bai-viet/github-co-ban-cho-nguoi-moi-dung-agent-ai">GitHub cơ bản</a> rồi đưa sản phẩm lên mạng miễn phí theo bài <a href="/bai-viet/cloudflare-cho-nguoi-moi-vibe-code">Cloudflare gói 0 đồng và 5 USD cho người mới vibe code</a>.</li>
+</ol>
+<p><img src="/api/v1/media/2026-11-f5c06cdcac51-sec5-lo-trinh-doc.jpg" alt="Ba lộ trình đọc và thực hành trên tqd.me chia theo vai trò Chủ doanh nghiệp, Nhân sự chuyên môn và Người mới tập Vibe Code" loading="lazy" decoding="async"></p>
+<p>Trong các bài tiếp theo của chuỗi này, mình sẽ đi sâu vào từng cặp khái niệm ở bốn chặng trên kèm ví dụ thực tế tại doanh nghiệp Việt Nam để bạn tra cứu bất cứ khi nào gặp thuật ngữ mới.</p>

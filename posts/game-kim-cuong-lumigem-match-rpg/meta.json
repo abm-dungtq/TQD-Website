@@ -1,0 +1,18 @@
+{
+  "slug": "game-kim-cuong-lumigem-match-rpg",
+  "title": "Kim Cương (LumiGem): game kéo đá nối combo đánh Boss trên trình duyệt",
+  "summary": "Game giải đố nhập vai (Match-3 RPG) lấy cảm hứng từ Puzzle & Dragons, nơi bạn giữ và kéo một viên đá xuyên qua bàn 6x5 trong 5 giây để nối chuỗi combo và hạ Boss.",
+  "postType": "POST",
+  "contentType": "HTML",
+  "status": "PUBLISHED",
+  "tags": [
+    "Game Kim Cương",
+    "LumiGem",
+    "Canvas 2D",
+    "TypeScript",
+    "Game"
+  ],
+  "cover": "2026-11-da549fd69ef4-kim-cuong-hero-combat-vi-1280x720.jpg",
+  "publishedAt": "2026-11-11 10:56:42",
+  "priority": 10
+}

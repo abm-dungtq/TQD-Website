@@ -1,5 +1,7 @@
 # REVIEW.md — Hợp đồng Kiểm duyệt Chất lượng UI / UX / AX / SEO & Bảo mật (tqd.me)
 
+> **Phạm vi sau migration 2026-11-21:** giao diện công khai nằm trong EzyPlatform (`page-fragments/`, `pages/`, theme), không còn trong `src/` của repo này. Các tiêu chí UI/UX/AX bên dưới áp dụng cho giao diện EzyPlatform và các bề mặt do `edge/` sinh ra. Repo này chỉ còn Worker công cụ (`src/worker.ts`), edge (`edge/`) và cấu hình deploy; `/admin` cùng API đăng bài đã bị xoá.
+
 Mọi thay đổi giao diện, tuyến trang (routes), nội dung và bề mặt khám phá AI trên **tqd.me** phải vượt qua đầy đủ các cổng kiểm định dưới đây trước khi hợp nhất hoặc triển khai lên Cloudflare Workers.
 
 ---
@@ -48,25 +50,25 @@ Chạy tuần tự các lệnh sau trước khi bàn giao:
 
 ```bash
 # 1. Kiểm tra kiểu dữ liệu Astro & TypeScript (yêu cầu: 0 errors, 0 warnings)
-npx astro check
+node node_modules/astro/bin/astro.mjs check
+node node_modules/typescript/bin/tsc -p edge/tsconfig.json
 
-# 2. Chạy toàn bộ kiểm thử đơn vị & bảo mật quyền riêng tư
-npm test
-npm run check:privacy
+# 2. Chạy kiểm thử của các phần còn giữ (tools + edge)
+node node_modules/vitest/vitest.mjs run src/lib edge/src
 
-# 3. Dựng bản phân phối Cloudflare Workers
-npm run build
+# 3. Dựng bản phân phối Worker công cụ
+node node_modules/astro/bin/astro.mjs build
 
-# 4. Quét bề mặt khám phá SEO / GEO / AX (khi dev server đang chạy ở cổng 4321)
+# 4. Quét bề mặt khám phá SEO / GEO / AX trên site EzyPlatform (qua edge)
 node /Users/tqd/.gemini/config/skills/ak-enhance-ux-ax/scripts/check-discovery-surfaces.mjs \
-  http://localhost:4321 \
-  --site-origin https://tqd.me
+  https://stg.tqd.me \
+  --site-origin https://stg.tqd.me
 
 # 5. Kiểm tra bố cục, tràn ngang, mục tiêu chạm 44px và lỗi tài nguyên trên trình duyệt thật
 node /Users/tqd/.gemini/config/skills/ak-frontend-design/scripts/render-check.mjs \
-  http://localhost:4321
+  https://stg.tqd.me
 node /Users/tqd/.gemini/config/skills/ak-frontend-design/scripts/render-check.mjs \
-  http://localhost:4321/tai-video
+  https://stg.tqd.me/tai-video
 node /Users/tqd/.gemini/config/skills/ak-frontend-design/scripts/render-check.mjs \
-  http://localhost:4321/ho-so
+  https://stg.tqd.me/ho-so
 ```

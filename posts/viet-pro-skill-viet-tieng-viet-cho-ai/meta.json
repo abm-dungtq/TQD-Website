@@ -1,0 +1,17 @@
+{
+  "slug": "viet-pro-skill-viet-tieng-viet-cho-ai",
+  "title": "Viết Pro: skill giúp trợ lý AI viết tiếng Việt tự nhiên và đúng dữ kiện",
+  "summary": "Viết Pro là skill cho Claude Code, OpenAI Codex và Google Antigravity: viết mới, biên tập, bớt giọng dịch và chuyển thể bài theo từng kênh, trong khi giữ nguyên tên, số liệu, ngày và đường link.",
+  "postType": "POST",
+  "contentType": "HTML",
+  "status": "PUBLISHED",
+  "tags": [
+    "Viết Pro",
+    "Skill",
+    "Claude Code",
+    "Codex",
+    "Antigravity"
+  ],
+  "publishedAt": "2026-10-14 03:56:17",
+  "priority": 22
+}

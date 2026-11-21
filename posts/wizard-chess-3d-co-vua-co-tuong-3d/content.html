@@ -1,0 +1,34 @@
+<p>Mỗi lần xem lại cảnh bàn cờ phù thủy trong tập đầu <em>Harry Potter</em>, mình đều tự hỏi vì sao trên web lại hiếm có một bàn cờ 3D nào giữ được cảm giác nặng tay của những quân cờ đá mà vẫn mở ra chơi ngay trong vài giây. Phần lớn trò chơi cờ trên trình duyệt dùng mặt bàn phẳng 2D cho nhẹ, còn những bản 3D cầu kỳ thì thường bắt tải bộ cài hàng trăm megabyte.</p>
+<p>Mình dựng <a href="https://chess.tqd.me">Wizard Chess 3D</a> để nối hai thái cực đó lại. Bạn chỉ cần mở đường dẫn trên điện thoại hoặc máy tính là bước thẳng vào một đại sảnh 3D có ánh sáng nến, bóng đổ thời gian thực, quân cờ điêu khắc nổi và hiệu ứng vỡ vụn mỗi khi ăn quân.</p>
+<h2>Hai bộ luật Cờ vua FIDE và Cờ tướng 3D trong cùng một không gian</h2>
+<p>Ban đầu dự án chỉ xoay quanh cờ vua quốc tế. Khi dựng xong hệ thống khung xương và vật liệu cho các quân Vua, Hậu, Xe, Tượng, Mã, Tốt, mình nhận ra rất nhiều bạn bè quanh mình thích đánh cờ tướng nhưng chưa từng trải nghiệm cảm giác nhìn quân Pháo lộn qua ngòi hay quân Mã bị cản chân trong không gian ba chiều.</p>
+<p><img src="/api/v1/media/2026-11-e338eb9ac900-chess-3d-xiangqi.jpg" alt="Chế độ Cờ tướng 3D với tượng Tướng, Sĩ, Tượng, Xe, Pháo, Mã và Tốt điêu khắc ba chiều" loading="lazy" decoding="async"></p>
+<p>Thay vì dùng những quân cờ tròn khắc chữ Hán như bàn gỗ truyền thống, mình tạo hình riêng từng quân Tướng, Sĩ, Tượng, Xe, Pháo, Mã và Tốt thành các bức tượng 3D cho hai phe Đỏ và Đen trên bàn 9x10 có sông Sở Hà - Hán Giới.</p>
+<p>Toàn bộ luật cờ được tách thành hai bộ máy độc lập:</p>
+<ul>
+<li><strong>Cờ vua quốc tế (FIDE)</strong> xử lý đầy đủ nước nhập thành, bắt tốt qua đường (<em>en passant</em>), phong cấp, chiếu, chiếu hết và các trường hợp hòa cờ (bất biến 3 lần, luật 50 nước, hết nước đi).</li>
+<li><strong>Cờ tướng (Xiangqi)</strong> do mình tự viết bộ kiểm tra luật riêng (<code>xiangqiEngine.ts</code>), tính chính xác các thế cản chân Mã, tắc mắt Tượng, Pháo ăn cách một ngòi, Tốt qua sông đi ngang và luật lộ mặt Tướng đối diện trên cùng một cột.</li>
+</ul>
+<h2>Cảm giác va chạm khi quân cờ vỡ vụn và góc quay kết liễu</h2>
+<p>Điểm làm nên chất riêng của một ván cờ 3D nằm ở khoảnh khắc hai quân cờ chạm trán. Khi bạn điều một quân tiến lên ô đối phương, quân tấn công lao tới tung đòn, còn quân bị bắt sẽ vỡ tung thành các mảnh đá văng ra mặt bàn theo lực va chạm trước khi tan biến.</p>
+<p><img src="/api/v1/media/2026-11-5ac2064e0ef4-chess-3d-checkmate.jpg" alt="Góc máy cận cảnh khi chiếu hết (Checkmate): quân Vua đen ngã đổ và vỡ vụn trên bàn cờ 3D" loading="lazy" decoding="async"></p>
+<p>Ở nước đi chiếu hết (<em>Checkmate</em>), máy quay tự động thu hẹp trường nhìn, làm mờ hậu cảnh (<em>Depth of Field</em>) và quay chậm cảnh quân Vua đối phương nghiêng đổ xuống mặt bàn đá. Nếu muốn xem lại khoảnh khắc dứt điểm ở góc máy khác, bạn có thể bấm nút <strong>Replay King Fall</strong> ngay trên bảng kết quả.</p>
+<p>Toàn bộ tiếng bước chân đá trượt trên mặt bàn, tiếng kiếm chạm khi ăn quân, tiếng chuông báo chiếu và tiếng sập đổ lúc kết thúc ván đều được tổng hợp trực tiếp bằng <strong>Web Audio API</strong> ngay trên trình duyệt, không cần tải thêm tệp âm thanh rời.</p>
+<h2>Tám đấu trường 3D và hệ thống chiếu sáng thời gian thực</h2>
+<p>Để người chơi không bị nhàm mắt khi ngồi đánh nhiều ván liền, mình thiết kế 8 bối cảnh đấu trường (<em>Arena</em>) với bảng màu, kiến trúc cột đá và nguồn sáng hoàn toàn khác nhau:</p>
+<ul>
+<li><strong>Đại Sảnh Phù Thủy (Hogwarts Sanctum)</strong> với cột đá Gothic và ánh đuốc vàng ấm.</li>
+<li><strong>Điện Ngọc Bích (Jade Dynasty)</strong> mang tông xanh ngọc và gỗ trầm Á Đông, rất hợp khi chuyển sang chế độ Cờ tướng.</li>
+<li><strong>Sảnh Bắc Âu (Viking Hall)</strong>, <strong>Lâu Đài Mạc Phủ (Shogun Keep)</strong>, <strong>Thiên Cung (Celestial)</strong>, <strong>Trạm Vũ Trụ (Cyber Grid)</strong>, <strong>Đỉnh Olympus</strong> và <strong>Thành Cổ Necropolis</strong>.</li>
+</ul>
+<p><img src="/api/v1/media/2026-11-a33b177ec106-chess-3d-arenas.jpg" alt="Sảnh chọn 8 bàn đấu 3D từ Đại Sảnh Phù Thủy, Điện Ngọc Bích đến Trạm Vũ Trụ và Đấu Trường Cổ Đại" loading="lazy" decoding="async"></p>
+<p>Mỗi bàn đấu đều hỗ trợ xoay camera tự do 360 độ, khóa góc nhìn cố định để tránh trượt tay khi thao tác trên màn hình cảm ứng hoặc chuyển nhanh sang góc nhìn từ đỉnh xuống khi cần tính các biến phức tạp.</p>
+<h2>Đấu với AI trong Web Worker hoặc mở phòng trực tuyến qua Durable Objects</h2>
+<p>Trò chơi hỗ trợ ba chế độ đối kháng:</p>
+<ol>
+<li><strong>Đấu với máy (AI)</strong> ở nhiều mức độ khó. Bộ máy tính nước đi sử dụng thuật toán tìm kiếm Minimax kết hợp cắt tỉa Alpha-Beta, bảng băm Zobrist và tìm kiếm sâu dần (<em>Iterative Deepening</em>). Toàn bộ quá trình tính toán chạy trong một <strong>Web Worker</strong> tách biệt để khung hình 3D ở luồng chính luôn mượt mà, không bị khựng khi máy đang suy nghĩ.</li>
+<li><strong>Chơi 2 người trên cùng thiết bị</strong> với chế độ tự động xoay góc nhìn hoặc giữ nguyên bàn cờ.</li>
+<li><strong>Phòng đấu trực tuyến (Online Room)</strong> chạy trên hạ tầng <strong>Cloudflare Workers</strong> và <strong>Durable Objects</strong>. Khi bạn tạo phòng và gửi mã phòng cho bạn bè, một thực thể <code>RoomDurableObject</code> trên mạng biên Cloudflare sẽ giữ kết nối WebSocket hai chiều, đồng bộ đồng hồ thi đấu và kiểm tra tính hợp lệ của từng nước đi ngay trên máy chủ để chống gian lận.</li>
+</ol>
+<h2>Trải nghiệm trực tiếp</h2>
+<p>Bạn có thể vào đánh thử một ván Cờ vua hoặc Cờ tướng 3D ngay trên trình duyệt mà không cần đăng ký tài khoản tại <a href="https://chess.tqd.me">chess.tqd.me</a>.</p>

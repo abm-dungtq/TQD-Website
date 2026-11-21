@@ -1,0 +1,26 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "tqd-edge",
+  "main": "./src/index.ts",
+  "account_id": "b243f38bff984ce1741c379547e97a75",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  // Public hostnames served by this Worker. The VPS origins are private (they answer 403 without the secret header).
+  "workers_dev": true,
+  "routes": [
+    { "pattern": "stg.tqd.me", "custom_domain": true },
+    { "pattern": "admin.tqd.me", "custom_domain": true }
+  ],
+  "observability": { "enabled": true },
+  "vars": {
+    // EzyPlatform web/admin hosts on the VPS (sslip.io: no DNS record inside the tqd.me zone is required).
+    "ORIGIN_WEB": "https://tqdweb.103-161-119-32.sslip.io",
+    "ORIGIN_ADMIN": "https://tqdadmin.103-161-119-32.sslip.io"
+  },
+  // ORIGIN_KEY is a secret (`wrangler secret put ORIGIN_KEY --config edge/wrangler.jsonc`), never a var.
+  // Tooling Worker from the Astro project (chat, downloader, Viral Lab, X-ray, media, analytics).
+  // `tqd-next` is the preview deploy of the Astro project's tooling Worker (chat, downloader, Viral Lab, X-ray,
+  // media, analytics). The production `tqd-tools` deploy still reports its backends offline, so the edge binds the
+  // preview one until that deploy is fixed.
+  "services": [{ "binding": "TOOLS", "service": "tqd-next" }]
+}

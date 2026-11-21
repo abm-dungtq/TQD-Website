@@ -1,0 +1,10 @@
+{
+  "slug": "sp-48-gflow-studio",
+  "title": "GFlow Studio",
+  "summary": "Công cụ dòng lệnh gflow và MCP server điều khiển Google Flow tạo ảnh với Imagen, Nano Banana và dựng video với Veo ngay từ terminal. Hỗ trợ chạy theo lô cả bảng phân cảnh, tải video 1080p, ẩn cửa sổ Chrome trên macOS và tự dừng khi tài khoản chạm giới hạn.",
+  "postType": "tqd_product",
+  "contentType": "HTML",
+  "status": "PUBLISHED",
+  "publishedAt": "2026-11-15 00:00:00",
+  "priority": 8
+}

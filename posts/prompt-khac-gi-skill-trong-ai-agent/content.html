@@ -1,0 +1,76 @@
+<p><strong>Skill trong AI Agent</strong> là sổ tay quy trình chuẩn được đóng gói sẵn gồm các bước thao tác, tiêu chuẩn đầu ra và công cụ đi kèm. Khác với <strong>Prompt</strong> chỉ là câu nhắc miệng theo từng lượt chat, Skill giúp nhân sự số tự mở đúng hướng dẫn để làm đồng đều mỗi sáng.</p>
+<p>Ở bài viết trước về <a href="/bai-viet/ai-agent-khac-gi-chatbot">sự khác biệt giữa Chatbot thông thường và AI Agent</a>, mình đã chỉ ra lý do doanh nghiệp cần một trợ lý có khả năng tự hành động thay vì chỉ ngồi hỏi đáp. Nếu AI Agent là một nhân viên mới vào công ty, thì <strong>Prompt</strong> giống lời dặn miệng vội vàng đầu giờ, còn <strong>Skill</strong> là bộ tài liệu hướng dẫn công việc chi tiết đặt ngay trên bàn. Bạn có thể tra cứu thêm các khái niệm nền tảng tại <a href="/bai-viet/tu-dien-ai-agent-cho-nguoi-khong-biet-lap-trinh">từ điển AI và AI Agent cho người không biết lập trình</a> trước khi đi sâu vào cách đóng gói quy trình dưới đây.</p>
+<h2 id="vi-sao-go-lai-cung-mot-doan-huong-dan-dai-moi-sang-lam-giam-hieu-suat">Vì sao gõ lại cùng một đoạn hướng dẫn dài mỗi sáng làm giảm hiệu suất</h2>
+<p><img src="/api/v1/media/2026-11-99a3f41638ba-sec1.jpg" alt="Vòng lặp gõ lại chỉ dẫn dài đầu giờ khiến tốn thời gian và kết quả trồi sụt" loading="lazy" decoding="async"></p>
+<p>Thói quen nhắn lại một đoạn chỉ dẫn dài đầu giờ làm tụt hiệu suất vì trí não con người luôn nhớ sót các yêu cầu chi tiết và mô hình AI không có mốc quy chuẩn cố định giữa các ngày. Hôm nay bạn đủ tỉnh táo để dặn đủ bảy gạch đầu dòng về giọng văn, bố cục và số liệu cần tránh. Sáng hôm sau bận họp gấp, bạn gõ vội ba dòng rồi dán tài liệu vào, kết quả trả về lập tức sai lệch so với chuẩn hôm qua.</p>
+<p>Ví dụ, nếu một chủ xưởng cơ khí hoặc trưởng phòng kinh doanh mất khoảng 15 đến 20 phút đầu ngày chỉ để viết lại một câu lệnh thật dài rồi chỉnh tay đoạn văn lệch tông, thì sau một tháng 24 ngày làm việc, riêng khâu nhắc đi nhắc lại yêu cầu cũ đã tốn gần một ngày công của người quản lý. Nguy hiểm hơn, khi giao lại câu lệnh đó cho hai nhân viên khác nhau chạy, mỗi người sửa một chữ khiến chất lượng báo cáo, email chào hàng hoặc bài đăng website của công ty trở nên thiếu nhất quán.</p>
+<p>Tưởng tượng bạn vừa tuyển một thực tập sinh thông minh nhưng sáng nào cũng quên đưa sổ tay quy trình. Thay vào đó, mỗi sáng tám giờ rưỡi bạn đứng cạnh bàn đọc miệng mười điều cần lưu ý cho một báo cáo tuần. Ngày nào bạn nói kỹ thì báo cáo sạch đẹp, ngày nào bạn bận điện thoại đọc thiếu hai ý thì thực tập sinh làm sai theo đúng phần thiếu đó. Sai lầm không nằm ở trí thông minh của trợ lý, mà nằm ở chỗ quy trình chưa được viết thành văn bản để mở ra dùng lại.</p>
+<h2 id="prompt-system-prompt-va-skill-khac-nhau-o-diem-nao-khi-giao-viec">Prompt, System Prompt và Skill khác nhau ở điểm nào khi giao việc</h2>
+<p><img src="/api/v1/media/2026-11-27ae9dfcb3ce-sec2.jpg" alt="Ba lớp giao việc cho AI Agent gồm Prompt nhắc tức thì, System Prompt nội quy phiên và Skill sổ tay quy trình" loading="lazy" decoding="async"></p>
+<p>Prompt, System Prompt và Skill khác nhau ở thời điểm có hiệu lực, dung lượng chi tiết và khả năng gọi thêm công cụ thực thi. Prompt là yêu cầu tức thời cho một lượt xử lý đơn lẻ, System Prompt là nội quy nền áp cho toàn bộ cuộc trò chuyện, còn Skill là gói quy trình chuyên biệt chỉ được mở ra khi đúng việc phát sinh.</p>
+<p>Nhiều bạn làm quản trị thường đánh đồng ba khái niệm này rồi nhồi toàn bộ quy trình của năm phòng ban vào ô hướng dẫn chung của trợ lý AI. Cách làm đó khiến bộ nhớ của mô hình bị quá tải ngay từ câu chào đầu tiên. Khi bạn đưa cho AI hàng nghìn chữ quy định về báo giá, kiểm tra hợp đồng lẫn viết nội dung chỉ để nhờ nó tóm tắt một hóa đơn tiền điện, máy dễ bị nhiễu thông tin và trả lời chậm hoặc sót yêu cầu chính.</p>
+<p>Bảng dưới đây đối chiếu trực tiếp ba lớp hướng dẫn để bạn chọn đúng công cụ cho từng đầu việc trong văn phòng:</p>
+<table>
+<thead>
+<tr>
+<th>Khái niệm</th>
+<th>Độ ổn định</th>
+<th>Phạm vi dùng lại</th>
+<th>Công cụ đi kèm</th>
+<th>Phù hợp cho ai</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Prompt miệng</td>
+<td>Thấp vì lệ thuộc vào mức độ chi tiết khi gõ từng hôm</td>
+<td>Chỉ tồn tại trong một lượt hỏi đáp ngắn</td>
+<td>Không gắn sẵn tệp mẫu hay tập lệnh kiểm tra</td>
+<td>Người hỏi đáp lẻ hoặc xử lý tình huống một lần</td>
+</tr>
+<tr>
+<td>System Prompt</td>
+<td>Khá ổn định xuyên suốt một phiên trò chuyện cố định</td>
+<td>Cố định cho một vai trò trợ lý hoặc một dự án</td>
+<td>Chủ yếu là văn bản hướng dẫn chung, ít tách theo tác vụ</td>
+<td>Cá nhân dựng trợ lý chat làm một việc đơn giản</td>
+</tr>
+<tr>
+<td>Skill</td>
+<td>Rất cao nhờ có các bước cố định, ví dụ chuẩn và kiểm định</td>
+<td>Dùng lại trên nhiều dự án và cho nhiều AI Agent cùng đọc</td>
+<td>Đi kèm tệp mẫu, tài liệu tham khảo và công cụ chạy lệnh</td>
+<td>Nhóm làm việc và SME muốn tự động hóa quy trình lặp lại</td>
+</tr>
+</tbody>
+</table>
+<p>Khi dùng Skill, AI Agent không phải vác theo toàn bộ quyển bách khoa toàn thư trong đầu suốt cả ngày. Trên bàn làm việc của nhân sự số chỉ cần đặt sẵn danh mục tiêu đề ngắn gọn. Gặp việc soạn thư báo giá thì AI tự rút đúng cuốn sổ tay báo giá ra đọc; gặp việc kiểm tra bài tiếng Việt thì mới mở đúng cuốn sổ tay biên tập.</p>
+<h2 id="ben-trong-mot-skill-hoan-chinh-gom-nhung-thanh-phan-nao">Bên trong một Skill hoàn chỉnh gồm những thành phần nào</h2>
+<p><img src="/api/v1/media/2026-11-d44de56deb03-sec3.jpg" alt="Bốn thành phần bên trong một gói Skill hoàn chỉnh cho AI Agent" loading="lazy" decoding="async"></p>
+<p>Một gói Skill hoàn chỉnh gồm bốn lớp cấu trúc rõ ràng là điều kiện kích hoạt, quy trình thực hiện từng bước, tiêu chuẩn kèm điều cấm và tài nguyên phụ trợ như tệp mẫu hoặc công cụ kiểm tra. Thiếu một trong bốn phần này, trợ lý AI dễ đoán mò ở bước giao tiếp giữa các khâu hoặc làm sai định dạng đầu ra mà bạn kỳ vọng.</p>
+<p>Qua quá trình xây dựng bộ Skill thực chiến đang vận hành tại <strong>ABM</strong> cùng kinh nghiệm đứng lớp đào tạo doanh nghiệp cho <strong>Agribank</strong> và <strong>BSR</strong>, mình rút ra rằng một Skill chạy bền không cần viết bằng mã lập trình phức tạp. Phần lõi của Skill chính là một tệp văn bản Markdown mang tên <code>SKILL.md</code> được tổ chức mạch lạc bằng tiếng Việt hoặc tiếng Anh đơn giản:</p>
+<ol>
+<li>Điều kiện kích hoạt nằm ngay vài dòng mở đầu để Agent biết chính xác khi nào được phép rút quyển sổ này ra đọc. Ví dụ, bạn quy định rõ chỉ mở sổ tay khi nhận được một hợp đồng dịch vụ cần rà điều khoản thanh toán hoặc khi cần viết bài chuẩn SEO lên website.</li>
+<li>Quy trình từng bước chia nhỏ mạch làm việc từ dữ liệu đầu vào, khâu đối chiếu tài liệu, bước soạn nháp tới khâu kiểm tra chéo. Cách sắp xếp theo thứ tự cố định giúp chuyển trạng thái làm việc tùy hứng thành chuỗi thao tác ổn định từ bước một đến bước cuối.</li>
+<li>Ví dụ mẫu chuẩn kèm danh sách điều cấm đóng vai trò chốt chặn chất lượng đầu ra. Một đoạn văn mẫu đạt chuẩn đi cùng hai lỗi tuyệt đối tránh giúp mô hình ngôn ngữ căn chỉnh giọng điệu sát thực tế hơn nhiều so với lời khuyên chung chung.</li>
+<li>Tài liệu tham khảo và công cụ đính kèm phục vụ những quy trình đòi hỏi độ chính xác cao. Tại đây, Skill nối thẳng tới bảng giá mẫu, thư mục câu hỏi thường gặp hoặc bộ kiểm lỗi tự động trước khi xuất bản.</li>
+</ol>
+<p>Một minh họa sống động cho cấu trúc bốn lớp này là <a href="/bai-viet/viet-pro-skill-viet-tieng-viet-cho-ai">ví dụ đóng gói quy tắc viết tiếng Việt thành Skill Viết Pro</a> đang vận hành cho chính các bài viết trên tqd.me. Nhờ tách bạch phần kiểm lỗi tất định sang một công cụ đi kèm và giữ phần giọng văn thực chiến trong các tài liệu tham khảo, nhân sự số tự rà sạch văn dịch máy và lỗi chính tả mà không tốn công nhắc lại.</p>
+<h2 id="cach-bien-mot-dau-viec-van-phong-lap-lai-thanh-skill-trong-15-phut">Cách biến một đầu việc văn phòng lặp lại thành Skill trong 15 phút</h2>
+<p><img src="/api/v1/media/2026-11-935f010de657-sec4.jpg" alt="Bốn bước biến một đầu việc văn phòng lặp lại thành Skill trong 15 phút" loading="lazy" decoding="async"></p>
+<p>Bạn chỉ cần khoảng 15 phút để biến một đầu việc lặp lại thành Skill theo bốn bước là chọn đúng một quy trình lặp, ghi lại thao tác tay, đính kèm một mẫu đạt chuẩn rồi chạy thử hai lần để vá lỗ hổng. Bạn không cần biết viết code hay cài đặt hạ tầng máy chủ mới làm được công việc đóng gói này.</p>
+<p>Hãy chọn ngay một việc đang làm tốn thời gian nhất của nhóm bạn vào mỗi đầu tuần hoặc mỗi buổi sáng. Cách bắt đầu hiệu quả nhất là làm theo bốn chặng nhỏ dưới đây:</p>
+<ol>
+<li>Hãy ưu tiên chọn đúng một đầu việc có tần suất lặp cao từ ba lần mỗi tuần trở lên và có khuôn mẫu đầu ra rõ ràng, chẳng hạn tóm tắt biên bản họp giao ban, soạn thư phản hồi khiếu nại theo chính sách công ty hoặc đối chiếu báo cáo ca làm việc. Đừng chọn việc đòi hỏi sáng tạo mới hoàn toàn ở lần thử đầu tiên.</li>
+<li>Trong lần làm tiếp theo, bạn vừa làm vừa viết ra giấy năm đến bảy bước thao tác tay bằng tiếng Việt đời thường. Hãy ghi rõ bạn lấy số liệu ở cột nào, kiểm tra điều kiện gì trước khi cộng sổ và cần giữ nguyên tên riêng hay mã đơn hàng nào.</li>
+<li>Sau khi có danh sách bước làm, bạn đính kèm thêm một bài mẫu cũ đạt điểm 9 cùng ba lỗi cấm kỵ không được lặp lại như tự bịa số liệu, dùng dấu gạch ngang dài hoặc đổi cách xưng hô giữa bài.</li>
+<li>Cuối cùng, bạn giao cho AI chạy thử trên một bộ dữ liệu dễ và một bộ dữ liệu có ngoại lệ để kiểm tra đầu ra. Quan sát xem máy hiểu nhầm ở bước nào rồi bổ sung đúng một câu giải thích vào sổ tay Skill tại vị trí đó; chỉ cần hai vòng chỉnh sửa là đủ dùng ổn định cho các lần chạy sau.</li>
+</ol>
+<p>Trên các nền tảng hỗ trợ Skill như Claude Code, Google Antigravity hay OpenAI Codex, bạn chỉ cần thả gói hướng dẫn và tài liệu mẫu vào đúng thư mục cấu hình là toàn bộ đội ngũ nhân sự số dùng chung được ngay lập tức.</p>
+<h2 id="nhung-loi-thuong-gap-khien-skill-viet-xong-nhung-ai-van-lam-lech-y">Những lỗi thường gặp khiến Skill viết xong nhưng AI vẫn làm lệch ý</h2>
+<p><img src="/api/v1/media/2026-11-82a53e963337-sec5.jpg" alt="Ba sai sót phổ biến khiến sổ tay Skill chưa ra đúng kết quả và cách khắc phục nhanh" loading="lazy" decoding="async"></p>
+<p>Nguyên nhân phổ biến khiến một sổ tay quy trình vừa viết xong vẫn cho ra kết quả chệch hướng nằm ở việc nhồi nhét quá nhiều đầu việc vào một tệp, dùng tính từ mơ hồ thay cho tiêu chí cụ thể và bỏ trống ví dụ mẫu đối chiếu. Chỉ cần tháo gỡ ba điểm nghẽn này, tỷ lệ phải sửa tay sau khi AI trả bài sẽ giảm đi rõ rệt.</p>
+<p>Lỗi đầu tiên là gom quy trình của cả một phòng ban vào chung một Skill khổng lồ dài hơn mười trang. Khi nhận một sổ tay ôm đồm từ cách tiếp nhận khách hàng, cách viết kịch bản quay video tới cách chốt công nợ cuối tháng, AI rất dễ bỏ qua các chi tiết quan trọng nằm ở đoạn giữa tài liệu. Cách sửa dứt điểm là áp dụng nguyên tắc một Skill chỉ giải quyết trọn vẹn một đầu việc cụ thể; khi việc này xong mới chuyển đầu ra sang Skill kế tiếp.</p>
+<p>Lỗi thứ hai là viết hướng dẫn bằng những cụm từ chung chung kiểu "hãy trình bày chuyên nghiệp, ngắn gọn và lôi cuốn". Khái niệm "ngắn gọn" với người viết có thể là năm dòng, nhưng với mô hình AI có thể là năm đoạn văn dài tám trăm chữ. Muốn AI bám đúng ý, hãy thay tính từ bằng con số và cấu trúc cụ thể như "tổng độ dài không quá bốn đoạn văn, mỗi đoạn tối đa bốn dòng, giữ nguyên đơn vị tiền tệ trong bảng gốc".</p>
+<p>Lỗi thứ ba là quên lưu các điều kiện kiểm chứng dữ kiện khi quy trình cần cập nhật thông tin thực tế hoặc con số tài chính. Nếu công việc yêu cầu không được suy đoán thông tin chưa có, sổ tay phải ghi rõ quy tắc khi thiếu số liệu thì ghi nhận khoảng trống hoặc hỏi lại người phụ trách thay vì tự điền con số cho đẹp bảng.</p>
+<p>Khi bạn đóng gói xong những đầu việc lặp lại thành thư viện Skill riêng cho doanh nghiệp, nhân sự thật sẽ rảnh tay khỏi những thao tác sao chép vụn vặt để tập trung chăm sóc khách hàng và ra quyết định chiến lược. Nếu bạn muốn tìm hiểu cách mình cùng đội ngũ <strong>ABM</strong> chuẩn hóa quy trình làm việc với AI Agent hoặc đặt lịch đào tạo thực chiến cho công ty bạn, hãy xem thêm tại <a href="/ho-so">hồ sơ năng lực và lịch đào tạo doanh nghiệp</a>.</p>

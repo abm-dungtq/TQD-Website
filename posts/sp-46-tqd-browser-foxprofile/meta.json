@@ -1,0 +1,10 @@
+{
+  "slug": "sp-46-tqd-browser-foxprofile",
+  "title": "TQD Browser (FoxProfile)",
+  "summary": "Trình quản lý hồ sơ trình duyệt chống nhận diện mã nguồn mở tự lưu trữ, tách biệt dấu vân tay thiết bị, cookie, proxy và múi giờ trên hai nhân Camoufox và Chrome. Kèm giao diện desktop Tiếng Việt - Anh, REST API cùng MCP server để AI Agent trực tiếp điều khiển.",
+  "postType": "tqd_product",
+  "contentType": "HTML",
+  "status": "PUBLISHED",
+  "publishedAt": "2026-11-15 00:00:00",
+  "priority": 6
+}

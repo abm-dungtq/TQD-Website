@@ -1,0 +1,10 @@
+{
+  "slug": "sp-49-tqd-voice",
+  "title": "TQD-Voice",
+  "summary": "Xưởng chuyển văn bản tiếng Việt thành giọng nói chạy hoàn toàn trên máy cá nhân qua GPU CUDA, Apple Silicon MPS hoặc CPU mà không gửi dữ liệu lên đám mây. Có sẵn mười giọng đọc ba miền, nhân bản giọng mới từ đoạn mẫu 5-10 giây qua Studio web, REST API và MCP.",
+  "postType": "tqd_product",
+  "contentType": "HTML",
+  "status": "PUBLISHED",
+  "publishedAt": "2026-11-15 00:00:00",
+  "priority": 9
+}

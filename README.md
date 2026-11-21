@@ -1,48 +1,92 @@
-# tqd.me — website cá nhân của Trịnh Quang Dũng (DũngTQ)
+# tqd.me — EzyPlatform + Cloudflare edge
 
-Website giới thiệu hồ sơ, sản phẩm AI tự xây, thư viện ảnh và video, video AI, bài viết và liên hệ của DũngTQ. Trang chủ có giao diện kiểu màn hình máy tính (dock, cửa sổ) trên màn hình rộng; trên điện thoại hoặc khi tắt JavaScript, mỗi mục là một trang thường tại `/{mục}`. Địa chỉ cũ `/dao-tao` chuyển hướng 301 sang `/thu-vien`. Các nút sao chép Markdown, tóm tắt bằng AI và chia sẻ cũng dùng được khi mở mục trong tấm nội dung trên điện thoại.
+Repo này chứa hai phần hạ tầng còn lại sau khi chuyển website cá nhân của **Trịnh Quang Dũng (DũngTQ)** sang EzyPlatform:
 
-Video được đánh dấu "Phát ở trang chủ" trong **`/admin/thu-vien`** tự phát không tiếng bên phải cửa sổ Hồ sơ trên màn hình từ 1280px (dưới 1440px cửa sổ Hồ sơ thu hẹp còn khoảng 60% để chừa chỗ); nút **Bật tiếng** phát lại từ đầu có tiếng một lần rồi trở về vòng lặp không tiếng. Video dừng khi bị cửa sổ khác che hoặc khi tab ẩn, và không tự phát khi bật giảm chuyển động hay tiết kiệm dữ liệu. Trên điện thoại video là một thẻ ngay dưới đồng hồ, chỉ tải khi chạm. Tệp ảnh và video tải lên ở `/admin/media` trước rồi chọn trong `/admin/thu-vien`.
+1. **`edge/` — Worker `tqd-edge`**: cửa công khai cho `stg.tqd.me` và `admin.tqd.me`. Sinh các bản máy đọc từ API công khai của EzyPlatform, proxy công cụ sang Worker `tqd-tools`, giữ 301 cho đường dẫn cũ và chuyển tiếp trong suốt mọi request khác về EzyPlatform.
+2. **`src/` — Worker `tqd-tools`**: runtime công cụ thuần Astro SSR, gồm chatbot, tải video, Viral Lab, trang X-ray và phục vụ media R2. Không còn nội dung, không còn `/admin`, không còn API đăng bài.
 
-Giao diện lấy cảm hứng từ zuey.me; mã nguồn viết mới, không sao chép từ repo đó.
+Site công khai **`tqd.me` bản cũ vẫn do Worker `tqd-website` phục vụ** và không được deploy lại từ repo này. Nội dung mới nằm trên EzyPlatform; địa chỉ thử nghiệm là `stg.tqd.me`.
 
-## Hiệu ứng
+## Host và thành phần
 
-Trên màn hình rộng: tìm nhanh bằng `Ctrl K` / `⌘K`; cửa sổ mở, thu nhỏ, phóng to, ghép nửa màn hình; nút **Tất cả cửa sổ** (hoặc `F3`) bày mọi cửa sổ kiểu Exposé; dock phóng to icon khi rê chuột; nền động là video lặp dải voan champagne trên nền ngà (tạo bằng Grok, gốc ở `src/assets/wallpaper-silk.mp4`, phục vụ từ R2 qua `/media/2026/10/silk-wallpaper.mp4` để có byte-range cho Safari; chỉ tải trên desktop khi trình duyệt rảnh, trước đó và khi tắt là nền aurora; tải lại bằng `npx wrangler r2 object put tqd-media/2026/10/silk-wallpaper.mp4 --file src/assets/wallpaper-silk.mp4 --content-type video/mp4 --cache-control "public, max-age=31536000, immutable" --remote`); linh vật DũngTQ đổi tư thế theo thao tác, thỉnh thoảng đi dạo và là lối vào chatbot; thời tiết Hà Nội ở thanh menu kèm mưa/tuyết trên nền khi trời mưa/tuyết (trình duyệt lấy trực tiếp từ [Open-Meteo](https://open-meteo.com/), giấy phép CC BY 4.0). Trên điện thoại mỗi mục mở thành một tấm trượt lên, kéo xuống để đóng.
+| Host / route | Xử lý bởi | Ghi chú |
+|---|---|---|
+| `stg.tqd.me/**` | `tqd-edge` | Trang công khai, reader máy đọc, proxy công cụ; passthrough sang `ORIGIN_WEB` |
+| `admin.tqd.me/**` | `tqd-edge` | Chỉ passthrough sang `ORIGIN_ADMIN`; HTML admin không bao giờ cache |
+| `/bai-viet/<slug>` | `tqd-edge` | Giữ URL hiển thị, lấy nội dung từ `/posts/<slug>` của origin |
+| `/bai-viet` | `tqd-edge` | Passthrough sang `/bai-viet` của origin |
+| `/api/chat*`, `/api/dl/*`, `/api/viral/*`, `/api/t`, `/xray/*`, `/media/*` | `tqd-tools` qua service binding `TOOLS` | Không lộ host của Worker công cụ ra ngoài |
+| `/dao-tao`, `/chuyen-mon`, `/video`, `/so-lieu` | `tqd-edge` | 301 cố định, giữ query string |
+| `tqd.me`, `www.tqd.me`, `tqd.io.vn` | `tqd-website` (bản cũ) | **Không deploy lại** trong quá trình migration |
 
-Giao diện chỉ có một bảng màu sáng: nền ngà `#faf7f1`, chữ mực `#1b2030`, màu chữ ký vàng champagne (`#8a6420` cho chữ và nút, `#b8935a` chỉ để trang trí); tiêu đề dùng Cormorant Garamond. Token màu nằm trong `src/styles/global.css`. Menu **Hiệu ứng** tắt/bật **Linh vật**, **Hiệu ứng thời tiết** và **Nền động**. Khi hệ điều hành bật giảm chuyển động (`prefers-reduced-motion`), mọi hiệu ứng đứng yên. Ảnh linh vật tạo lại bằng `node scripts/make-mascot.mjs` (hoặc `--fallback` để dùng ảnh chân dung tròn).
+Origin EzyPlatform là các host `sslip.io` của VPS, khai báo trong `edge/wrangler.jsonc`:
 
-## Chatbot & Công cụ Tải Video (`/tai-video`)
+- `ORIGIN_WEB` — web công khai.
+- `ORIGIN_ADMIN` — admin.
+- `ORIGIN_KEY` — secret của `tqd-edge`, gửi kèm header `X-TQD-Origin-Key`; Caddy/EzyPlatform trên VPS chỉ trả lời khi header khớp.
 
-- **Chatbot**: Bấm linh vật (desktop) hoặc nút tròn mặt linh vật (điện thoại) để trò chuyện với **Agent DũngTQ**, một agent chạy trên GoClaw tự host, trả lời dựa trên nội dung website. Khi máy chủ nhà tắt, khung chat mời khách nhắn Zalo. Giới hạn, cấu hình, cách đồng bộ kiến thức sau khi đăng bài và cách thu hồi key: [docs/chatbot.md](docs/chatbot.md).
-- **Tải Video & Nhạc Đa Nền Tảng (`/tai-video`)**: Công cụ trực tuyến tải video MP4 chuẩn H.264, Shorts/Reels 9:16, Playlist, kênh `@profile` và tách nhạc MP3 320kbps từ hơn 14 nền tảng (YouTube, TikTok, Facebook, Instagram, X, SoundCloud...) qua kiến trúc Hybrid Worker + Home Daemon (`yt-dlp` & `ffmpeg`), tự xóa file tạm ngay sau khi truyền về trình duyệt. Kiến trúc, phân quyền 2 tầng và cách vận hành: [docs/video-downloader.md](docs/video-downloader.md).
+## Bản máy đọc do edge sinh
 
-## Nội dung
+Mọi endpoint dưới đây đọc API công khai của EzyPlatform (`/api/v1/posts`, `/api/v1/posts/{slug}`) rồi dựng nội dung tại edge, cache bằng Cache API 5–15 phút:
 
-- Nội dung nằm trong D1 (`tqd_db`) và được sửa tại **`/admin`** (đăng nhập bằng email + mật khẩu admin). Không còn sửa nội dung trong mã nguồn.
-- Site **không** chứa văn bản bài Facebook nào; `npm run check:privacy -- <url>` quét toàn bộ trang công khai để chặn việc này.
-- Bản cho máy đọc: `/llms.txt`, `/index.md`, `/{mục}.md`, `/sitemap.xml`.
-- Quản trị từ khóa và Google Search Console (`/admin/seo`, `/api/v1/seo`): tích hợp quy trình `/ak-seo` qua `npm run seo:status`, `npm run seo:keywords`, `npm run seo:gsc:sync` và `npm run seo:audit`. Hướng dẫn sử dụng cho chủ trang: [HUONG-DAN-SUA-WEB.md](HUONG-DAN-SUA-WEB.md).
-- Sao lưu D1 → R2 hằng đêm và cách khôi phục: [docs/backup-restore.md](docs/backup-restore.md).
+| Endpoint | Nội dung |
+|---|---|
+| `/llms.txt`, `/.well-known/llms.txt` | Hồ sơ, sản phẩm, mục lục và bài viết dạng Markdown |
+| `/llms-full.txt` | Toàn văn hồ sơ + shop + tài liệu tải video + privacy + tối đa 12 bài mới nhất |
+| `/index.md`, `/ho-so.md`, `/san-pham.md`, `/thu-vien.md`, `/video-ai.md`, `/bai-viet.md`, `/lien-he.md` | Từng mục |
+| `/bai-viet/<slug>.md` | Bài viết đầy đủ (HTML → Markdown) |
+| `/shop.md`, `/tai-video.md`, `/quyen-rieng-tu.md` | Trang cố định |
+| `/rss.xml`, `/feed.json` | RSS 2.0 và JSON Feed 1.1 của bài viết |
+| `/search.json` | Chỉ mục tìm kiếm |
+| `/catalog.json` | Danh mục máy đọc cho sản phẩm, video, bài viết, công cụ |
+| `/.well-known/agent.json` | A2A agent card |
+| `/robots.txt`, `/sitemap.xml` | Robots và sitemap |
 
-## Đăng bài từ agent
+Khi origin tạm không trả lời, các mục dùng dữ liệu tĩnh (profile, shop, tài liệu, privacy) vẫn trả 200 kèm `X-Origin-Status: unavailable`; các endpoint cần bài viết trả lỗi 502/404 tương ứng.
 
-Agent (Claude Code, Codex) đăng bài, ảnh và video qua API `/api/v1` bằng API key tạo tại `/admin/api-keys`. Skill đóng gói sẵn nằm ở `skills/tqd-publish`. Hợp đồng API, ví dụ và cách cài skill: [docs/agent-publishing.md](docs/agent-publishing.md). Agent làm các việc còn lại của `/admin` (hồ sơ, số liệu, liên hệ, sản phẩm, video, thư viện, sao lưu, API key, thống kê chat) theo [docs/admin-agent-operations.md](docs/admin-agent-operations.md).
+## Worker công cụ
+
+`src/` giữ đúng các route runtime:
+
+- `src/pages/api/chat.ts`, `api/chat/status.ts` — chatbot GoClaw.
+- `src/pages/api/dl/**` — tải video qua Home Daemon.
+- `src/pages/api/viral/**` — bóc băng, sinh kịch bản, chia sẻ X-ray.
+- `src/pages/api/t.ts` — beacon thống kê ẩn danh vào Analytics Engine.
+- `src/pages/xray/[id].astro` và `.md.ts` — trang báo cáo X-ray.
+- `src/pages/media/[...key].ts` — stream media R2, hỗ trợ `Range`.
+
+Không còn trang nội dung, layout, component, admin, API đăng bài hay cron. `src/worker.ts` chỉ chuyển request cho Astro; `src/middleware.ts` chỉ gắn security header.
 
 ## Lệnh
 
 | Lệnh | Việc |
 |---|---|
-| `npm install` | Cài phụ thuộc (Node ≥ 22.12) |
-| `npx astro dev --background` | Chạy thử tại `http://localhost:4321` (cần `.dev.vars`, xem docs/deployment.md) |
-| `npm run build` | Kiểm tra type và build |
-| `npm test` | Unit test (Vitest) |
-| `npm run verify:dl` | Kiểm chứng Home Daemon tải video (`scripts/verify/dl-daemon.mjs`) |
-| `npm run dl:daemon` | Chạy Home Daemon `yt-dlp` + `ffmpeg` (cần biến `DL_API_KEY`) |
-| `npm run check:privacy -- <url>` | Xác nhận site tại `<url>` không chứa văn bản bài Facebook |
-| `npm run deploy:preview` | Deploy bản preview `tqd-next` |
-| `npm run deploy` | Deploy production lên `tqd.me` |
+| `npm run build` | `astro check` + build Worker công cụ |
+| `node node_modules/astro/bin/astro.mjs build` | Build khi `npx astro` không chạy trên máy Windows thiếu binding |
+| `node node_modules/vitest/vitest.mjs run src/lib edge/src` | Unit test các phần còn giữ |
+| `npx wrangler deploy --config dist/server/wrangler.json` | Deploy `tqd-tools` từ bản build |
+| `CLOUDFLARE_ENV=preview npm run build` rồi `npx wrangler deploy --config dist/server/wrangler.json` | Deploy preview `tqd-next` |
+| `npx wrangler deploy --config edge/wrangler.jsonc` | Deploy `tqd-edge` |
+| `npx wrangler deploy --dry-run --config edge/wrangler.jsonc` | Kiểm tra bundle edge, không upload |
+| `npm run verify:dl` | Kiểm chứng Home Daemon tải video |
 
-Các kiểm tra khác nằm trong `scripts/verify/` (`site`, `admin`, `articles`, `api`, `cache`, `seed`, `live`, `lighthouse`, `mascot-files`).
+Deploy, secret, rollback và lý do không deploy `tqd-website`: [docs/deployment.md](docs/deployment.md).
 
-Cách deploy, secret admin, cache và rollback: [docs/deployment.md](docs/deployment.md).
+## Nội dung và quản trị
+
+- Bài viết, trang, hồ sơ, sản phẩm, video, thư viện: **admin EzyPlatform** (`http://127.0.0.1:9090` khi chạy local; `https://admin.tqd.me` khi lên VPS).
+- Ảnh/video: media library của EzyPlatform; media cũ vẫn nằm trong R2 và được phục vụ qua `/media/*`.
+- Publish và kiểm chứng: dùng các skill `ezy-author`, `ezy-media`, `ezy-publish`, `ezy-verify`; xem [docs/agent-publishing.md](docs/agent-publishing.md).
+- Liên hệ: plugin `ezysupport` (Contact-us) + `ezymail`.
+- Sao lưu: plugin `data-backup` của EzyPlatform; bản cũ trong R2 vẫn giữ, xem [docs/backup-restore.md](docs/backup-restore.md).
+
+## Tài liệu
+
+- [docs/deployment.md](docs/deployment.md) — deploy edge/tools, secret, rollback.
+- [docs/chatbot.md](docs/chatbot.md) — chatbot GoClaw và giới hạn.
+- [docs/video-downloader.md](docs/video-downloader.md) — kiến trúc tải video/Viral Lab.
+- [docs/agent-publishing.md](docs/agent-publishing.md) — đăng bài qua EzyPlatform.
+- [docs/admin-agent-operations.md](docs/admin-agent-operations.md) — việc quản trị đã chuyển đi đâu.
+- [docs/analytics-event-spec.md](docs/analytics-event-spec.md) — hợp đồng dữ liệu `/api/t`.
+- [REVIEW.md](REVIEW.md) — cổng kiểm duyệt UI/UX/AX/SEO (áp dụng cho giao diện EzyPlatform và edge).
+- [plans/261121-ezyplatform-migration/plan.md](plans/261121-ezyplatform-migration/plan.md) — hợp đồng migration.

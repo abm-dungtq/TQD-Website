@@ -19,7 +19,6 @@ import {
   TIER_LIMITS,
   verifyDlTicket,
 } from './dl';
-import { logSecurityEvent } from './security-log';
 
 const SAMPLE_UUID = '550e8400-e29b-41d4-a716-446655440000';
 const SECRET = 'test-dl-hmac-secret-2026';
@@ -136,7 +135,7 @@ describe('dl-platforms: SSRF, IPv6 transitional ranges, rebinding & domain allow
   });
 });
 
-describe('dl: HKDF-derived HMAC ticket signing, tier isolation & audit log redaction', () => {
+describe('dl: HKDF-derived HMAC ticket signing & tier isolation', () => {
   it('signs and verifies a valid itemTicket with HKDF domain separation (rejecting raw HMAC)', async () => {
     const now = Math.floor(Date.now() / 1000);
     const payload = {
@@ -215,27 +214,6 @@ describe('dl: HKDF-derived HMAC ticket signing, tier isolation & audit log redac
 
     const tier = await resolveDlTier(mockDb, undefined, 'Bearer tqd_fake_editorial_agent_key_1234567890');
     expect(tier).toBe('public');
-  });
-
-  it('redacts secret-like fields in logSecurityEvent', async () => {
-    const logs: string[] = [];
-    const origInfo = console.info;
-    console.info = (msg: string) => logs.push(msg);
-    try {
-      await logSecurityEvent('apikey.created', {
-        keyName: 'bot-1',
-        prefix: 'tqd_abcd1234',
-        password: 'super-secret-password',
-        rawToken: 'tqd_1234567890abcdefghij1234567890',
-      });
-    } finally {
-      console.info = origInfo;
-    }
-    expect(logs).toHaveLength(1);
-    expect(logs[0]).toContain('"event":"apikey.created"');
-    expect(logs[0]).toContain('"prefix":"tqd_abcd1234"');
-    expect(logs[0]).not.toContain('super-secret-password');
-    expect(logs[0]).not.toContain('tqd_1234567890abcdefghij1234567890');
   });
 });
 

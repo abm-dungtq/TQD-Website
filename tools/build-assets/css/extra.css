@@ -1,0 +1,53 @@
+/* Additions that are not part of the compiled design bundle (they appear only on ported pages). */
+
+.contact-field {
+  min-height: 2.75rem;
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-line);
+  background: var(--color-panel);
+  padding: 0.625rem 0.875rem;
+  font: inherit;
+  color: var(--color-ink);
+}
+
+textarea.contact-field {
+  min-height: 8rem;
+  resize: vertical;
+}
+
+.contact-field:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+[data-contact-status] {
+  min-height: 1.25rem;
+}
+
+[data-contact-status][data-tone='pending'] {
+  color: var(--color-muted);
+}
+
+[data-contact-status][data-tone='ok'] {
+  color: #2f6b3f;
+}
+
+[data-contact-status][data-tone='error'] {
+  color: #a03030;
+}
+
+/* AI prompt links carry a {origin} token that foot.js replaces with the live origin. */
+a[data-tqd-origin][hidden] {
+  display: none;
+}
+
+/* The desktop shell owns the viewport at wide widths; the mobile header, page main and footer stay in the DOM for
+   narrow screens but must not paint above or below the fixed desktop. */
+@media (min-width: 64rem) {
+  html:has(.desktop) .site-header,
+  html:has(.desktop) .site-footer,
+  html:has(.desktop) > body > main {
+    display: none;
+  }
+}

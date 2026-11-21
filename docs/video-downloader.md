@@ -1,6 +1,6 @@
 # Công cụ Tải Video Đa Nền Tảng & Xưởng Mổ Xẻ Kịch Bản Viral AI (`/tai-video`)
 
-Trang `/tai-video` cung cấp 2 nhóm năng lực trên cùng một giao diện Champagne sáng của `tqd.me`:
+Trang `/tai-video` (page fragment của EzyPlatform, edge chuyển tiếp API sang Worker `tqd-tools`) cung cấp 2 nhóm năng lực:
 1. **Tải Video & Nhạc 14+ Nền Tảng**: Tải video `.mp4` chuẩn H.264 + AAC (`faststart`), Shorts/Reels dọc 9:16, Playlist, `@profile`, nhiều link hàng loạt và tách nhạc `.mp3` 320kbps qua `yt-dlp` + `ffmpeg`.
 2. **TQD Viral Lab (`🧬 Mổ Xẻ Viral & Kịch Bản AI`)**: Bóc băng lời thoại có mốc thời gian (`Transcript` + xuất `.srt`), giải phẫu X-Quang yếu tố triệu view và nhân bản kịch bản đa kênh ("Đổi Ngành Giữ Khung" & "Việt Hóa Trend Ngoại") bằng **`opencode-go` (`deepseek-v4.1-flash`)** kết hợp bộ quy chuẩn chống văn mẫu AI **`viet-pro`**.
 
@@ -44,7 +44,13 @@ Giới hạn thời lượng áp dụng cả khi transcript đã có trong cache
 
 Bóc băng mới và chia sẻ kiểm tra hạn mức visitor/IP trước khi tính quota ngày dùng chung. Request đã bị chặn theo visitor/IP không làm tăng quota ngày; chia sẻ chỉ tính quota ngày sau khi kiểm tra transcript và nội dung hợp lệ.
 
-Cron hằng đêm trong `src/worker.ts` gọi `cleanupDlLimits(env.DB)` và `cleanupViralCache(env.DB)` để dọn các dòng `rate_limits` cũ hơn 2 ngày cùng dữ liệu đệm `viral_transcripts`, `viral_shares` cũ hơn 30 ngày.
+**Không còn cron dọn dẹp** kể từ khi bỏ trigger của Worker công cụ. Các dòng `rate_limits` cũ hơn 2 ngày và dữ liệu đệm `viral_transcripts`, `viral_shares` cũ hơn 30 ngày cần dọn thủ công khi cần:
+
+```bash
+npx wrangler d1 execute tqd_db --remote --command "DELETE FROM rate_limits WHERE window_start < strftime('%s','now') - 172800"
+npx wrangler d1 execute tqd_db --remote --command "DELETE FROM viral_transcripts WHERE created_at < strftime('%s','now') - 2592000"
+npx wrangler d1 execute tqd_db --remote --command "DELETE FROM viral_shares WHERE created_at < strftime('%s','now') - 2592000"
+```
 
 ## 4. Cấu hình biến môi trường & Bindings
 
@@ -55,10 +61,10 @@ Cron hằng đêm trong `src/worker.ts` gọi `cleanupDlLimits(env.DB)` và `cle
 | `DL_DAILY_CAP` / `VIRAL_DAILY_CAP` | `vars` (`wrangler.jsonc`) | `150` |
 | `OPENCODE_GO_BASE_URL` | `vars` (`wrangler.jsonc`) | `https://opencode.ai/zen/go/v1` |
 | `OPENCODE_GO_MODEL` | `vars` (`wrangler.jsonc`) | `deepseek-v4.1-flash` |
-| `DL_API_KEY` | `secret` | Khóa xác thực Bearer & ký HMAC-SHA256 giữa Worker và VPS Daemon |
-| `OPENCODE_GO_API_KEY` | `secret` | Khóa API OpenCode Go cho `deepseek-v4.1-flash` |
+| `DL_API_KEY` | `secret` của `tqd-tools` | Khóa xác thực Bearer & ký HMAC-SHA256 giữa Worker và VPS Daemon |
+| `OPENCODE_GO_API_KEY` | `secret` của `tqd-tools` | Khóa API OpenCode Go cho `deepseek-v4.1-flash` |
 
 ## 5. Kiểm tra tự động
 
-- `npm test`: Chạy toàn bộ 21 bộ unit test bao gồm `src/lib/dl.test.ts` và `src/lib/viral.test.ts` (chuẩn hóa URL đa nền tảng, parser phụ đề VTT/SRT, mock daemon `/transcribe`, bộ kiểm định 21 luật `viet-pro`, xuất `.srt`/CapCut và chống Prompt Injection).
+- `node node_modules/vitest/vitest.mjs run src/lib/dl.test.ts src/lib/viral.test.ts src/lib/viral-routes.test.mjs`: chuẩn hóa URL đa nền tảng, parser phụ đề VTT/SRT, mock daemon `/transcribe`, bộ kiểm định 21 luật `viet-pro`, xuất `.srt`/CapCut và chống Prompt Injection.
 - `npm run verify:dl`: Kiểm thử vòng đời daemon cô lập và xác nhận thư mục tạm trong `/tmp/tqd-dl` tự xóa 100%.

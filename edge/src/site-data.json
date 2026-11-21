@@ -1,0 +1,127 @@
+{
+ "person": {
+  "name": "Trịnh Quang Dũng",
+  "handle": "DũngTQ",
+  "initials": "TQD",
+  "role": "Đào tạo và triển khai AI Agent cho doanh nghiệp · ABM",
+  "intro": "Mình là Trịnh Quang Dũng, từng có mười năm sáng lập và điều hành một doanh nghiệp xuất nhập khẩu Trung Quốc - Việt Nam. Thói quen của người trực tiếp vận hành rất thực tế: công cụ chỉ đáng giữ lại dùng lâu dài khi giúp đội ngũ làm nhanh hơn và ít sai hơn.\n\nTừ đầu năm 2025, mình chuyển toàn bộ thời gian sang nghiên cứu, tự viết công cụ và đào tạo AI cho doanh nghiệp Việt Nam. Cùng ABM (Công ty Cổ phần Công nghệ và Đào tạo ABM), mình đứng lớp và tư vấn triển khai AI Agent tại BSR (Lọc Hóa dầu Bình Sơn), ABIC, Hanoitourist hay khóa \"AI nâng cao hiệu suất công việc trong hoạt động ngân hàng\" tại Trường Đào tạo cán bộ Agribank TP.HCM ngày 15-16/6/2026. Mọi chương trình đều giữ nguyên tắc \"Brain first - AI second\": con người chốt bài toán, dữ liệu và chịu trách nhiệm kết quả trước khi đóng gói quy trình hay skill theo tinh thần \"làm 1 dùng N\".\n\nNgoài giờ đứng lớp, mình viết và vận hành nhiều sản phẩm web ngay trên Cloudflare Workers. Nổi bật có Xưởng tải video và mổ xẻ kịch bản Viral AI tại tqd.me/tai-video, Tử Vi Đầu Số Thiên Kỷ (tuvi.tqd.me), Website Ngự Long Y Quán (ngulongyquan.com), bộ TQD KidGuard & TV Launcher quản lý Tivi cho gia đình (tv.tqd.me), cùng hai trò chơi trình duyệt Wizard Chess 3D và Kim Cương LumiGem.\n\nTrên GitHub (github.com/abm-dungtq), mình chia sẻ những kho mã nguồn và Agent Skill đã kiểm chứng trong công việc hằng ngày. Trọng tâm gồm Viết Pro v6 (viet-pro) kiểm duyệt biên tập tiếng Việt đóng tem SHA-256 cho Claude Code, OpenAI Codex, Google Antigravity; China Sourcing Suite (china-sourcing) quét xưởng 1688, Taobao, tính giá vốn về kho Việt Nam và canh tin nhắn WangWang; TQD Browser (tqd-browser) quản lý hồ sơ trình duyệt chống nhận diện kèm MCP; ABM Video BGĐT dựng bài giảng 16:9 khớp giọng VieNeu-TTS; GFlow Studio chạy lô ảnh và video 1080p từ terminal hay TQD-Voice nhân bản giọng đọc tiếng Việt cục bộ.\n\nTrang tqd.me lưu lại hệ công cụ và ghi chép kỹ thuật hằng ngày, mở sẵn bản Markdown song sinh cùng WebMCP cho trợ lý AI đọc hiểu mạch lạc. Nếu đội ngũ của bạn cần đào tạo AI nội bộ hoặc may đo Agent sát quy trình, nhắn trực tiếp cho mình qua Zalo tại https://zalo.me/trinhquangdung.",
+  "focus": [
+   "Đào tạo AI ứng dụng cho doanh nghiệp",
+   "Tư vấn & triển khai hệ thống AI Agent",
+   "Mã nguồn mở & Skill (Claude Code, Codex, Antigravity)",
+   "Ứng dụng Web & AI trên Cloudflare Edge"
+  ],
+  "email": "dungtq.ceo@gmail.com",
+  "zalo": "https://zalo.me/trinhquangdung",
+  "portraitAlt": "Chân dung Trịnh Quang Dũng",
+  "portrait": "/img/portrait-480.webp",
+  "portraitSmall": "/img/portrait-240.webp"
+ },
+ "links": [
+  {
+   "label": "Email",
+   "href": "mailto:dungtq.ceo@gmail.com"
+  },
+  {
+   "label": "Zalo",
+   "href": "https://zalo.me/trinhquangdung"
+  },
+  {
+   "label": "GitHub",
+   "href": "https://github.com/abm-dungtq"
+  },
+  {
+   "label": "Facebook",
+   "href": "https://www.facebook.com/dungtq.ceo87"
+  },
+  {
+   "label": "TikTok",
+   "href": "https://www.tiktok.com/@abmdungtq"
+  },
+  {
+   "label": "ABM Edu",
+   "href": "https://lp.abmedu.vn"
+  }
+ ],
+ "topics": {
+  "howTo": [
+   "Claude CLI lập kế hoạch, chia phase cho Codex",
+   "Gehihi làm worker trong OMP",
+   "Kết hợp Orca và OMP",
+   "Vận hành nhiều CLI bằng Paseo",
+   "Cài Hermes-Agent",
+   "So sánh chi phí và kết quả Pi, Codex, Claude Code",
+   "Chọn model Claude theo việc",
+   "Browser automation cho AI",
+   "ChatGPT hỗ trợ con học"
+  ],
+  "marketWatch": [
+   "Claude Opus 5 và 5.5",
+   "GPT 5.6 và GPT-6",
+   "Codex",
+   "Gemini 3.6 Flash",
+   "DeepSeek V4 Flash và V4.1 Flash",
+   "Grok 4.6",
+   "Antigravity",
+   "Omni Flash 1.1"
+  ]
+ },
+ "sections": [
+  {
+   "id": "ho-so",
+   "title": "Hồ sơ",
+   "short": "Mình là ai, đang làm gì",
+   "icon": "user"
+  },
+  {
+   "id": "san-pham",
+   "title": "Sản phẩm",
+   "short": "Skill, agent và công cụ tự xây",
+   "icon": "box"
+  },
+  {
+   "id": "thu-vien",
+   "title": "Thư viện",
+   "short": "Ảnh và video các chương trình",
+   "icon": "image"
+  },
+  {
+   "id": "video-ai",
+   "title": "Video AI",
+   "short": "Thử nghiệm video làm bằng AI",
+   "icon": "film"
+  },
+  {
+   "id": "bai-viet",
+   "title": "Bài viết",
+   "short": "Viết hằng ngày về AI ứng dụng",
+   "icon": "book"
+  },
+  {
+   "id": "lien-he",
+   "title": "Liên hệ",
+   "short": "Kết nối với mình",
+   "icon": "mail"
+  }
+ ],
+ "gallery": [
+  {
+   "caption": "Đào tạo AI cho cán bộ Agribank",
+   "key": "2026/10/agribank-dao-tao-ai.mp4",
+   "featured": true,
+   "poster": "2026/10/agribank-dao-tao-ai-poster.webp"
+  },
+  {
+   "key": "2026/10/agribank-lop-ai-ngan-hang.webp",
+   "caption": "Lớp “AI nâng cao hiệu suất công việc trong hoạt động ngân hàng”, Trường Đào tạo cán bộ Agribank, TP.HCM, 15–16/6/2026"
+  },
+  {
+   "key": "2026/10/agribank-ai-tao-sinh.webp",
+   "caption": "Chia sẻ về AI tạo sinh cho cán bộ Agribank"
+  },
+  {
+   "key": "2026/10/vina2-lam-viec-ai.webp",
+   "caption": "Buổi làm việc về ứng dụng AI tại Công ty CP Đầu tư và Xây dựng Vina2"
+  }
+ ]
+}

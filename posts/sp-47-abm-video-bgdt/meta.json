@@ -1,0 +1,10 @@
+{
+  "slug": "sp-47-abm-video-bgdt",
+  "title": "ABM Video BGĐT",
+  "summary": "Agent skill giúp Claude Code tự sản xuất video bài giảng điện tử tiếng Việt 16:9 dài 3-15 phút qua tám chặng từ nghiên cứu, viết kịch bản đến ghép thoại bằng VieNeu-TTS MCP. Chữ karaoke khớp từng từ ở dải dưới cùng hình động HyperFrames dựng từ thư viện 142 khung mẫu.",
+  "postType": "tqd_product",
+  "contentType": "HTML",
+  "status": "PUBLISHED",
+  "publishedAt": "2026-11-15 00:00:00",
+  "priority": 7
+}

@@ -1,0 +1,18 @@
+{
+  "slug": "wizard-chess-3d-co-vua-co-tuong-3d",
+  "title": "Wizard Chess 3D: bàn cờ vua và cờ tướng 3D chạy thẳng trên trình duyệt",
+  "summary": "Trò chơi cờ vua chuẩn FIDE và cờ tướng 3D viết bằng Three.js và Cloudflare Durable Objects, có 8 bàn đấu, hiệu ứng quân cờ vỡ vụn khi ăn quân và phòng chơi trực tuyến.",
+  "postType": "POST",
+  "contentType": "HTML",
+  "status": "PUBLISHED",
+  "tags": [
+    "Wizard Chess 3D",
+    "Three.js",
+    "WebGL",
+    "Cloudflare",
+    "Game 3D"
+  ],
+  "cover": "2026-11-e0fbe4cac9b3-chess-3d-cover.jpg",
+  "publishedAt": "2026-11-11 10:56:42",
+  "priority": 11
+}

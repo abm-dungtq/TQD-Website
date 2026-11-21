@@ -1,232 +1,180 @@
 ---
+// Self-contained X-ray report page served by the tooling Worker. The site layout/components moved to EzyPlatform,
+// so this page carries its own minimal styles and metadata.
 import { env } from 'cloudflare:workers';
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import Icon from '../../components/Icon.astro';
-import PageActions from '../../components/PageActions.astro';
-import { clampMetaDescription, getSite } from '../../lib/content';
 import { renderMarkdown } from '../../lib/markdown';
-import { breadcrumbNode, personNode, xrayArticleNode } from '../../lib/structured-data';
+import { SITE_PERSON } from '../../lib/site-profile';
 import { getViralShare, VIRAL_FORMATS } from '../../lib/viral';
 
+const clamp = (text: string, max = 158): string => (text.length <= max ? text : `${text.slice(0, max - 1).trimEnd()}…`);
+
 const id = Astro.params.id ?? '';
-// Check share existence BEFORE querying site settings to avoid wasted D1 reads on 404 (CB-11)
 const share = await getViralShare(env.DB, id);
-if (!share) return Astro.rewrite('/404');
+if (!share) {
+  Astro.response.status = 404;
+  Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+}
 
-const site = await getSite(env.DB);
-const isCurated = share.shareId.startsWith('c-');
+const isCurated = Boolean(share?.shareId.startsWith('c-'));
+if (share) Astro.response.headers.set('X-Robots-Tag', isCurated ? 'index, follow' : 'noindex, nofollow');
 
-// Policy #3: Admin-created curated showcase shares (c-*) are indexable; unverified public shares stay noindex, nofollow
-Astro.response.headers.set('X-Robots-Tag', isCurated ? 'index, follow' : 'noindex, nofollow');
-
-const formatSpec = VIRAL_FORMATS.find((f) => f.key === share.formatKey);
+const formatSpec = share ? VIRAL_FORMATS.find((f) => f.key === share.formatKey) : undefined;
 const formatLabel = formatSpec ? formatSpec.label : 'Báo cáo X-Quang Video Viral';
+const [xrayHtml, scriptHtml] = share
+  ? await Promise.all([
+      share.xrayMarkdown ? renderMarkdown(share.xrayMarkdown, { allowExternalLinks: isCurated }) : Promise.resolve(''),
+      share.scriptMarkdown ? renderMarkdown(share.scriptMarkdown, { allowExternalLinks: isCurated }) : Promise.resolve(''),
+    ])
+  : ['', ''];
 
-// Unverified public shares strip external links via { allowExternalLinks: false } for anti-phishing safety
-const [xrayHtml, scriptHtml] = await Promise.all([
-  share.xrayMarkdown
-    ? renderMarkdown(share.xrayMarkdown, { allowExternalLinks: isCurated })
-    : Promise.resolve(''),
-  share.scriptMarkdown
-    ? renderMarkdown(share.scriptMarkdown, { allowExternalLinks: isCurated })
-    : Promise.resolve(''),
-]);
-
-const createdLabel = share.createdAt
-  ? new Intl.DateTimeFormat('vi-VN', {
-      timeZone: 'Asia/Ho_Chi_Minh',
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    }).format(new Date(share.createdAt * 1000))
+const createdLabel = share?.createdAt
+  ? new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', day: '2-digit', month: '2-digit', year: 'numeric' }).format(
+      new Date(share.createdAt * 1000),
+    )
   : '';
-
 const durationLabel =
-  share.duration > 0
+  share && share.duration > 0
     ? `${Math.floor(share.duration / 60)}:${String(Math.round(share.duration % 60)).padStart(2, '0')}`
     : '';
 
-const pageTitle = `Mổ xẻ Viral: ${share.title}`;
-const pageDesc = clampMetaDescription(
-  share.industry
-    ? `Bóc tách công thức video "${share.title}" (${share.platformLabel}) & chuyển thể kịch bản sang ngành ${share.industry} chuẩn Viết Pro (${share.vietProScore}/100) tại tqd.me.`
-    : `Bóc tách X-Quang công thức viral & kịch bản nhân bản từ video "${share.title}" (${share.platformLabel}) chuẩn Viết Pro (${share.vietProScore}/100) tại tqd.me.`,
-  158,
-);
-
-const origin = new URL('/', Astro.url.origin).href;
-const canonicalUrl = new URL(`/xray/${share.shareId}`, Astro.url.origin).href;
-const primaryZalo = site.person.zalo || 'https://zalo.me/trinhquangdung';
-const breadcrumb = breadcrumbNode(
-  [
-    { name: 'Trang chủ', url: origin },
-    { name: 'Xưởng Mổ Xẻ Video', url: `${origin}tai-video` },
-    { name: share.title, url: canonicalUrl },
-  ],
-  canonicalUrl,
-);
-const jsonLd = isCurated
-  ? [
-      personNode(site, Astro.url.origin),
-      xrayArticleNode({
-        url: canonicalUrl,
-        origin: Astro.url.origin,
-        headline: pageTitle,
-        description: pageDesc,
-        createdAt: share.createdAt,
-        keywords: [formatLabel, share.platformLabel, share.industry, 'Viết Pro'].filter(Boolean),
-      }),
-      breadcrumb,
-    ]
-  : [personNode(site, Astro.url.origin), breadcrumb];
+const pageTitle = share ? `Mổ xẻ Viral: ${share.title}` : 'Không tìm thấy báo cáo';
+const pageDesc = share
+  ? clamp(
+      share.industry
+        ? `Bóc tách công thức video "${share.title}" (${share.platformLabel}) & chuyển thể kịch bản sang ngành ${share.industry} chuẩn Viết Pro (${share.vietProScore}/100) tại tqd.me.`
+        : `Bóc tách X-Quang công thức viral & kịch bản nhân bản từ video "${share.title}" (${share.platformLabel}) chuẩn Viết Pro (${share.vietProScore}/100) tại tqd.me.`,
+    )
+  : 'Báo cáo X-Quang Viral không tồn tại hoặc đã bị xoá.';
+const canonicalUrl = new URL(`/xray/${share?.shareId ?? id}`, Astro.url.origin).href;
+const jsonLd = share
+  ? {
+      '@context': 'https://schema.org',
+      '@type': 'Article',
+      headline: pageTitle,
+      description: pageDesc,
+      url: canonicalUrl,
+      datePublished: share.createdAt ? new Date(share.createdAt * 1000).toISOString() : undefined,
+      author: { '@type': 'Person', name: SITE_PERSON.name, url: `${Astro.url.origin}/ho-so` },
+      isPartOf: { '@type': 'WebSite', name: 'tqd.me', url: Astro.url.origin },
+    }
+  : null;
+const jsonLdText = jsonLd ? JSON.stringify(jsonLd).replace(/</g, '\\u003c') : '';
 ---
 
-<BaseLayout
-  site={site}
-  title={pageTitle}
-  description={pageDesc}
-  path={`/xray/${share.shareId}`}
-  ogType="article"
-  markdownPath={`/xray/${share.shareId}.md`}
-  ogImagePath="/og/xray.png"
-  jsonLd={jsonLd}
->
-  <article class="mx-auto flex max-w-4xl flex-col gap-6">
-    <p class="eyebrow flex-wrap">
-      <a href="/tai-video" class="inline-flex min-h-11 -my-3 items-center no-underline">← Mở Xưởng Tải &amp; Mổ Xẻ Video</a>
-      <span class="eyebrow-rule" aria-hidden="true"></span>
-      {createdLabel && <span class="eyebrow-index">{createdLabel}</span>}
-      {isCurated && <span class="lux-chip px-2.5 py-0.5 text-[0.6875rem] font-semibold">Case Study Tuyển Chọn</span>}
-    </p>
-
-    <header class="lux-card p-6 sm:p-8">
-      <div class="flex flex-wrap items-center gap-2 text-xs">
-        <span class="lux-chip inline-flex items-center gap-1.5 px-3 py-1 font-semibold">
-          <Icon name="dna" size={14} />
-          <span>Báo cáo X-Quang Viral</span>
-        </span>
-        {share.platformLabel && <span class="lux-chip px-3 py-1">{share.platformLabel}</span>}
-        {
-          durationLabel && (
-            <span class="lux-chip inline-flex items-center gap-1 px-3 py-1 font-mono">
-              <Icon name="clock" size={13} />
-              <span>{durationLabel}</span>
-            </span>
-          )
-        }
-        <span class="lux-chip inline-flex items-center gap-1.5 px-3 py-1 font-semibold text-accent-ink">
-          <Icon name="sparkles" size={14} />
-          <span>Chuẩn Viết Pro: {share.vietProScore}/100</span>
-        </span>
-      </div>
-
-      <h1 class="display mt-4 text-3xl sm:text-5xl">{share.title}</h1>
-      <p class="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted">
-        {share.uploader && <span>Kênh gốc: <strong>{share.uploader}</strong> ·</span>}
-        <a
-          href={share.canonicalUrl}
-          target="_blank"
-          rel="noopener noreferrer nofollow ugc"
-          class="inline-flex min-h-11 -my-2 items-center gap-1 underline"
-        >
-          <span>Xem video gốc</span>
-          <Icon name="external" size={14} />
-        </a>
-      </p>
-
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={pageDesc} />
+    <link rel="canonical" href={canonicalUrl} />
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={pageDesc} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={`${Astro.url.origin}/og/xray.png`} />
+    {jsonLdText && <script type="application/ld+json" set:html={jsonLdText} />}
+    <style is:global>
+      :root { color-scheme: dark; --ink: #f4f0e6; --muted: #b9b2a3; --gold: #d9b86c; --line: #33302a; --card: #171613; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: #0d0c0a; color: var(--ink); font: 16px/1.65 system-ui, -apple-system, "Segoe UI", sans-serif; }
+      a { color: var(--gold); }
+      .wrap { max-width: 900px; margin: 0 auto; padding: 28px 18px 64px; }
+      .card { border: 1px solid var(--line); border-radius: 16px; background: var(--card); padding: 22px; margin-top: 18px; }
+      .chips { display: flex; flex-wrap: wrap; gap: 8px; font-size: 13px; }
+      .chip { border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; color: var(--muted); }
+      h1 { font-size: clamp(1.7rem, 4vw, 2.6rem); line-height: 1.15; margin: 14px 0 8px; }
+      h2 { font-size: 1.35rem; margin: 0 0 12px; }
+      h3 { font-size: 1.1rem; }
+      .muted { color: var(--muted); font-size: 0.92rem; }
+      .btn { display: inline-block; border-radius: 10px; padding: 10px 16px; margin: 8px 8px 0 0; text-decoration: none; font-weight: 600; }
+      .btn-gold { background: var(--gold); color: #191408; }
+      .btn-outline { border: 1px solid var(--gold); color: var(--gold); }
+      .prose img, .prose video { max-width: 100%; height: auto; border-radius: 10px; }
+      .prose table { width: 100%; border-collapse: collapse; display: block; overflow-x: auto; }
+      .prose th, .prose td { border: 1px solid var(--line); padding: 6px 10px; text-align: left; }
+      .prose blockquote { margin: 1em 0; padding-left: 14px; border-left: 3px solid var(--gold); color: var(--muted); }
+      .prose code { background: #24221d; padding: 1px 5px; border-radius: 5px; font-size: 0.92em; }
+      .prose pre { background: #24221d; padding: 14px; border-radius: 10px; overflow-x: auto; }
+      .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+      footer { margin-top: 28px; border-top: 1px solid var(--line); padding-top: 16px; font-size: 0.9rem; color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
       {
-        share.industry && (
-          <div class="mt-4 flex items-start gap-2.5 rounded-xl border border-line bg-tint/70 px-4 py-3 text-sm">
-            <Icon name="wand" size={18} class="mt-0.5 shrink-0 text-accent" />
-            <p>
-              <strong>Đổi Ngành Giữ Khung:</strong> Đã chuyển thể cấu trúc sang ngành{' '}
-              <span class="font-semibold text-accent-ink">{share.industry}</span> ({formatLabel})
+        share ? (
+          <>
+            <p class="muted">
+              <a href="/tai-video">← Mở Xưởng Tải &amp; Mổ Xẻ Video</a>
+              {createdLabel && <span> · {createdLabel}</span>}
+              {isCurated && <span> · Case Study Tuyển Chọn</span>}
             </p>
-          </div>
+
+            <header class="card">
+              <div class="chips">
+                <span class="chip">Báo cáo X-Quang Viral</span>
+                {share.platformLabel && <span class="chip">{share.platformLabel}</span>}
+                {durationLabel && <span class="chip">{durationLabel}</span>}
+                <span class="chip">Chuẩn Viết Pro: {share.vietProScore}/100</span>
+              </div>
+              <h1>{share.title}</h1>
+              <p class="muted">
+                {share.uploader && <span>Kênh gốc: <strong>{share.uploader}</strong> · </span>}
+                <a href={share.canonicalUrl} target="_blank" rel="noopener noreferrer nofollow ugc">Xem video gốc</a>
+              </p>
+              {
+                share.industry && (
+                  <p class="muted">
+                    <strong>Đổi Ngành Giữ Khung:</strong> Đã chuyển thể cấu trúc sang ngành <strong>{share.industry}</strong> ({formatLabel})
+                  </p>
+                )
+              }
+              <div class="actions">
+                <a class="btn btn-gold" href={`/tai-video?url=${encodeURIComponent(share.canonicalUrl)}&tab=viral`}>Mổ xẻ lại / Đổi sang ngành của bạn</a>
+                <a class="btn btn-outline" href="/tai-video">Dán link video khác (Miễn phí)</a>
+                <a class="btn btn-outline" href={`/xray/${share.shareId}.md`}>Bản Markdown</a>
+              </div>
+            </header>
+
+            {scriptHtml && (
+              <section class="card">
+                <p class="muted">Kịch bản chuyển thể</p>
+                <h2>{formatLabel}</h2>
+                <div class="prose" set:html={scriptHtml} />
+              </section>
+            )}
+
+            {xrayHtml && (
+              <section class="card">
+                <p class="muted">Giải phẫu công thức triệu view</p>
+                <h2>X-Quang Hook &amp; Nhịp Giữ Chân</h2>
+                <div class="prose" set:html={xrayHtml} />
+              </section>
+            )}
+
+            <aside class="card">
+              <p class="muted">Hệ sinh thái AI thực chiến · {SITE_PERSON.handle}</p>
+              <h2>Muốn tự động hóa quy trình sản xuất nội dung &amp; AI Agent cho doanh nghiệp?</h2>
+              <div class="actions">
+                <a class="btn btn-gold" href={SITE_PERSON.zalo} target="_blank" rel="noopener noreferrer">Nhắn Zalo tư vấn</a>
+                <a class="btn btn-outline" href="/san-pham">Khám phá Sản phẩm AI</a>
+              </div>
+            </aside>
+          </>
+        ) : (
+          <section class="card">
+            <h1>Không tìm thấy báo cáo</h1>
+            <p class="muted">Báo cáo X-Quang Viral này không tồn tại hoặc đã bị xoá.</p>
+            <a class="btn btn-gold" href="/tai-video">Mở Xưởng Tải &amp; Mổ Xẻ Video</a>
+          </section>
         )
       }
-
-      <div class="mt-5 flex flex-wrap items-center gap-3">
-        <a
-          href={`/tai-video?url=${encodeURIComponent(share.canonicalUrl)}&tab=viral`}
-          class="btn-gold text-xs sm:text-sm"
-        >
-          <Icon name="bolt" size={16} />
-          <span>Mổ xẻ lại / Đổi sang ngành của bạn</span>
-        </a>
-        <a
-          href="/tai-video"
-          class="btn-outline-gold text-xs sm:text-sm"
-        >
-          <Icon name="film" size={16} />
-          <span>Dán link video khác (Miễn phí)</span>
-        </a>
-      </div>
-
-      <PageActions
-        markdownPath={`/xray/${share.shareId}.md`}
-        canonicalUrl={canonicalUrl}
-        title={pageTitle}
-        class="mt-6 border-t border-line pt-4"
-      />
-    </header>
-
-    {
-      scriptHtml && (
-        <section class="lux-card p-6 sm:p-8" aria-label="Kịch bản nhân bản chuẩn Viết Pro">
-          <div class="mb-5 flex flex-wrap items-center justify-between gap-2 border-b border-line pb-4">
-            <div>
-              <p class="text-xs font-semibold uppercase tracking-wider text-muted">Kịch bản chuyển thể</p>
-              <h2 class="display text-2xl sm:text-3xl">{formatLabel}</h2>
-            </div>
-            <span class="lux-chip px-3 py-1 text-xs font-semibold text-accent-ink">
-              Viết Pro {share.vietProScore}/100 · Chống văn mẫu AI
-            </span>
-          </div>
-          {/* scriptHtml is sanitized by renderMarkdown (rehype-sanitize + rehypeSitePolicy). */}
-          <div class="prose-article overflow-x-auto" set:html={scriptHtml} />
-        </section>
-      )
-    }
-
-    {
-      xrayHtml && (
-        <section class="lux-card p-6 sm:p-8" aria-label="Phân tích X-Quang yếu tố Viral">
-          <div class="mb-5 border-b border-line pb-4">
-            <p class="text-xs font-semibold uppercase tracking-wider text-muted">Giải phẫu công thức triệu view</p>
-            <h2 class="display text-2xl sm:text-3xl">X-Quang Hook &amp; Nhịp Giữ Chân</h2>
-          </div>
-          {/* xrayHtml is sanitized by renderMarkdown (rehype-sanitize + rehypeSitePolicy). */}
-          <div class="prose-article overflow-x-auto" set:html={xrayHtml} />
-        </section>
-      )
-    }
-
-    <aside class="lux-card flex flex-col justify-between gap-4 border-champagne/50 bg-tint/70 p-6 sm:flex-row sm:items-center sm:p-7">
-      <div>
-        <p class="text-xs font-semibold uppercase tracking-wider text-accent-ink">Hệ sinh thái AI thực chiến · {site.person.handle}</p>
-        <h2 class="display mt-1 text-2xl">Muốn tự động hóa quy trình sản xuất nội dung &amp; AI Agent cho doanh nghiệp?</h2>
-        <p class="mt-1 text-sm text-muted">
-          Khám phá các chương trình đào tạo AI ứng dụng, bộ kỹ năng nguồn mở Viết Pro và giải pháp triển khai thực tế từ {site.person.name}.
-        </p>
-      </div>
-      <div class="flex shrink-0 flex-wrap gap-2.5">
-        <a
-          href={primaryZalo}
-          target="_blank"
-          rel="noopener noreferrer"
-          class="btn-gold text-xs sm:text-sm"
-        >
-          <Icon name="chat" size={16} />
-          <span>Nhắn Zalo tư vấn</span>
-        </a>
-        <a
-          href="/san-pham"
-          class="btn-outline-gold text-xs sm:text-sm"
-        >
-          <span>Khám phá Sản phẩm AI</span>
-        </a>
-      </div>
-    </aside>
-  </article>
-</BaseLayout>
+      <footer>
+        {SITE_PERSON.name} ({SITE_PERSON.handle}) · <a href={SITE_PERSON.zalo}>Zalo</a> ·
+        <a href={`mailto:${SITE_PERSON.email}`}>{SITE_PERSON.email}</a>
+      </footer>
+    </main>
+  </body>
+</html>

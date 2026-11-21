@@ -1,0 +1,18 @@
+{
+  "slug": "cloudflare-cho-nguoi-moi-vibe-code",
+  "title": "Cloudflare gói 0 đồng và 5 USD cho người mới vibe code: đưa web AI lên mạng không lo hóa đơn máy chủ",
+  "summary": "Khi mới dùng AI làm web (vibe code), nhiều người xong phần mềm trong hai giờ nhưng vướng chi phí thuê máy chủ, cơ sở dữ liệu và băng thông hàng chục USD mỗi tháng. Bài viết giải thích bốn dịch vụ cốt lõi của Cloudflare (Pages, Workers, D1, R2) bằng ngôn ngữ đời thường, so sánh gói miễn phí với gói 5 USD và hướng dẫn cách đưa dự án đầu tay lên mạng.",
+  "postType": "POST",
+  "contentType": "HTML",
+  "status": "PUBLISHED",
+  "tags": [
+    "AI cho doanh nghiệp",
+    "Vibe code",
+    "Cloudflare",
+    "Chi phí AI",
+    "Website"
+  ],
+  "cover": "2026-11-678bb44fc9da-cover.jpg",
+  "publishedAt": "2026-11-04 09:21:24",
+  "priority": 14
+}

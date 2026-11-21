@@ -1,0 +1,17 @@
+{
+  "slug": "github-co-ban-cho-nguoi-moi-dung-agent-ai",
+  "title": "GitHub cơ bản cho người mới dùng agent AI",
+  "summary": "Repository, commit, branch, pull request, issue, .gitignore và GitHub Actions giải thích bằng ngôn ngữ đời thường, để bạn hiểu và kiểm soát việc Claude Code hay Codex làm trên dự án của mình.",
+  "postType": "POST",
+  "contentType": "HTML",
+  "status": "PUBLISHED",
+  "tags": [
+    "GitHub",
+    "Claude Code",
+    "Codex",
+    "Người mới"
+  ],
+  "cover": "2026-10-64b9bf3e9339-github-infographic.png",
+  "publishedAt": "2026-10-14 08:19:20",
+  "priority": 21
+}

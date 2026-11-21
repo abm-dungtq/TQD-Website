@@ -1,0 +1,91 @@
+<p>Khi mới dùng các công cụ AI như Cursor, Claude Code hay Antigravity để làm web theo kiểu mô tả ý tưởng bằng tiếng Việt cho máy tự viết mã (thường gọi là vibe code), nhiều người hoàn thành ứng dụng đầu tay chỉ sau hai giờ. Cảm giác hào hứng đó thường chững lại ở bước tiếp theo, khi bạn muốn lấy một đường link gửi cho đồng nghiệp, khách hàng hoặc người nhà bấm vào dùng thử. Nếu đi thuê máy chủ ảo, cơ sở dữ liệu và băng thông theo cách truyền thống, hóa đơn duy trì có thể lên tới 30 đến 50 USD mỗi tháng dù trang web mới chỉ có vài người ghé xem.</p>
+<p>Bài viết này giải thích cách ghép bốn dịch vụ trong hệ sinh thái Cloudflare gồm Pages, Workers, D1 và R2 để đưa sản phẩm web hoặc ứng dụng AI lên mạng với chi phí 0 đồng hoặc 5 USD mỗi tháng. Chính trang <code>tqd.me</code> bạn đang đọc cũng vận hành hoàn toàn trên tổ hợp này. Các thông số hạn mức và bảng giá trong bài được đối chiếu trên tài liệu chính thức của Cloudflare ngày 04/11/2026.</p>
+<h2>Vì sao thuê máy chủ truyền thống dễ lãng phí với dự án nhỏ</h2>
+<p>Khi AI vừa viết xong mã nguồn, toàn bộ trang web mới nằm trên ổ cứng máy tính cá nhân của bạn (hay gọi là chạy ở địa chỉ <code>localhost</code>). Máy tính của bạn tắt thì trang web tắt; người ở ngoài cũng không thể truy cập vào được. Muốn có một địa chỉ trên mạng hoạt động cả ngày, bạn phải đưa bộ mã đó lên một máy chủ đám mây.</p>
+<p>Với người mới bắt đầu hoặc doanh nghiệp nhỏ làm công cụ nội bộ, cách thuê máy chủ ảo truyền thống thường vướng hai khoản chi phí cố định. Khoản thứ nhất là tiền thuê máy chạy liên tục suốt 24 giờ mỗi ngày. Cách này giống như bạn chỉ cần mở một quầy trà đá nhỏ nhưng phải thuê nguyên mặt bằng nhà hàng và bật điều hòa cả ngày lẫn đêm; những lúc vắng khách, đồng hồ tiền thuê mặt bằng vẫn chạy đều. Khoản thứ hai là phí băng thông tải ra (egress fee), tức số tiền nhà cung cấp thu thêm mỗi khi người dùng tải ảnh, tài liệu hoặc xem video từ máy chủ về điện thoại của họ.</p>
+<p><img src="/api/v1/media/2026-11-bd2e40b420c5-quannuoc-cloudflare.jpg" alt="So sánh máy chủ truyền thống tốn 50 USD mỗi tháng với mô hình quán nước Cloudflare 0 đồng đến 5 USD mỗi tháng" loading="lazy" decoding="async"></p>
+<p>Nếu bạn chỉ có một hệ thống lớn chạy ổn định quanh năm, chi phí cố định đó hoàn toàn hợp lý. Nhưng đặc trưng của người dùng AI làm sản phẩm là thử nghiệm rất nhanh: mỗi cuối tuần có thể dựng thử một trang giới thiệu, một bảng tính báo giá hay một chatbot nhỏ. Nếu mỗi dự án thử nghiệm đều cần một máy chủ riêng, tiền nuôi hạ tầng sẽ nhanh chóng vượt xa tiền mua tài khoản AI.</p>
+<h2>Bốn mảnh ghép mở quán trên mạng của Cloudflare</h2>
+<p>Thay vì bắt người dùng thuê cả một chiếc máy chủ bật sẵn 24 giờ, Cloudflare tách các phần việc của một trang web thành những dịch vụ tính phí theo lượt dùng thực tế. Để dễ hình dung, bạn có thể ví một ứng dụng web trên mạng như một quán nước gồm bốn bộ phận phối hợp với nhau:</p>
+<ul>
+<li><strong>Cloudflare Pages đóng vai trò mặt tiền đón khách.</strong> Đây là nơi trưng bày phần giao diện tĩnh của trang web như chữ viết, bố cục và biểu mẫu. Cloudflare miễn phí hoàn toàn dịch vụ này và không giới hạn băng thông cho các tệp tĩnh.</li>
+<li><strong>Cloudflare Workers làm nhiệm vụ của nhân viên pha chế.</strong> Đây là những đoạn mã xử lý nghiệp vụ ở phía máy chủ, chẳng hạn kiểm tra mật khẩu đăng nhập, nhận nội dung biểu mẫu hoặc gửi câu hỏi sang các mô hình AI. Nhân viên này chỉ thức dậy làm việc đúng vài phần nghìn giây khi có khách bấm nút trên web rồi nghỉ ngay, không tốn tiền ngồi chờ lúc quán vắng.</li>
+<li><strong>Cloudflare D1 là cuốn sổ ghi chép dữ liệu.</strong> Mọi thông tin cần lưu lại có cấu trúc như danh sách bài viết, tài khoản người dùng hay lịch sử đơn hàng đều nằm trong cơ sở dữ liệu SQLite này.</li>
+<li><strong>Cloudflare R2 là kho lạnh chứa tệp dung lượng lớn.</strong> Ảnh minh họa, tài liệu PDF hay video được cất tại đây. Điểm khác biệt lớn nhất của R2 so với nhiều dịch vụ lưu trữ đám mây truyền thống là miễn phí 100% băng thông tải ra, nên bạn không lo hóa đơn tăng vọt khi một bài viết có nhiều người vào xem ảnh và video.</li>
+</ul>
+<p>Trên chính trang <code>tqd.me</code> này, bốn mảnh ghép đó đang chia việc đúng như vậy: Workers xử lý việc hiển thị bài viết và cổng kết nối cho agent, D1 lưu nội dung các trang cùng danh sách bài, còn R2 phục vụ toàn bộ ảnh minh họa và video nền mà không phát sinh phí băng thông.</p>
+<p><img src="/api/v1/media/2026-11-ad65ab7142c2-sec2-bon-manh-ghep.jpg" alt="Sơ đồ luồng phối hợp giữa bốn mảnh ghép Pages, Workers, D1 và R2 trong một ứng dụng trên Cloudflare" loading="lazy" decoding="async"></p>
+<h2>So sánh gói miễn phí 0 đồng và gói trả phí 5 USD mỗi tháng</h2>
+<p>Khi ghép bốn dịch vụ trên vào cùng một tài khoản Cloudflare, bạn có thể bắt đầu ở gói miễn phí (Free) rồi nâng lên gói trả phí (Workers Paid, giá 5 USD mỗi tháng chưa gồm thuế) khi lượng truy cập tăng. Bảng dưới đây tóm tắt hạn mức của từng mảnh ghép ở hai gói:</p>
+<table>
+<thead>
+<tr>
+<th>Dịch vụ</th>
+<th>Vai trò trong ứng dụng</th>
+<th>Gói Free (0 USD)</th>
+<th>Gói Workers Paid (5 USD/tháng)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cloudflare Pages</td>
+<td>Mặt tiền giao diện tĩnh</td>
+<td>Miễn phí, băng thông tĩnh thoải mái</td>
+<td>Miễn phí, lưu lượng tĩnh không trần</td>
+</tr>
+<tr>
+<td>Cloudflare Workers</td>
+<td>Chạy mã xử lý yêu cầu và gọi API</td>
+<td>100.000 lượt gọi/ngày, tối đa 10 mili-giây CPU/lượt</td>
+<td>10 triệu lượt gọi/tháng, 30 triệu mili-giây CPU/tháng</td>
+</tr>
+<tr>
+<td>Cloudflare D1 (SQLite)</td>
+<td>Sổ lưu dữ liệu bài viết, tài khoản, đơn hàng</td>
+<td>Đọc 5 triệu dòng/ngày, ghi 100.000 dòng/ngày, lưu trữ 5 GB</td>
+<td>Đọc 25 tỷ dòng/tháng, ghi 50 triệu dòng/tháng, lưu trữ 5 GB đầu</td>
+</tr>
+<tr>
+<td>Cloudflare R2</td>
+<td>Kho chứa ảnh, tài liệu và video</td>
+<td>10 GB lưu trữ/tháng, 0 USD cước tải tệp ra (egress)</td>
+<td>10 GB đầu miễn phí/tháng, 0 USD phí truyền dữ liệu ra</td>
+</tr>
+</tbody>
+</table>
+<p><em>Nguồn: trang giá Cloudflare Workers, D1, R2 và Pages, đối chiếu ngày 04/11/2026.</em></p>
+<p>Nhìn vào bảng số liệu trên, có hai cơ chế tính phí đặc biệt có lợi cho người làm ứng dụng AI và doanh nghiệp nhỏ:</p>
+<ol>
+<li><strong>Thời gian chờ AI trả lời không bị tính vào tiền CPU.</strong> Khi một người dùng bấm nút trò chuyện với chatbot trên web của bạn, Workers sẽ gửi câu hỏi đó tới máy chủ của OpenAI, Anthropic hoặc Google rồi chờ từ 5 đến 10 giây để nhận câu trả lời. Cloudflare tính phí dựa trên số mili-giây con chip thực sự chạy mã (<code>CPU time</code>), không tính thời gian mở kết nối ngồi chờ phản hồi mạng (<code>I/O wait</code>). Suốt mấy giây chờ mô hình AI suy nghĩ đó, đồng hồ tính cước CPU của Workers dừng ở mức 0 đồng.</li>
+<li><strong>Hạn mức tính chung cho toàn bộ tài khoản.</strong> Gói Free hay gói 5 USD mỗi tháng không giới hạn bạn chỉ được dựng một trang web. Bạn có thể đặt 10 hay 20 dự án thử nghiệm khác nhau vào chung một tài khoản; tất cả cùng chia sẻ hạn mức 100.000 lượt gọi mỗi ngày (ở gói Free) hoặc 10 triệu lượt gọi mỗi tháng (ở gói 5 USD). Những dự án làm thử vào cuối tuần rồi để đó không làm phát sinh thêm hóa đơn riêng.</li>
+</ol>
+<p><img src="/api/v1/media/2026-11-753e1b765ccc-sec3-cpu-wait-ai.jpg" alt="Cơ chế đồng hồ CPU tạm dừng ở mức 0 USD khi chờ AI trả lời và gộp nhiều dự án vào chung một tài khoản" loading="lazy" decoding="async"></p>
+<h2>Vì sao Cloudflare cung cấp được mức giá này</h2>
+<p>Nhiều người mới tìm hiểu thường thắc mắc vì sao một nhà cung cấp hạ tầng lại tặng không 100.000 lượt truy cập mỗi ngày và miễn phí toàn bộ băng thông tải ảnh ở gói 0 đồng. Câu trả lời nằm ở mô hình kinh doanh cốt lõi của họ.</p>
+<p>Cloudflare đã xây dựng sẵn mạng lưới máy chủ đặt tại hơn 330 thành phố trên toàn cầu để bán các gói bảo mật, chống tấn công mạng và tăng tốc đường truyền trị giá hàng chục nghìn USD cho các tập đoàn lớn. Để sẵn sàng chống đỡ những đợt tấn công lưu lượng khổng lồ, hệ thống máy chủ này luôn phải duy trì một lượng công suất dự phòng rất lớn. Giữa các nhịp cao điểm, phần công suất máy tính nhàn rỗi trên mạng lưới vẫn chạy không. Việc mở phần tài nguyên nhàn rỗi đó cho lập trình viên cá nhân và các dự án nhỏ gần như không làm tăng chi phí cố định của Cloudflare, đổi lại giúp họ thu hút hàng triệu sản phẩm mới xây dựng ngay trên nền tảng của mình từ ngày đầu.</p>
+<p><img src="/api/v1/media/2026-11-fe1ba0f4aad3-sec4-mang-luoi-330-thanh-pho.jpg" alt="Mô hình tận dụng công suất nhàn rỗi từ mạng lưới hơn 330 thành phố của Cloudflare cho các dự án nhỏ" loading="lazy" decoding="async"></p>
+<h2>Khi nào phù hợp và những giới hạn cần lưu ý</h2>
+<p>Dù tiết kiệm chi phí, tổ hợp Cloudflare không phải là giải pháp thay thế cho mọi loại máy chủ trong mọi tình huống. Bạn nên biết rõ phạm vi phù hợp trước khi chọn:</p>
+<ul>
+<li><strong>Rất phù hợp cho:</strong> website giới thiệu doanh nghiệp, blog cá nhân, trang đích bán hàng, cổng tra cứu nội bộ, ứng dụng quản lý nhỏ và các sản phẩm tích hợp AI qua API (như gọi GPT, Claude, Gemini).</li>
+<li><strong>Cần lưu ý giới hạn CPU ở gói miễn phí:</strong> mỗi lượt gọi Workers ở gói 0 đồng chỉ được dùng tối đa 10 mili-giây CPU. Mức này dư dả để đọc dữ liệu từ D1 và trả về trang HTML đã dựng sẵn, nhưng nếu mã nguồn của bạn thực hiện các phép tính nặng ngay trong lúc khách bấm nút (ví dụ xử lý tệp lớn hoặc giải mã phức tạp), lượt gọi có thể chạm trần 10 mili-giây. Khi đó bạn nên chuyển phần xử lý nặng sang bước lưu trước hoặc nâng lên gói 5 USD (cho phép tới 30 triệu mili-giây CPU mỗi tháng).</li>
+<li><strong>Không dành cho tác vụ chạy dài trên máy chủ riêng:</strong> Workers khởi động và kết thúc theo từng yêu cầu ngắn trên môi trường biên, không phải một máy chủ Linux mở liên tục để bạn tự cài các phần mềm máy bàn hay tự chạy mô hình AI nguồn mở nặng hàng chục gigabyte trực tiếp trên thẻ đồ họa.</li>
+</ul>
+<p><img src="/api/v1/media/2026-11-09460c9e9d66-sec5-khi-nao-phu-hop.jpg" alt="Đối chiếu các trường hợp phù hợp và những giới hạn kỹ thuật cần lưu ý khi dùng Cloudflare Workers" loading="lazy" decoding="async"></p>
+<h2>Bắt đầu từ đâu với dự án đầu tay</h2>
+<p>Nếu bạn đang có một trang web hoặc công cụ nhỏ do AI viết sẵn trên máy tính cá nhân và muốn đưa lên mạng cho mọi người dùng thử, lộ trình gọn nhất gồm bốn bước:</p>
+<ol>
+<li><strong>Lưu mã nguồn lên GitHub trước.</strong> Trước khi triển khai lên mạng, hãy đưa dự án vào một kho lưu trữ (repository) riêng tư trên GitHub và kiểm tra tệp <code>.gitignore</code> để không làm lộ các khóa API. Nếu chưa quen thao tác này, bạn có thể đọc bài <a href="/bai-viet/github-co-ban-cho-nguoi-moi-dung-agent-ai">GitHub cơ bản cho người mới dùng agent AI</a>.</li>
+<li><strong>Tạo tài khoản Cloudflare ở gói 0 đồng.</strong> Đăng ký tại <code>dash.cloudflare.com</code> và bắt đầu hoàn toàn bằng gói Free. Với 100.000 lượt truy cập mỗi ngày và 5 GB cơ sở dữ liệu D1, hầu hết dự án cá nhân hoặc công cụ nội bộ trong giai đoạn thử nghiệm đều chưa cần trả phí.</li>
+<li><strong>Giao cho agent triển khai qua công cụ dòng lệnh Wrangler.</strong> Bạn không cần tự bấm từng nút cấu hình trên trình duyệt. Hãy yêu cầu agent lập trình bạn đang dùng (Claude Code, Codex hay Antigravity) cài đặt <code>wrangler</code>, tạo cơ sở dữ liệu D1, tạo kho ảnh R2 và đẩy trang web lên địa chỉ thử nghiệm <code>*.workers.dev</code> hoặc <code>*.pages.dev</code>.</li>
+<li><strong>Chỉ nâng lên gói 5 USD khi có nhu cầu thực tế.</strong> Sau vài tuần chạy thử, nếu ứng dụng có lượng người dùng đều đặn mỗi ngày hoặc cần thời gian xử lý CPU dài hơn cho các tác vụ phức tạp, lúc đó bạn mới bật gói Workers Paid. Để cân đối khoản này trong tổng ngân sách công cụ của công ty, bạn có thể xem thêm bài <a href="/bai-viet/chi-phi-ai-theo-tung-nhan-vien-cho-doanh-nghiep-nho">tính chi phí AI theo từng nhân viên</a> và <a href="/bai-viet/chon-cong-cu-ai-theo-dau-viec-cho-ceo">bảng chọn nhanh công cụ AI theo đầu việc</a>.</li>
+</ol>
+<p><img src="/api/v1/media/2026-11-19b4b42dec0c-sec6-lo-trinh-4-buoc.jpg" alt="Lộ trình bốn bước đưa ứng dụng đầu tay từ máy tính cá nhân lên Cloudflare" loading="lazy" decoding="async"></p>
+<h2>Nguồn đã kiểm</h2>
+<p>Đối chiếu ngày 04/11/2026:</p>
+<ul>
+<li>Bảng giá và hạn mức Cloudflare Workers: <a href="https://developers.cloudflare.com/workers/platform/pricing/" rel="noopener nofollow ugc">developers.cloudflare.com/workers/platform/pricing</a></li>
+<li>Bảng giá và hạn mức cơ sở dữ liệu Cloudflare D1: <a href="https://developers.cloudflare.com/d1/platform/pricing/" rel="noopener nofollow ugc">developers.cloudflare.com/d1/platform/pricing</a></li>
+<li>Bảng giá lưu trữ và chính sách băng thông của Cloudflare R2: <a href="https://developers.cloudflare.com/r2/pricing/" rel="noopener nofollow ugc">developers.cloudflare.com/r2/pricing</a></li>
+<li>Giới hạn gói Cloudflare Pages: <a href="https://developers.cloudflare.com/pages/functions/pricing/" rel="noopener nofollow ugc">developers.cloudflare.com/pages/functions/pricing</a></li>
+</ul>

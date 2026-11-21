@@ -1,6 +1,8 @@
 ## Development
 
-When starting the dev server, use background mode:
+Repo này chỉ còn hai Worker: `tqd-edge` (`edge/`) và `tqd-tools` (`src/`). Giao diện công khai và admin nằm trong EzyPlatform, không sửa trong repo này.
+
+Khi cần chạy Astro dev cho Worker công cụ, dùng background mode:
 
 ```
 astro dev --background

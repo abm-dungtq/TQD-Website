@@ -1,22 +1,28 @@
 # Chatbot "Agent DũngTQ"
 
-Linh vật trên trang chủ (desktop) và nút tròn mặt linh vật ở góc phải dưới (điện thoại) mở khung chat với agent `dungtq-web` chạy trên GoClaw tự host. Agent trả lời bằng nội dung website và nói rõ khi không chắc.
+Khung chat nằm trong giao diện EzyPlatform (page fragment). Trình duyệt gọi `/api/chat*` trên `stg.tqd.me`; edge chuyển tiếp nguyên request sang Worker công cụ `tqd-tools`, rồi Worker gọi agent `dungtq-web` trên GoClaw tự host.
 
 ## Đường đi của một tin nhắn
 
 ```text
-trình duyệt ──POST /api/chat──▶ Worker ──/v1/chat/completions (stream)──▶ https://goclaw.tqd.io.vn ──▶ agent dungtq-web
-            ◀──── SSE truyền nguyên trạng ────┘
+trình duyệt (stg.tqd.me) ──POST /api/chat──▶ tqd-edge ──service binding──▶ tqd-tools ──/v1/chat/completions (stream)──▶ https://goclaw.tqd.io.vn
+                                            ◀──────────── SSE truyền nguyên trạng ────────────┘
 ```
 
 - `POST /api/chat` (`src/pages/api/chat.ts`): body `{ message, visitorId }`. Chỉ nhận JSON cùng origin, tin tối đa 1000 ký tự, `visitorId` là UUID v4. GoClaw nhận user `web:<visitorId>` và giữ lịch sử hội thoại; website không lưu nội dung chat.
 - Trước khi tính lượt, Worker hỏi `/health` của GoClaw (cache 60 giây). Máy chủ nhà tắt thì trả 503 `offline` mà không tốn lượt trong ngày.
-- Giới hạn (bảng D1 `rate_limits`): 20 tin/giờ mỗi khách, 60 tin/giờ mỗi IP, trần cả ngày là `CHAT_DAILY_CAP`. Vượt giới hạn thì trả 429 kèm `Retry-After` và lời mời nhắn Zalo. Cron hằng đêm xoá các hàng `chat:%` cũ.
-- Trước cả Worker, rule rate limiting của Cloudflare (phase `http_ratelimit` trên zone `tqd.me`; zone cũ `tqd.io.vn` giữ một bản giống hệt, rule "Chat API: max 15 requests per 10 seconds per IP") chặn 10 giây mọi IP gửi quá 15 yêu cầu tới `/api/chat*` trong 10 giây. Spam bị chặn ở edge nên không tốn lượt Worker và hạn mức ghi D1 (dùng chung với đăng nhập admin). Gói Free chỉ có một rule như vậy, khoảng đếm 10 giây và thời gian chặn 10 giây. Xem hoặc sửa: `cf rulesets entrypoint get http_ratelimit -z tqd.me` (đổi tên miền thì phải tạo lại rule trên zone mới), hoặc Security → WAF → Rate limiting rules trên dashboard.
-- Thống kê (`src/lib/chat-stats.ts`, trang `/admin/chat`): mỗi yêu cầu chat hợp lệ được cộng vào bảng D1 `chat_daily` theo ngày giờ Việt Nam, chia thành trả lời, bị giới hạn, agent nghỉ và lỗi. Bảng `chat_visitors` ghi SHA-256 rút gọn của `visitorId` để đếm số người mỗi ngày; cron hằng đêm xoá hàng cũ hơn 90 ngày. Chỉ đếm, không lưu nội dung tin. Ghi số đếm chạy sau khi đã trả lời (`waitUntil`), lỗi ghi không ảnh hưởng khách. `chat_daily` có trong bản sao lưu hằng đêm, `chat_visitors` thì không.
+- Giới hạn (bảng D1 `rate_limits`): 20 tin/giờ mỗi khách, 60 tin/giờ mỗi IP, trần cả ngày là `CHAT_DAILY_CAP`. Vượt giới hạn thì trả 429 kèm `Retry-After` và lời mời nhắn Zalo.
+- Thống kê (`src/lib/chat-stats.ts`): mỗi yêu cầu chat hợp lệ được cộng vào bảng D1 `chat_daily` theo ngày giờ Việt Nam, chia thành trả lời, bị giới hạn, agent nghỉ và lỗi. Bảng `chat_visitors` ghi SHA-256 rút gọn của `visitorId` để đếm số người mỗi ngày. Chỉ đếm, không lưu nội dung tin. Ghi số đếm chạy sau khi đã trả lời (`waitUntil`), lỗi ghi không ảnh hưởng khách.
+- **Không còn cron dọn dẹp** kể từ khi bỏ trigger của Worker. Hàng `chat:%` trong `rate_limits` và `chat_visitors` cũ hơn 90 ngày cần dọn thủ công nếu chạm hạn mức D1:
+
+  ```bash
+  npx wrangler d1 execute tqd_db --remote --command "DELETE FROM chat_visitors WHERE day < date('now','-90 day')"
+  npx wrangler d1 execute tqd_db --remote --command "DELETE FROM rate_limits WHERE bucket LIKE 'chat:%' AND window_start < strftime('%s','now') - 172800"
+  ```
+
 - Mọi lỗi đều có dạng `{ error, message }`: `rate_limited` (429), `offline` / `busy` (503), `forbidden` (403), `unsupported_media_type` (415), `too_large` (413), `invalid` (400).
 - `GET /api/chat/status` trả `{ online }`. Khung chat chỉ gọi nó khi được mở.
-- Hiển thị (`src/lib/chat-render.ts`): chỉ đoạn văn, danh sách, in đậm và link. Chỉ link `https://tqd.me/...` mới bấm được; URL khác hiện dạng chữ, để câu trả lời bị dụ cũng không gắn được link lạ dưới tên DũngTQ.
+- Hiển thị (`src/lib/chat-render.ts`): chỉ đoạn văn, danh sách, in đậm và link. Chỉ link `https://tqd.me/...` mới bấm được; URL khác hiện dạng chữ, để câu trả lời bị dụ cũng không gắn link lạ dưới tên DũngTQ.
 
 ## Cấu hình
 
@@ -25,13 +31,13 @@ trình duyệt ──POST /api/chat──▶ Worker ──/v1/chat/completions (
 | `GOCLAW_BASE_URL` | `vars` | `https://goclaw.tqd.io.vn` |
 | `GOCLAW_AGENT` | `vars` | `dungtq-web` |
 | `CHAT_DAILY_CAP` | `vars` | Trần tin mỗi ngày cho cả site (mặc định 300) |
-| `GOCLAW_API_KEY` | secret | Key ứng dụng GoClaw tên `tqd-website`. Đặt cho cả `tqd-website` và `tqd-next`; không có key thì chat báo offline |
+| `GOCLAW_API_KEY` | secret của `tqd-tools` | Key ứng dụng GoClaw tên `tqd-website`; không có key thì chat báo offline |
 
-Key do script trên máy GoClaw tạo và đưa thẳng vào `wrangler secret put` qua stdin: `node D:/Goclaw/plans/261013-dungtq-web/create-agent.mjs`. Chạy lại không tạo key mới.
+Secret phải đặt trên `tqd-tools` bằng `npx wrangler secret put GOCLAW_API_KEY`. Key do script trên máy GoClaw tạo và đưa thẳng vào stdin: `node D:/Goclaw/plans/261013-dungtq-web/create-agent.mjs`. Chạy lại không tạo key mới.
 
 ## Sau khi đăng bài mới
 
-Kiến thức của agent là file `CAPABILITIES.md`, sinh từ `https://tqd.me/index.md` và các bài viết. Sau khi đăng bài thì chạy trên máy GoClaw:
+Kiến thức của agent là file `CAPABILITIES.md`, sinh từ nội dung công khai. Sau khi publish bài trên EzyPlatform, đồng bộ trên máy GoClaw:
 
 ```bash
 node D:/Goclaw/plans/261013-dungtq-web/sync-context.mjs
@@ -41,12 +47,12 @@ node D:/Goclaw/plans/261013-dungtq-web/verify-chat.mjs   # ALL PASS
 ## Thu hồi hoặc đổi key
 
 1. Thu hồi key `tqd-website` trong GoClaw (cách làm ở `D:/Goclaw/docs/application-api.md`). Chat lập tức trả offline.
-2. Muốn bật lại thì chạy `create-agent.mjs` để tạo key mới và đặt lại secret cho cả hai Worker.
+2. Muốn bật lại thì chạy `create-agent.mjs` để tạo key mới và đặt lại secret cho `tqd-tools` (và `tqd-next` nếu đang kiểm thử preview).
 
-Tắt hẳn chat mà không thu hồi key: `npx wrangler secret delete GOCLAW_API_KEY --name tqd-website`.
+Tắt hẳn chat mà không thu hồi key: `npx wrangler secret delete GOCLAW_API_KEY --name tqd-tools`.
 
 ## Kiểm tra
 
-- `npm test`: kiểm tra body, origin, IP băm, GoClaw không tới được và cách hiển thị câu trả lời.
-- `node scripts/verify/site.mjs <url>`: có `/api/chat/status` và kiểm tra 403 khi khác origin. Không gửi tin thật.
+- `node node_modules/vitest/vitest.mjs run src/lib/chat.test.ts src/lib/chat-render.test.ts src/lib/chat-stats.test.mjs`.
+- `curl -s https://tqd-tools.ngulongyquan.workers.dev/api/chat/status`.
 - Agent phía GoClaw: `verify-chat.mjs` ở trên; tài liệu tại `D:/Goclaw/docs/dungtq-web-agent.md`.

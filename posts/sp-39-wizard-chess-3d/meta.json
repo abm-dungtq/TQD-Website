@@ -1,0 +1,10 @@
+{
+  "slug": "sp-39-wizard-chess-3d",
+  "title": "Wizard Chess 3D",
+  "summary": "Bàn cờ vua chuẩn FIDE và cờ tướng 3D chạy thẳng trên trình duyệt với 8 đấu trường, hiệu ứng quân cờ vỡ vụn khi ăn quân, góc quay kết liễu, AI trong Web Worker và phòng đấu trực tuyến qua Cloudflare Durable Objects.",
+  "postType": "tqd_product",
+  "contentType": "HTML",
+  "status": "PUBLISHED",
+  "publishedAt": "2026-11-11 00:00:00",
+  "priority": 10
+}

@@ -1,0 +1,18 @@
+{
+  "slug": "bay-tam-chin-3d-game-xuc-xac-webgl",
+  "title": "Bảy Tám Chín 3D: đưa bát xúc xắc bàn tiệc lên trình duyệt bằng WebGL",
+  "summary": "Trò chơi lắc bát xúc xắc 3D cho bàn tiệc từ 2 đến 10 người trên trình duyệt, tích hợp vật lý bát sứ 3D, âm thanh Web Audio API và Sổ bia tự động.",
+  "postType": "POST",
+  "contentType": "HTML",
+  "status": "PUBLISHED",
+  "tags": [
+    "Bảy Tám Chín 3D",
+    "Three.js",
+    "WebGL",
+    "Web Audio",
+    "Game 3D"
+  ],
+  "cover": "2026-11-8dae44942fb3-game-789-3d-bowl-1280x720.jpg",
+  "publishedAt": "2026-11-11 11:08:45",
+  "priority": 7
+}
